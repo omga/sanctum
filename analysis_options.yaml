@@ -1,0 +1,41 @@
+# Sanctum static analysis.
+#
+# very_good_analysis is a strict, opinionated ruleset (stricter than
+# flutter_lints). riverpod_lint is installed via the top-level `plugins:`
+# key below — since riverpod_lint 3.x it uses Dart's native
+# analysis_server_plugin system, so `dart analyze` picks up its rules
+# directly and no custom_lint runner is required in CI.
+include: package:very_good_analysis/analysis_options.yaml
+
+plugins:
+  riverpod_lint: ^3.1.8
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - "**/*.g.dart"
+    - "**/*.mapper.dart"
+    - "**/*.drift.dart"
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+  errors:
+    # Generated-code noise we never want to fail a build on.
+    invalid_annotation_target: ignore
+    # Clock and Logger are single-method *interfaces*, not helpers. The
+    # entire point is that they are injected and swapped (FixedClock in
+    # tests, Sentry in production) — a top-level function cannot be.
+    # (Set here rather than under `linter.rules` because the rule itself
+    # is deprecated, and naming it there warns.)
+    one_member_abstracts: ignore
+    # pubspec.yaml is grouped by concern with explanatory comments, which
+    # is far more useful to read than alphabetical order.
+    sort_pub_dependencies: ignore
+
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true

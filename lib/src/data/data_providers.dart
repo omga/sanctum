@@ -1,0 +1,135 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sanctum/src/core/result/result.dart';
+import 'package:sanctum/src/data/catalog/content_catalog.dart';
+import 'package:sanctum/src/data/catalog/content_catalog_source.dart';
+import 'package:sanctum/src/data/database/sanctum_database.dart';
+import 'package:sanctum/src/data/repositories/energy_repository.dart';
+import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
+import 'package:sanctum/src/data/repositories/journal_repository.dart';
+import 'package:sanctum/src/data/repositories/oracle_repository.dart';
+import 'package:sanctum/src/data/repositories/practice_repository.dart';
+import 'package:sanctum/src/data/repositories/quiz_repository.dart';
+import 'package:sanctum/src/data/repositories/settings_repository.dart';
+import 'package:sanctum/src/data/repositories/subscription_repository.dart';
+import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
+
+part 'data_providers.g.dart';
+
+/// The database. One per app, closed when the container is disposed.
+@Riverpod(keepAlive: true)
+SanctumDatabase sanctumDatabase(Ref ref) {
+  final database = SanctumDatabase();
+  ref.onDispose(database.close);
+  return database;
+}
+
+/// Where bundled content is read from.
+@Riverpod(keepAlive: true)
+ContentCatalogSource contentCatalogSource(Ref ref) =>
+    const AssetContentCatalogSource();
+
+/// The parsed content catalogue.
+///
+/// ## Where `Result` stops and `AsyncValue` starts
+///
+/// The data layer returns [Result] so failure is in the type and cannot
+/// be forgotten. Riverpod already models loading/data/error as
+/// `AsyncValue`, so re-wrapping a `Result` inside one would give the UI
+/// two error channels to handle for the same failure.
+///
+/// This provider is the boundary: it unwraps the [Result] and rethrows
+/// the failure, letting `AsyncValue.error` carry it from here on. That is
+/// why `AppFailure` implements `Exception`.
+@Riverpod(keepAlive: true)
+Future<ContentCatalog> contentCatalog(Ref ref) async {
+  final result = await ref.watch(contentCatalogSourceProvider).load();
+  return switch (result) {
+    Ok(:final value) => value,
+    Err(:final failure) => throw failure,
+  };
+}
+
+/// Stable per-install salt for daily content selection.
+@Riverpod(keepAlive: true)
+Future<String> installSalt(Ref ref) async {
+  final result = await ref.watch(settingsRepositoryProvider).installSalt();
+  return switch (result) {
+    Ok(:final value) => value,
+    Err(:final failure) => throw failure,
+  };
+}
+
+/// Onboarding quiz answers.
+@Riverpod(keepAlive: true)
+QuizRepository quizRepository(Ref ref) => const PreferencesQuizRepository();
+
+/// App settings store.
+@Riverpod(keepAlive: true)
+SettingsRepository settingsRepository(Ref ref) =>
+    const PreferencesSettingsRepository();
+
+/// Practice log and streaks.
+@Riverpod(keepAlive: true)
+PracticeRepository practiceRepository(Ref ref) =>
+    DriftPracticeRepository(ref.watch(sanctumDatabaseProvider));
+
+/// Journal entries.
+@Riverpod(keepAlive: true)
+JournalRepository journalRepository(Ref ref) =>
+    DriftJournalRepository(ref.watch(sanctumDatabaseProvider));
+
+/// Energy check-ins.
+@Riverpod(keepAlive: true)
+EnergyRepository energyRepository(Ref ref) =>
+    DriftEnergyRepository(ref.watch(sanctumDatabaseProvider));
+
+/// Oracle draws.
+@Riverpod(keepAlive: true)
+OracleRepository oracleRepository(Ref ref) =>
+    DriftOracleRepository(ref.watch(sanctumDatabaseProvider));
+
+/// The local stand-in for a real store.
+///
+/// One object serves both interfaces below, exactly as RevenueCat's
+/// `Purchases` does. Replacing it means changing these three providers
+/// and nothing else in the app.
+@Riverpod(keepAlive: true)
+LocalSubscriptionRepository subscriptionStore(Ref ref) =>
+    LocalSubscriptionRepository();
+
+/// What the user has access to. Most features depend only on this.
+@Riverpod(keepAlive: true)
+EntitlementRepository entitlementRepository(Ref ref) =>
+    ref.watch(subscriptionStoreProvider);
+
+/// Buying a subscription. Only the paywall depends on this.
+@Riverpod(keepAlive: true)
+SubscriptionRepository subscriptionRepository(Ref ref) =>
+    ref.watch(subscriptionStoreProvider);
+
+/// The live entitlement, as a stream.
+@Riverpod(keepAlive: true)
+Stream<SanctumEntitlement> entitlement(Ref ref) =>
+    ref.watch(entitlementRepositoryProvider).watch();
+
+/// Whether the user is premium right now.
+@Riverpod(keepAlive: true)
+bool isPremium(Ref ref) =>
+    ref.watch(entitlementProvider).value?.isPremium ?? false;
+
+/// The audio engine.
+///
+/// Overridden in `bootstrap()` with the handler returned by
+/// `AudioService.init()`. It cannot be constructed lazily here because
+/// initialising the background service is async and must happen exactly
+/// once, before the first frame — so this throws rather than silently
+/// handing out a second, non-background player.
+@Riverpod(keepAlive: true)
+SanctumAudioService audioService(Ref ref) => throw UnimplementedError(
+  'audioServiceProvider must be overridden in bootstrap()',
+);
+
+/// Live session progress.
+@Riverpod(keepAlive: true)
+Stream<SessionPlaybackState> sessionPlayback(Ref ref) =>
+    ref.watch(audioServiceProvider).sessionState;

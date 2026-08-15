@@ -1,0 +1,11 @@
+# Test-only relaxations. Nested analysis_options files apply to their
+# directory and below, so this affects tests and nothing shipped.
+include: ../analysis_options.yaml
+
+analyzer:
+  errors:
+    # DateTime's month and day both default to 1, so the analyzer calls
+    # `DateTime(2026, 1, 1)` redundant and wants `DateTime(2026)`. In a
+    # suite where almost every assertion is about a specific calendar
+    # date, spelling the date out is the whole point.
+    avoid_redundant_argument_values: ignore

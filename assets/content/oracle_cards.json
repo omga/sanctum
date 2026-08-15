@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "id": "the-threshold",
+      "name": "The Threshold",
+      "message": "You are standing at the edge of a room you have not entered.",
+      "guidance": "Not every door asks to be understood before it is walked through. Notice what you are waiting for permission to begin."
+    },
+    {
+      "id": "still-water",
+      "name": "Still Water",
+      "message": "What is muddy will clear if you stop stirring it.",
+      "guidance": "You do not have to solve this today. Let the sediment settle and look again tomorrow."
+    },
+    {
+      "id": "the-ember",
+      "name": "The Ember",
+      "message": "Something small in you is still burning.",
+      "guidance": "It does not need to be a bonfire to be real. Protect it from the wind before you try to grow it."
+    },
+    {
+      "id": "open-hands",
+      "name": "Open Hands",
+      "message": "You cannot receive with a closed fist.",
+      "guidance": "Consider what you are gripping. Some of it is not even yours to hold."
+    },
+    {
+      "id": "the-long-root",
+      "name": "The Long Root",
+      "message": "Growth you cannot see is still growth.",
+      "guidance": "The season below ground has no visible reward. It is not a delay; it is the work."
+    },
+    {
+      "id": "the-mirror",
+      "name": "The Mirror",
+      "message": "What irritates you is often instructive.",
+      "guidance": "The trait you cannot stand in someone else is asking to be looked at directly."
+    },
+    {
+      "id": "low-tide",
+      "name": "Low Tide",
+      "message": "The water is not gone. It is gathering.",
+      "guidance": "Rest is not the interruption of the work. Today, it is the work."
+    },
+    {
+      "id": "the-clearing",
+      "name": "The Clearing",
+      "message": "You made space. Something will come.",
+      "guidance": "Resist filling it immediately. Emptiness is a decision you are allowed to keep."
+    },
+    {
+      "id": "borrowed-weight",
+      "name": "Borrowed Weight",
+      "message": "You are carrying something you did not pack.",
+      "guidance": "Set it down and see whose it was. You may find no one comes to claim it."
+    },
+    {
+      "id": "first-light",
+      "name": "First Light",
+      "message": "The beginning does not announce itself.",
+      "guidance": "It rarely feels like a beginning while it is happening. Look for the quiet ones."
+    },
+    {
+      "id": "the-unsent-letter",
+      "name": "The Unsent Letter",
+      "message": "Say it, even if only to yourself.",
+      "guidance": "Some things need to be spoken to leave the body. The audience is optional."
+    },
+    {
+      "id": "the-narrow-path",
+      "name": "The Narrow Path",
+      "message": "Fewer options is not the same as fewer choices.",
+      "guidance": "When the way narrows, it is usually pointing. Follow it before you widen it again."
+    },
+    {
+      "id": "soft-animal",
+      "name": "Soft Animal",
+      "message": "Your body has been asking for something.",
+      "guidance": "It has probably been asking for a while. Today, answer it before it has to shout."
+    },
+    {
+      "id": "the-old-story",
+      "name": "The Old Story",
+      "message": "You are still telling it as though it is happening.",
+      "guidance": "Check whether the danger is present or remembered. They ask for different things."
+    },
+    {
+      "id": "wild-honey",
+      "name": "Wild Honey",
+      "message": "Take the sweetness without apologising for it.",
+      "guidance": "Pleasure is not a reward you must first earn. You are allowed it on an ordinary day."
+    },
+    {
+      "id": "the-quiet-no",
+      "name": "The Quiet No",
+      "message": "A refusal does not require a defence.",
+      "guidance": "You may decline without a case file. 'No' is a complete sentence and always has been."
+    },
+    {
+      "id": "the-crossing",
+      "name": "The Crossing",
+      "message": "You are further along than the fear suggests.",
+      "guidance": "Look behind you. The thing you were sure you could not survive is already back there."
+    },
+    {
+      "id": "north",
+      "name": "North",
+      "message": "You know the direction. You are negotiating the cost.",
+      "guidance": "Stop asking whether it is right. Start asking what you will trade for it."
+    },
+    {
+      "id": "the-guest",
+      "name": "The Guest",
+      "message": "This feeling is visiting, not moving in.",
+      "guidance": "Give it tea. Do not give it your bedroom. It will leave when it has been received."
+    },
+    {
+      "id": "bare-branch",
+      "name": "Bare Branch",
+      "message": "What you have shed was not a loss.",
+      "guidance": "A tree in winter is not failing at being a tree. You are allowed a season of less."
+    },
+    {
+      "id": "the-second-key",
+      "name": "The Second Key",
+      "message": "There is another way in.",
+      "guidance": "The door you keep pushing may simply not be the entrance. Walk the perimeter."
+    },
+    {
+      "id": "held",
+      "name": "Held",
+      "message": "You do not have to be the only one carrying this.",
+      "guidance": "Name one person. Ask for one specific thing. That is the whole practice today."
+    }
+  ]
+}

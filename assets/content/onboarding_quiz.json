@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "questions": [
+    {
+      "id": "name",
+      "kind": "text",
+      "title": "What should we call you?",
+      "subtitle": "Only ever used to address you. It stays on this phone."
+    },
+    {
+      "id": "goals",
+      "kind": "multi",
+      "title": "What are you here for?",
+      "subtitle": "Choose as many as are true. This shapes everything you see.",
+      "options": [
+        {
+          "id": "love",
+          "label": "Love and relationships",
+          "detail": "Someone specific, or the search"
+        },
+        {
+          "id": "clarity",
+          "label": "A decision I keep circling"
+        },
+        {
+          "id": "calm",
+          "label": "Quiet in my own head"
+        },
+        {
+          "id": "purpose",
+          "label": "Where my life is going"
+        },
+        {
+          "id": "self",
+          "label": "Understanding myself"
+        },
+        {
+          "id": "people",
+          "label": "Reading people better"
+        }
+      ]
+    },
+    {
+      "id": "echo",
+      "kind": "interstitial",
+      "title": "Then that is what we will work on.",
+      "subtitle": "Sanctum will shape your daily card, your rituals and your readings around this."
+    },
+    {
+      "id": "love_status",
+      "kind": "single",
+      "title": "Where are you with it?",
+      "showIf": {
+        "questionId": "goals",
+        "anyOf": [
+          "love"
+        ]
+      },
+      "options": [
+        {
+          "id": "single",
+          "label": "On my own"
+        },
+        {
+          "id": "talking",
+          "label": "Talking to someone"
+        },
+        {
+          "id": "together",
+          "label": "With someone"
+        },
+        {
+          "id": "healing",
+          "label": "Coming out of something"
+        }
+      ]
+    },
+    {
+      "id": "weight",
+      "kind": "multi",
+      "title": "What is heaviest right now?",
+      "subtitle": "Be honest. Nobody sees this but you.",
+      "options": [
+        {
+          "id": "mixed_signals",
+          "label": "I cannot read someone"
+        },
+        {
+          "id": "repeating",
+          "label": "I keep repeating a pattern"
+        },
+        {
+          "id": "letting_go",
+          "label": "I cannot let something go"
+        },
+        {
+          "id": "racing",
+          "label": "My mind will not slow down"
+        },
+        {
+          "id": "stuck",
+          "label": "I freeze and do nothing"
+        },
+        {
+          "id": "drained",
+          "label": "I am running on empty"
+        }
+      ]
+    },
+    {
+      "id": "birth_date",
+      "kind": "date",
+      "title": "When were you born?",
+      "subtitle": "Your sign shapes how your readings are written."
+    },
+    {
+      "id": "rhythm",
+      "kind": "single",
+      "title": "When do you want your reading?",
+      "subtitle": "One moment a day. You can change it whenever.",
+      "options": [
+        {
+          "id": "morning",
+          "label": "Morning",
+          "detail": "Before the day starts"
+        },
+        {
+          "id": "midday",
+          "label": "Midday",
+          "detail": "When it gets loud"
+        },
+        {
+          "id": "evening",
+          "label": "Evening",
+          "detail": "To put the day down"
+        }
+      ]
+    },
+    {
+      "id": "commitment",
+      "kind": "single",
+      "title": "How often will you show up?",
+      "subtitle": "A promise you keep beats an ambitious one you break.",
+      "options": [
+        {
+          "id": "daily",
+          "label": "Every day",
+          "detail": "I want the streak"
+        },
+        {
+          "id": "most",
+          "label": "Most days"
+        },
+        {
+          "id": "when",
+          "label": "When I need it"
+        }
+      ]
+    }
+  ]
+}

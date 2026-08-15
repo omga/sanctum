@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "rituals": [
+    {
+      "id": "new-moon-intention",
+      "moon": "New Moon",
+      "title": "Intention Setting",
+      "phase": "newMoon",
+      "opening": "The dark moon is the empty page. Nothing is required of you yet.",
+      "steps": [
+        "Sit somewhere you will not be interrupted for ten minutes.",
+        "Write down one thing you want, in the present tense, as though it is already true.",
+        "Underneath it, write the smallest action that would make it slightly more true.",
+        "Do that action within 48 hours. That is the whole ritual."
+      ]
+    },
+    {
+      "id": "full-moon-release",
+      "moon": "Full Moon",
+      "title": "Release",
+      "phase": "fullMoon",
+      "opening": "Everything is lit, including what you would rather not look at.",
+      "steps": [
+        "Name one thing you are ready to stop carrying.",
+        "Write it down in full. Do not abbreviate it to be polite.",
+        "Read it aloud once, to yourself.",
+        "Tear the page. Keeping it is also allowed — the point is the naming."
+      ]
+    },
+    {
+      "id": "first-quarter-tension",
+      "moon": "First Quarter",
+      "title": "Meeting Resistance",
+      "phase": "firstQuarter",
+      "opening": "The half-lit moon is where the friction shows up.",
+      "steps": [
+        "Name what has become harder than you expected.",
+        "Ask whether it is difficult or simply unfamiliar.",
+        "Choose one thing to make 10% easier, and change it today."
+      ]
+    },
+    {
+      "id": "last-quarter-review",
+      "moon": "Last Quarter",
+      "title": "Honest Review",
+      "phase": "lastQuarter",
+      "opening": "Before the dark, an accounting. No punishment involved.",
+      "steps": [
+        "List three things that happened this cycle. Any three.",
+        "Mark which you would repeat.",
+        "Forgive yourself one specific thing, by name."
+      ]
+    }
+  ]
+}

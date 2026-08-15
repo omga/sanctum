@@ -1,0 +1,55 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/domain/models/paywall.dart';
+import 'package:sanctum/src/features/paywall/view_model/paywall_view_model.dart';
+import 'package:sanctum/src/routing/app_router.dart';
+
+/// Watches for an earned moment and opens the paywall when one arrives.
+///
+/// Wrapped around the Today screen rather than pushed from a dozen call
+/// sites, so there is exactly one place that can open the paywall
+/// automatically — which is what makes "am I nagging people?" an
+/// answerable question.
+///
+/// It checks once per mount. Not on a timer, not on every rebuild: a
+/// paywall that can appear while someone is mid-tap is how you get a
+/// purchase the user did not mean to make, and then a refund.
+class PaywallPresenter extends ConsumerStatefulWidget {
+  /// Wraps [child].
+  const PaywallPresenter({required this.child, super.key});
+
+  /// The screen underneath.
+  final Widget child;
+
+  @override
+  ConsumerState<PaywallPresenter> createState() => _PaywallPresenterState();
+}
+
+class _PaywallPresenterState extends ConsumerState<PaywallPresenter> {
+  /// Guards against a second presentation within one app run, however
+  /// many times this widget rebuilds.
+  static bool _shownThisLaunch = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_check()));
+  }
+
+  Future<void> _check() async {
+    if (_shownThisLaunch) return;
+
+    final decision = await ref.read(paywallDecisionProvider().future);
+    if (!mounted) return;
+
+    if (decision case ShowPaywall(:final moment)) {
+      _shownThisLaunch = true;
+      unawaited(PaywallRoute(moment: moment).push<void>(context));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}

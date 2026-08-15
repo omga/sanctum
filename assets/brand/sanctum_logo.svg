@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder mark for Sanctum. Crescent + spark, gold on night.
+     Deliberately simple so it survives being 48px in a status bar. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241640"/>
+      <stop offset="1" stop-color="#0B0616"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.46" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7C5CFF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#7C5CFF" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="crescent">
+      <rect width="1024" height="1024" fill="black"/>
+      <circle cx="471" cy="512" r="307" fill="white"/>
+      <circle cx="599" cy="445" r="271" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#night)"/>
+  <circle cx="471" cy="512" r="420" fill="url(#glow)"/>
+  <rect width="1024" height="1024" fill="#E8C88A" mask="url(#crescent)"/>
+
+  <!-- four-pointed spark -->
+  <path fill="#E8C88A" d="M717 205
+    C 725 265, 745 285, 805 293
+    C 745 301, 725 321, 717 381
+    C 709 321, 689 301, 629 293
+    C 689 285, 709 265, 717 205 Z"/>
+</svg>

@@ -1,0 +1,356 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/design_system/effects/glass_card.dart';
+import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/domain/models/energy_check_in.dart';
+import 'package:sanctum/src/domain/models/paywall.dart';
+import 'package:sanctum/src/features/rituals/view_model/ritual_view_model.dart';
+import 'package:sanctum/src/features/today/view/widgets/moon_disc.dart';
+import 'package:sanctum/src/features/today/view/widgets/oracle_card_view.dart';
+import 'package:sanctum/src/features/today/view_model/today_view_model.dart';
+import 'package:sanctum/src/routing/app_router.dart';
+
+/// The home screen: today's attunement.
+class TodayScreen extends ConsumerWidget {
+  /// Creates the screen.
+  const TodayScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(todayStateProvider);
+
+    return SafeArea(
+      bottom: false,
+      child: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => _TodayError(message: '$error'),
+        data: (data) => _TodayContent(state: data),
+      ),
+    );
+  }
+}
+
+class _TodayError extends StatelessWidget {
+  const _TodayError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(SanctumSpacing.xl),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: context.type.bodyMedium,
+        ),
+      ),
+    );
+  }
+}
+
+class _TodayContent extends ConsumerWidget {
+  const _TodayContent({required this.state});
+
+  final TodayUiState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final type = context.type;
+    // `watch`, not just `read(.notifier)`. Generated @riverpod providers
+    // are auto-dispose: reading only the notifier creates it with nobody
+    // listening, so Riverpod disposes it immediately and the very next
+    // `ref.read` inside an action throws UnmountedRefException — the tap
+    // silently does nothing. Watching keeps it alive for as long as this
+    // widget is mounted, and gives us the action's status for free.
+    ref.watch(todayControllerProvider);
+    final controller = ref.read(todayControllerProvider.notifier);
+
+    // Actions record failures into their own AsyncValue. Surface them,
+    // otherwise a failed write is indistinguishable from a dead button.
+    ref.listen(todayControllerProvider, (_, next) {
+      if (next case AsyncError(:final error)) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text('$error')),
+        );
+      }
+    });
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        SanctumSpacing.screenGutter,
+        SanctumSpacing.lg,
+        SanctumSpacing.screenGutter,
+        SanctumSpacing.huge + SanctumSpacing.xxl,
+      ),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _greeting(state.date),
+                    style: type.displayMedium,
+                  ),
+                  const SizedBox(height: SanctumSpacing.xxs),
+                  Text(
+                    state.moon.phase.displayName.toUpperCase(),
+                    style: type.caption.copyWith(color: colors.gold),
+                  ),
+                ],
+              ),
+            ),
+            MoonDisc(reading: state.moon, size: 52),
+          ],
+        ),
+        const SizedBox(height: SanctumSpacing.xl),
+
+        // The affirmation leads, because it asks nothing of the user.
+        GlassCard.flat(
+          child: Text(state.affirmation, style: type.quote),
+        ),
+        const SizedBox(height: SanctumSpacing.lg),
+
+        OracleCardView(
+          card: state.card,
+          revealed: state.cardRevealed,
+          onReveal: controller.revealCard,
+        ),
+        const SizedBox(height: SanctumSpacing.lg),
+
+        // Only rendered on the four phases that carry a ritual, so it
+        // reads as an event rather than a permanent menu item.
+        const _RitualPrompt(),
+
+        if (state.needsCheckIn)
+          _EnergyPrompt(onSelect: controller.recordEnergy)
+        else
+          _EnergyRecorded(level: state.energy!.level),
+
+        const SizedBox(height: SanctumSpacing.lg),
+        _StreakRow(
+          current: state.streak.current,
+          longest: state.streak.longest,
+          atRisk: state.streak.isAtRisk,
+        ),
+      ],
+    );
+  }
+
+  String _greeting(DateTime date) {
+    // Based on the *date's* hour would always be midnight, so use the
+    // real hour of day here — this is presentation, not domain logic.
+    final hour = DateTime.now().hour;
+    if (hour < 5) return 'Still awake';
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+}
+
+/// Appears only when the current moon phase has a ritual.
+class _RitualPrompt extends ConsumerWidget {
+  const _RitualPrompt();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(ritualStateProvider).value;
+    final ritual = state?.ritual;
+    if (ritual == null) return const SizedBox.shrink();
+
+    final colors = context.colors;
+    final type = context.type;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: SanctumSpacing.lg),
+      child: GlassCard.flat(
+        onTap: () {
+          if (ref.read(isPremiumProvider)) {
+            const RitualRoute().go(context);
+          } else {
+            unawaited(
+              const PaywallRoute(moment: PaywallMoment.lockedContent)
+                  .push<void>(context),
+            );
+          }
+        },
+        child: Row(
+          children: [
+            Icon(Icons.brightness_2_outlined, color: colors.gold),
+            const SizedBox(width: SanctumSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ritual.title, style: type.title),
+                  Text(
+                    '${ritual.moon} ritual is open',
+                    style: type.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            if (ref.watch(isPremiumProvider))
+              Icon(Icons.chevron_right, color: colors.textTertiary)
+            else
+              Icon(Icons.lock_outline, size: 18, color: colors.gold),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EnergyPrompt extends StatelessWidget {
+  const _EnergyPrompt({required this.onSelect});
+
+  final void Function(EnergyLevel) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return GlassCard.flat(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('How is your energy?', style: context.type.title),
+          const SizedBox(height: SanctumSpacing.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final level in EnergyLevel.values)
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    label: level.displayName,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onSelect(level),
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 34,
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: SanctumSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: SanctumRadii.smAll,
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  colors.accent.withValues(
+                                    alpha: 0.15 + level.value * 0.13,
+                                  ),
+                                  colors.accentTertiary.withValues(
+                                    alpha: 0.08 + level.value * 0.08,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: SanctumSpacing.xs),
+                          Text(
+                            level.displayName,
+                            textAlign: TextAlign.center,
+                            style: context.type.caption,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EnergyRecorded extends StatelessWidget {
+  const _EnergyRecorded({required this.level});
+
+  final EnergyLevel level;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GlassCard.flat(
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_outline, color: colors.success, size: 20),
+          const SizedBox(width: SanctumSpacing.md),
+          Expanded(
+            child: Text(
+              'Today you felt ${level.displayName.toLowerCase()}.',
+              style: context.type.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakRow extends StatelessWidget {
+  const _StreakRow({
+    required this.current,
+    required this.longest,
+    required this.atRisk,
+  });
+
+  final int current;
+  final int longest;
+  final bool atRisk;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final type = context.type;
+
+    return GlassCard.flat(
+      child: Row(
+        children: [
+          Icon(
+            Icons.local_fire_department_outlined,
+            color: current > 0 ? colors.gold : colors.textTertiary,
+          ),
+          const SizedBox(width: SanctumSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  current == 0
+                      ? 'No streak yet'
+                      : '$current day${current == 1 ? '' : 's'} in a row',
+                  style: type.title,
+                ),
+                Text(
+                  switch ((current, atRisk)) {
+                    (0, _) => 'Begin one today.',
+                    (_, true) => 'Practise today to keep it.',
+                    _ => 'Longest: $longest days',
+                  },
+                  style: type.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

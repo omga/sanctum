@@ -1,0 +1,621 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/effects/aurora_background.dart';
+import 'package:sanctum/src/design_system/effects/starfield.dart';
+import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
+import 'package:sanctum/src/domain/models/quiz.dart';
+import 'package:sanctum/src/domain/models/zodiac_sign.dart';
+import 'package:sanctum/src/domain/services/zodiac.dart';
+import 'package:sanctum/src/features/quiz/view/widgets/quiz_option_card.dart';
+import 'package:sanctum/src/features/quiz/view/widgets/zodiac_wheel.dart';
+import 'package:sanctum/src/features/quiz/view_model/quiz_view_model.dart';
+
+/// The onboarding quiz.
+///
+/// One question per screen with a progress bar, because a flow that
+/// shows how much is left gets finished and one that does not gets
+/// abandoned. Questions cross-fade and slide rather than cutting: the
+/// motion is what separates this from a form.
+class QuizScreen extends ConsumerWidget {
+  /// Creates the quiz.
+  const QuizScreen({required this.onFinished, super.key});
+
+  /// Called once every visible question is answered.
+  final VoidCallback onFinished;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(quizControllerProvider);
+
+    return Scaffold(
+      body: AuroraBackground(
+        intensity: 0.85,
+        child: Starfield(
+          child: SafeArea(
+            child: state.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(child: Text('$error')),
+              data: (data) => _QuizBody(state: data, onFinished: onFinished),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuizBody extends ConsumerWidget {
+  const _QuizBody({required this.state, required this.onFinished});
+
+  final QuizUiState state;
+  final VoidCallback onFinished;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final controller = ref.read(quizControllerProvider.notifier);
+    final question = state.current;
+
+    if (question == null) {
+      // Everything answered — hand off to the payoff screen.
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await controller.finish();
+        await ref.read(settingsRepositoryProvider).setOnboarded();
+        onFinished();
+      });
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            SanctumSpacing.lg,
+            SanctumSpacing.sm,
+            SanctumSpacing.lg,
+            0,
+          ),
+          child: Row(
+            children: [
+              Opacity(
+                opacity: state.canGoBack ? 1 : 0,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  color: colors.textSecondary,
+                  onPressed: state.canGoBack
+                      ? () => unawaited(controller.back())
+                      : null,
+                ),
+              ),
+              Expanded(
+                child: _Progress(value: state.progress),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+        ),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: SanctumMotion.calm,
+            switchInCurve: SanctumMotion.enter,
+            switchOutCurve: SanctumMotion.exit,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween(
+                  begin: const Offset(0.06, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: _Question(
+              key: ValueKey(question.id),
+              question: question,
+              answers: state.answers,
+              questions: state.questions,
+              controller: controller,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Progress extends StatelessWidget {
+  const _Progress({required this.value});
+
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value),
+      duration: SanctumMotion.calm,
+      curve: SanctumMotion.ease,
+      builder: (context, progress, _) => ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: LinearProgressIndicator(
+          value: progress,
+          minHeight: 3,
+          backgroundColor: colors.glassBorder,
+          valueColor: AlwaysStoppedAnimation(colors.gold),
+        ),
+      ),
+    );
+  }
+}
+
+class _Question extends StatelessWidget {
+  const _Question({
+    required this.question,
+    required this.answers,
+    required this.questions,
+    required this.controller,
+    super.key,
+  });
+
+  final QuizQuestion question;
+  final QuizAnswers answers;
+  final List<QuizQuestion> questions;
+  final QuizController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = context.type;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        SanctumSpacing.xl,
+        SanctumSpacing.xl,
+        SanctumSpacing.xl,
+        SanctumSpacing.xxl,
+      ),
+      children: [
+        Text(question.title, style: type.displaySmall)
+            .animate()
+            .fadeIn(duration: SanctumMotion.quick)
+            .slideY(begin: 0.15, end: 0),
+        if (question.subtitle case final subtitle?) ...[
+          const SizedBox(height: SanctumSpacing.sm),
+          Text(subtitle, style: type.bodyMedium)
+              .animate(delay: const Duration(milliseconds: 60))
+              .fadeIn(duration: SanctumMotion.quick),
+        ],
+        const SizedBox(height: SanctumSpacing.xl),
+        _Body(
+          question: question,
+          answers: answers,
+          questions: questions,
+          controller: controller,
+        ),
+      ],
+    );
+  }
+}
+
+class _Body extends StatelessWidget {
+  const _Body({
+    required this.question,
+    required this.answers,
+    required this.questions,
+    required this.controller,
+  });
+
+  final QuizQuestion question;
+  final QuizAnswers answers;
+  final List<QuizQuestion> questions;
+  final QuizController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (question.kind) {
+      case QuizQuestionKind.single:
+      case QuizQuestionKind.multi:
+        return _Choices(
+          question: question,
+          answers: answers,
+          controller: controller,
+        );
+      case QuizQuestionKind.date:
+        return _BirthDate(question: question, controller: controller);
+      case QuizQuestionKind.text:
+        return _TextEntry(question: question, controller: controller);
+      case QuizQuestionKind.interstitial:
+        return _Interstitial(
+          question: question,
+          answers: answers,
+          questions: questions,
+          controller: controller,
+        );
+    }
+  }
+}
+
+class _Choices extends StatelessWidget {
+  const _Choices({
+    required this.question,
+    required this.answers,
+    required this.controller,
+  });
+
+  final QuizQuestion question;
+  final QuizAnswers answers;
+  final QuizController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final multi = question.kind == QuizQuestionKind.multi;
+    final chosen = answers.optionsFor(question.id);
+
+    return Column(
+      children: [
+        for (final (index, option) in question.options.indexed) ...[
+          QuizOptionCard(
+                option: option,
+                multi: multi,
+                selected: chosen.contains(option.id),
+                onTap: () {
+                  if (!multi) {
+                    unawaited(controller.choose(question.id, [option.id]));
+                    return;
+                  }
+                  final next = [...chosen];
+                  chosen.contains(option.id)
+                      ? next.remove(option.id)
+                      : next.add(option.id);
+                  // Multi-select must not auto-advance, so write straight to
+                  // the answers and let the button move the flow on.
+                  unawaited(controller.choose(question.id, next));
+                },
+              )
+              .animate(delay: Duration(milliseconds: 40 * index))
+              .fadeIn(duration: SanctumMotion.quick)
+              .slideY(begin: 0.12, end: 0),
+          const SizedBox(height: SanctumSpacing.md),
+        ],
+        if (multi) ...[
+          const SizedBox(height: SanctumSpacing.md),
+          SanctumButton(
+            label: 'Continue',
+            expand: true,
+            // Nothing chosen is a real answer to "what are you here
+            // for?" — but it personalises nothing, so require one.
+            onPressed: chosen.isEmpty
+                ? null
+                : () => unawaited(controller.choose(question.id, chosen)),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _Interstitial extends StatelessWidget {
+  const _Interstitial({
+    required this.question,
+    required this.answers,
+    required this.questions,
+    required this.controller,
+  });
+
+  final QuizQuestion question;
+  final QuizAnswers answers;
+  final List<QuizQuestion> questions;
+  final QuizController controller;
+
+  /// The labels the user actually chose, in the order they were offered.
+  ///
+  /// Echoing their own words back is the whole job of this screen. A
+  /// generic "we'll work on it" reads as filler; their own three answers
+  /// listed back read as being heard.
+  List<String> get _echo {
+    final goals = questions.where((q) => q.id == 'goals').firstOrNull;
+    if (goals == null) return const [];
+
+    final chosen = answers.optionsFor('goals');
+    return goals.options
+        .where((o) => chosen.contains(o.id))
+        .map((o) => o.label)
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final type = context.type;
+    final echoed = _echo;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (index, label) in echoed.indexed)
+          Padding(
+                padding: const EdgeInsets.only(bottom: SanctumSpacing.md),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: colors.gold,
+                      size: 22,
+                    ),
+                    const SizedBox(width: SanctumSpacing.md),
+                    Expanded(child: Text(label, style: type.bodyLarge)),
+                  ],
+                ),
+              )
+              .animate(delay: Duration(milliseconds: 140 * index))
+              .fadeIn(duration: SanctumMotion.calm)
+              .slideX(begin: 0.08, end: 0),
+        SizedBox(height: SanctumSpacing.lg + echoed.length * 4),
+        SanctumButton(
+              label: 'Continue',
+              expand: true,
+              onPressed: () => unawaited(controller.acknowledge(question.id)),
+            )
+            .animate(delay: Duration(milliseconds: 140 * echoed.length + 120))
+            .fadeIn(),
+      ],
+    );
+  }
+}
+
+class _TextEntry extends StatefulWidget {
+  const _TextEntry({required this.question, required this.controller});
+
+  final QuizQuestion question;
+  final QuizController controller;
+
+  @override
+  State<_TextEntry> createState() => _TextEntryState();
+}
+
+class _TextEntryState extends State<_TextEntry> {
+  final _field = TextEditingController();
+
+  @override
+  void dispose() {
+    _field.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Column(
+      children: [
+        TextField(
+          controller: _field,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          style: context.type.displaySmall,
+          onChanged: (_) => setState(() {}),
+          onSubmitted: _submit,
+          decoration: InputDecoration(
+            hintText: 'Your name',
+            hintStyle: context.type.displaySmall.copyWith(
+              color: colors.textTertiary,
+            ),
+            filled: true,
+            fillColor: colors.glassFill,
+            border: const OutlineInputBorder(
+              borderRadius: SanctumRadii.mdAll,
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        const SizedBox(height: SanctumSpacing.xl),
+        SanctumButton(
+          label: 'Continue',
+          expand: true,
+          onPressed: _field.text.trim().isEmpty
+              ? null
+              : () => _submit(_field.text),
+        ),
+      ],
+    );
+  }
+
+  void _submit(String value) {
+    if (value.trim().isEmpty) return;
+    unawaited(widget.controller.chooseText(widget.question.id, value));
+  }
+}
+
+class _BirthDate extends StatefulWidget {
+  const _BirthDate({required this.question, required this.controller});
+
+  final QuizQuestion question;
+  final QuizController controller;
+
+  @override
+  State<_BirthDate> createState() => _BirthDateState();
+}
+
+class _BirthDateState extends State<_BirthDate> {
+  DateTime _date = DateTime(1996, 6, 15);
+
+  ZodiacSign get _sign => Zodiac.signFor(_date);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final type = context.type;
+
+    return Column(
+      children: [
+        ZodiacWheel(sign: _sign),
+        const SizedBox(height: SanctumSpacing.md),
+        // The payoff, updating live as they scroll. This lands before we
+        // have asked for anything, which is the entire point of putting
+        // the birth date here rather than after the paywall.
+        AnimatedSwitcher(
+          duration: SanctumMotion.quick,
+          child: Column(
+            key: ValueKey(_sign),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _sign.glyph,
+                    style: SanctumTypography.symbol(30, colors.gold),
+                  ),
+                  const SizedBox(width: SanctumSpacing.md),
+                  Text(_sign.displayName, style: type.displaySmall),
+                ],
+              ),
+              Text(
+                '${_sign.element.displayName} sign',
+                style: type.caption.copyWith(color: colors.gold),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: SanctumSpacing.lg),
+        SizedBox(
+          height: 170,
+          child: _DateWheels(
+            date: _date,
+            onChanged: (date) => setState(() => _date = date),
+          ),
+        ),
+        const SizedBox(height: SanctumSpacing.lg),
+        SanctumButton(
+          label: 'Continue',
+          expand: true,
+          onPressed: () => unawaited(
+            widget.controller.chooseDate(widget.question.id, _date),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DateWheels extends StatelessWidget {
+  const _DateWheels({required this.date, required this.onChanged});
+
+  final DateTime date;
+  final ValueChanged<DateTime> onChanged;
+
+  static const _months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final years = List.generate(90, (i) => now.year - 13 - i);
+    final daysInMonth = DateTime(date.year, date.month + 1, 0).day;
+
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: _Wheel(
+            count: 12,
+            initial: date.month - 1,
+            label: (i) => _months[i],
+            onSelected: (i) => onChanged(
+              // Clamp the day, or scrolling from 31 Jan to February
+              // silently rolls the date into March.
+              DateTime(
+                date.year,
+                i + 1,
+                date.day.clamp(1, DateTime(date.year, i + 2, 0).day),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _Wheel(
+            count: daysInMonth,
+            initial: date.day - 1,
+            label: (i) => '${i + 1}',
+            onSelected: (i) => onChanged(
+              DateTime(date.year, date.month, i + 1),
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: _Wheel(
+            count: years.length,
+            initial: years.indexOf(date.year).clamp(0, years.length - 1),
+            label: (i) => '${years[i]}',
+            onSelected: (i) => onChanged(
+              DateTime(years[i], date.month, date.day),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Wheel extends StatelessWidget {
+  const _Wheel({
+    required this.count,
+    required this.initial,
+    required this.label,
+    required this.onSelected,
+  });
+
+  final int count;
+  final int initial;
+  final String Function(int) label;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return ListWheelScrollView.useDelegate(
+      controller: FixedExtentScrollController(initialItem: initial),
+      itemExtent: 40,
+      perspective: 0.004,
+      diameterRatio: 1.6,
+      physics: const FixedExtentScrollPhysics(),
+      onSelectedItemChanged: onSelected,
+      childDelegate: ListWheelChildBuilderDelegate(
+        childCount: count,
+        builder: (context, index) => Center(
+          child: Text(
+            label(index),
+            style: context.type.bodyLarge.copyWith(
+              color: index == initial
+                  ? colors.textPrimary
+                  : colors.textTertiary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

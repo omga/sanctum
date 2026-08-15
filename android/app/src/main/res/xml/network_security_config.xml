@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sanctum makes exactly one network connection: to itself.
+
+  just_audio serves a StreamAudioSource (our synthesised tones) through a
+  local cleartext HTTP proxy on 127.0.0.1. Android blocks cleartext by
+  default on API 28+, so without an exception the tone player fails on
+  release builds — while working fine in debug, because the debug
+  manifest quietly adds the INTERNET permission for hot reload.
+
+  The usual advice is android:usesCleartextTraffic="true" on the
+  application element. That switches cleartext back on for *every* host,
+  which is a real security regression for a one-line convenience. This
+  config permits cleartext to loopback only and keeps it blocked
+  everywhere else.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
