@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/core/analytics/analytics_event.dart';
+import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
@@ -7,12 +10,12 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 /// First-run welcome.
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends ConsumerWidget {
   /// Creates the screen.
   const OnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final type = context.type;
 
     return Scaffold(
@@ -30,8 +33,8 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'A quiet room that is only yours.\n\n'
                     'One card, one tone, one honest sentence a day. '
-                    'Nothing here needs an account, and nothing leaves '
-                    'your phone.',
+                    'No account, ever. Your name, your birth date and '
+                    'your journal stay on this phone.',
                     style: type.bodyLarge,
                   ),
                   const Spacer(),
@@ -43,7 +46,12 @@ class OnboardingScreen extends StatelessWidget {
                     // at the *end* of it, so someone who bails half-way
                     // is offered it again rather than dropped into an
                     // app that knows nothing about them.
-                    onPressed: () => const QuizRoute().go(context),
+                    onPressed: () {
+                      ref
+                          .read(analyticsProvider)
+                          .track(const AnalyticsEvent.quizStarted());
+                      const QuizRoute().go(context);
+                    },
                   ),
                   const SizedBox(height: SanctumSpacing.xl),
                 ],

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/core/analytics/analytics_event.dart';
+import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
@@ -50,21 +52,34 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     // Record the impression once, on display — this is what feeds the
     // cooldown, so it must not fire on every rebuild.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(analyticsProvider)
+          .track(AnalyticsEvent.paywallShown(moment: widget.moment.name));
       unawaited(ref.read(paywallControllerProvider.notifier).recordShown());
     });
   }
 
   Future<void> _dismiss() async {
     if (!_purchased) {
+      ref
+          .read(analyticsProvider)
+          .track(
+            AnalyticsEvent.paywallDismissed(moment: widget.moment.name),
+          );
       await ref.read(paywallControllerProvider.notifier).recordDismissed();
     }
     if (mounted) Navigator.of(context).maybePop();
   }
 
   Future<void> _purchase(SubscriptionPlan plan) async {
+    final analytics = ref.read(analyticsProvider)
+      ..track(AnalyticsEvent.purchaseStarted(plan: plan.id));
+
     await ref.read(paywallControllerProvider.notifier).purchase(plan);
     if (!mounted) return;
     if (ref.read(paywallControllerProvider).hasError) return;
+
+    analytics.track(AnalyticsEvent.purchaseCompleted(plan: plan.id));
 
     unawaited(HapticFeedback.mediumImpact());
     setState(() => _purchased = true);
@@ -91,6 +106,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         child: Starfield(
           child: SafeArea(
             child: plans.when(
+   skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(child: Text('$error')),
               data: (unordered) {

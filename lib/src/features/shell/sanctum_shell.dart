@@ -15,13 +15,14 @@ import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/features/today/view_model/reminder_view_model.dart';
 
-/// The persistent frame around the three main sections.
+/// The persistent frame around the four main sections.
 ///
 /// The aurora and starfield live *here*, not inside each screen. Two
 /// reasons, and the second is the important one:
 ///
-/// 1. One shader and one ticker for the whole app instead of three.
+/// 1. One shader and one ticker for the whole app instead of four.
 /// 2. Because the background is not rebuilt when the tab changes, it does
 ///    not restart — the sky keeps drifting through the transition. A
 ///    background that visibly resets on every tab tap is the single
@@ -42,10 +43,23 @@ class _SanctumShellState extends ConsumerState<SanctumShell> {
 
   StatefulNavigationShell get navigationShell => widget.navigationShell;
 
+  bool _remindersRefreshed = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _audio ??= ref.read(audioServiceProvider);
+
+    // The scheduled notifications carry a week of pre-composed readings,
+    // so the queue is a snapshot. Rewriting it once per launch keeps the
+    // copy fresh and costs one cancel and seven schedules. It is a no-op
+    // for anyone who never granted permission.
+    if (!_remindersRefreshed) {
+      _remindersRefreshed = true;
+      unawaited(
+        ref.read(reminderControllerProvider.notifier).refresh(),
+      );
+    }
   }
 
   @override
@@ -135,6 +149,7 @@ class _SanctumNavBar extends StatelessWidget {
 
   static const List<({IconData icon, String label})> _items = [
     (icon: Icons.wb_twilight, label: 'Today'),
+    (icon: Icons.favorite_outline, label: 'Match'),
     (icon: Icons.graphic_eq, label: 'Sound'),
     (icon: Icons.auto_stories_outlined, label: 'Journal'),
   ];
@@ -222,7 +237,7 @@ class _NavItem extends StatelessWidget {
                 size: 20,
                 color: selected ? colors.gold : colors.textTertiary,
               ),
-              // The label only appears on the selected tab: three always-on
+              // The label only appears on the selected tab: four always-on
               // labels crowd a glass pill, and the icon plus the pill is
               // already an unambiguous selected state.
               AnimatedSize(

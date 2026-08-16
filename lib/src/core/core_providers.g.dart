@@ -124,3 +124,66 @@ final class LoggerProvider extends $FunctionalProvider<Logger, Logger, Logger>
 }
 
 String _$loggerHash() => r'cbb336cf8ebaaf2681c308342045c568462de849';
+
+/// Product analytics.
+///
+/// The instrumentation is the durable part and is vendor-free; this
+/// line is the only thing that knows which product receives it.
+/// `LoggingAnalyticsService` remains available for local debugging.
+
+@ProviderFor(analytics)
+final analyticsProvider = AnalyticsProvider._();
+
+/// Product analytics.
+///
+/// The instrumentation is the durable part and is vendor-free; this
+/// line is the only thing that knows which product receives it.
+/// `LoggingAnalyticsService` remains available for local debugging.
+
+final class AnalyticsProvider
+    extends
+        $FunctionalProvider<
+          AnalyticsService,
+          AnalyticsService,
+          AnalyticsService
+        >
+    with $Provider<AnalyticsService> {
+  /// Product analytics.
+  ///
+  /// The instrumentation is the durable part and is vendor-free; this
+  /// line is the only thing that knows which product receives it.
+  /// `LoggingAnalyticsService` remains available for local debugging.
+  AnalyticsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'analyticsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$analyticsHash();
+
+  @$internal
+  @override
+  $ProviderElement<AnalyticsService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AnalyticsService create(Ref ref) {
+    return analytics(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AnalyticsService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AnalyticsService>(value),
+    );
+  }
+}
+
+String _$analyticsHash() => r'9c4eae9040046c7fbdcd3f8cdb0a66141d4aec91';

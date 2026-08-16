@@ -23,6 +23,7 @@ class SessionsScreen extends ConsumerWidget {
     return SafeArea(
       bottom: false,
       child: catalog.when(
+   skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('$error')),
         data: (data) => ListView(

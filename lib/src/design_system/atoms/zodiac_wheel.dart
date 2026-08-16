@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
-import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 
 /// An arc of the twelve signs that turns to the user's own sign.
 ///
@@ -16,12 +15,26 @@ import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 /// The rotation is animated rather than snapped — the wheel turning to
 /// find you reads as the app thinking, where an instant jump reads as a
 /// lookup table.
+///
+/// Takes glyphs and an index rather than a `ZodiacSign` so that the
+/// design system stays free of the domain layer. Callers pass
+/// `[for (final s in ZodiacSign.values) s.glyph]`, which is a little
+/// wordy at the two call sites and keeps the dependency arrow pointing
+/// the right way.
 class ZodiacWheel extends StatelessWidget {
-  /// Creates a wheel highlighting [sign].
-  const ZodiacWheel({required this.sign, this.size = 260, super.key});
+  /// Creates a wheel highlighting [activeIndex].
+  const ZodiacWheel({
+    required this.glyphs,
+    required this.activeIndex,
+    this.size = 260,
+    super.key,
+  });
 
-  /// The sign to point at.
-  final ZodiacSign sign;
+  /// The glyphs around the arc, in wheel order.
+  final List<String> glyphs;
+
+  /// Which of [glyphs] the pointer settles on.
+  final int activeIndex;
 
   /// Width of the arc.
   final double size;
@@ -29,14 +42,14 @@ class ZodiacWheel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final index = ZodiacSign.values.indexOf(sign);
+    final index = activeIndex;
 
     // Rotate so the active sign lands under the pointer at the top of
     // the arc. Glyph i sits at `pi + slice/2 + i*slice`, and the top of
     // the circle is `3*pi/2`, so the offset is the difference — not
     // simply `-index * slice`, which leaves the wheel short by a quarter
     // turn and points at a gap.
-    const slice = math.pi / 12;
+    final slice = math.pi / glyphs.length;
     final target = math.pi / 2 - slice / 2 - index * slice;
 
     return SizedBox(
@@ -50,6 +63,7 @@ class ZodiacWheel extends StatelessWidget {
           return CustomPaint(
             painter: _WheelPainter(
               rotation: rotation,
+              glyphs: glyphs,
               activeIndex: index,
               arc: colors.accent,
               glow: colors.accentSecondary,
@@ -67,6 +81,7 @@ class ZodiacWheel extends StatelessWidget {
 class _WheelPainter extends CustomPainter {
   const _WheelPainter({
     required this.rotation,
+    required this.glyphs,
     required this.activeIndex,
     required this.arc,
     required this.glow,
@@ -76,6 +91,7 @@ class _WheelPainter extends CustomPainter {
   });
 
   final double rotation;
+  final List<String> glyphs;
   final int activeIndex;
   final Color arc;
   final Color glow;
@@ -105,7 +121,7 @@ class _WheelPainter extends CustomPainter {
     );
 
     // The wedge marking the selected sign, at the top of the arc.
-    const slice = math.pi / 12;
+    final slice = math.pi / glyphs.length;
     canvas
       ..save()
       ..translate(centre.dx, centre.dy)
@@ -124,7 +140,7 @@ class _WheelPainter extends CustomPainter {
       ..restore();
 
     // Glyphs, laid around the arc and turned so the active one is on top.
-    for (var i = 0; i < ZodiacSign.values.length; i++) {
+    for (var i = 0; i < glyphs.length; i++) {
       final angle = math.pi + slice / 2 + i * slice + rotation;
 
       // Signs that have turned past either end of the half-arc must not
@@ -139,7 +155,7 @@ class _WheelPainter extends CustomPainter {
       final active = i == activeIndex;
       final painter = TextPainter(
         text: TextSpan(
-          text: ZodiacSign.values[i].glyph,
+          text: glyphs[i],
           style: SanctumTypography.symbol(
             active ? 26 : 18,
             active ? ink : dim.withValues(alpha: 0.7),

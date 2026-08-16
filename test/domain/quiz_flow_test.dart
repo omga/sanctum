@@ -169,6 +169,36 @@ void main() {
       );
     });
 
+    test('pruning drops answers to questions no longer asked', () {
+      // What a multi-select untick does: the option that opened the
+      // branch is gone, but the branch's own answer is still sitting
+      // there.
+      final answers = const QuizAnswers()
+          .withSelection('focus', ['calm'])
+          .withSelection('status', ['together'])
+          .withDate('together_since', DateTime(2024))
+          .withDate('birth', DateTime(1996, 4, 2));
+
+      final pruned = QuizFlow.prune(_questions, answers);
+
+      expect(pruned.optionsFor('focus'), ['calm'], reason: 'still asked');
+      expect(pruned.has('status'), isFalse);
+      expect(pruned.has('together_since'), isFalse);
+      expect(pruned.has('birth'), isTrue);
+    });
+
+    test('pruning leaves a live branch alone', () {
+      final answers = const QuizAnswers()
+          .withSelection('focus', ['love'])
+          .withSelection('status', ['together'])
+          .withDate('together_since', DateTime(2024));
+
+      expect(
+        QuizFlow.prune(_questions, answers).has('together_since'),
+        isTrue,
+      );
+    });
+
     test('a cleared quiz is no longer complete', () {
       final answers = const QuizAnswers()
           .withSelection('focus', ['calm'])

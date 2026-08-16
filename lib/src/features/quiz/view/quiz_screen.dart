@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/design_system/atoms/date_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/atoms/zodiac_wheel.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
@@ -16,7 +18,6 @@ import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/zodiac.dart';
 import 'package:sanctum/src/features/quiz/view/widgets/quiz_option_card.dart';
-import 'package:sanctum/src/features/quiz/view/widgets/zodiac_wheel.dart';
 import 'package:sanctum/src/features/quiz/view_model/quiz_view_model.dart';
 
 /// The onboarding quiz.
@@ -42,6 +43,7 @@ class QuizScreen extends ConsumerWidget {
         child: Starfield(
           child: SafeArea(
             child: state.when(
+   skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(child: Text('$error')),
               data: (data) => _QuizBody(state: data, onFinished: onFinished),
@@ -267,19 +269,15 @@ class _Choices extends StatelessWidget {
                 option: option,
                 multi: multi,
                 selected: chosen.contains(option.id),
-                onTap: () {
-                  if (!multi) {
-                    unawaited(controller.choose(question.id, [option.id]));
-                    return;
-                  }
-                  final next = [...chosen];
-                  chosen.contains(option.id)
-                      ? next.remove(option.id)
-                      : next.add(option.id);
-                  // Multi-select must not auto-advance, so write straight to
-                  // the answers and let the button move the flow on.
-                  unawaited(controller.choose(question.id, next));
-                },
+                // Single-select answers and advances on the tap.
+                // Multi-select only ticks: the question is not finished
+                // until Continue, so ticking must leave the user where
+                // they are however many options they go on to add.
+                onTap: () => unawaited(
+                  multi
+                      ? controller.toggle(question.id, option.id)
+                      : controller.choose(question.id, [option.id]),
+                ),
               )
               .animate(delay: Duration(milliseconds: 40 * index))
               .fadeIn(duration: SanctumMotion.quick)
@@ -295,7 +293,7 @@ class _Choices extends StatelessWidget {
             // for?" — but it personalises nothing, so require one.
             onPressed: chosen.isEmpty
                 ? null
-                : () => unawaited(controller.choose(question.id, chosen)),
+                : () => unawaited(controller.advance()),
           ),
         ],
       ],
@@ -458,7 +456,10 @@ class _BirthDateState extends State<_BirthDate> {
 
     return Column(
       children: [
-        ZodiacWheel(sign: _sign),
+        ZodiacWheel(
+          glyphs: [for (final sign in ZodiacSign.values) sign.glyph],
+          activeIndex: ZodiacSign.values.indexOf(_sign),
+        ),
         const SizedBox(height: SanctumSpacing.md),
         // The payoff, updating live as they scroll. This lands before we
         // have asked for anything, which is the entire point of putting
@@ -489,7 +490,7 @@ class _BirthDateState extends State<_BirthDate> {
         const SizedBox(height: SanctumSpacing.lg),
         SizedBox(
           height: 170,
-          child: _DateWheels(
+          child: BirthDateWheels(
             date: _date,
             onChanged: (date) => setState(() => _date = date),
           ),
@@ -503,119 +504,6 @@ class _BirthDateState extends State<_BirthDate> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _DateWheels extends StatelessWidget {
-  const _DateWheels({required this.date, required this.onChanged});
-
-  final DateTime date;
-  final ValueChanged<DateTime> onChanged;
-
-  static const _months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final years = List.generate(90, (i) => now.year - 13 - i);
-    final daysInMonth = DateTime(date.year, date.month + 1, 0).day;
-
-    return Row(
-      children: [
-        Expanded(
-          flex: 3,
-          child: _Wheel(
-            count: 12,
-            initial: date.month - 1,
-            label: (i) => _months[i],
-            onSelected: (i) => onChanged(
-              // Clamp the day, or scrolling from 31 Jan to February
-              // silently rolls the date into March.
-              DateTime(
-                date.year,
-                i + 1,
-                date.day.clamp(1, DateTime(date.year, i + 2, 0).day),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: _Wheel(
-            count: daysInMonth,
-            initial: date.day - 1,
-            label: (i) => '${i + 1}',
-            onSelected: (i) => onChanged(
-              DateTime(date.year, date.month, i + 1),
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 2,
-          child: _Wheel(
-            count: years.length,
-            initial: years.indexOf(date.year).clamp(0, years.length - 1),
-            label: (i) => '${years[i]}',
-            onSelected: (i) => onChanged(
-              DateTime(years[i], date.month, date.day),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Wheel extends StatelessWidget {
-  const _Wheel({
-    required this.count,
-    required this.initial,
-    required this.label,
-    required this.onSelected,
-  });
-
-  final int count;
-  final int initial;
-  final String Function(int) label;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return ListWheelScrollView.useDelegate(
-      controller: FixedExtentScrollController(initialItem: initial),
-      itemExtent: 40,
-      perspective: 0.004,
-      diameterRatio: 1.6,
-      physics: const FixedExtentScrollPhysics(),
-      onSelectedItemChanged: onSelected,
-      childDelegate: ListWheelChildBuilderDelegate(
-        childCount: count,
-        builder: (context, index) => Center(
-          child: Text(
-            label(index),
-            style: context.type.bodyLarge.copyWith(
-              color: index == initial
-                  ? colors.textPrimary
-                  : colors.textTertiary,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

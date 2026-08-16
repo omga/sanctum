@@ -1,8 +1,9 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/core/analytics/analytics_event.dart';
+import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
@@ -12,6 +13,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/reading.dart';
 import 'package:sanctum/src/features/payoff/view/widgets/shareable_card.dart';
 import 'package:sanctum/src/features/payoff/view_model/payoff_view_model.dart';
+import 'package:sanctum/src/features/sharing/view_model/share_controller.dart';
+import 'package:sanctum/src/features/today/view_model/reminder_view_model.dart';
 
 /// The end of onboarding: what we heard, said back.
 ///
@@ -37,6 +40,13 @@ class _PayoffScreenState extends ConsumerState<PayoffScreen> {
   final GlobalKey _cardKey = GlobalKey();
 
   @override
+  void initState() {
+    super.initState();
+    // The end of the funnel onboarding is measured against.
+    ref.read(analyticsProvider).track(const AnalyticsEvent.payoffShown());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final reading = ref.watch(readingProvider);
 
@@ -55,20 +65,39 @@ class _PayoffScreenState extends ConsumerState<PayoffScreen> {
         child: Starfield(
           child: SafeArea(
             child: reading.when(
+   skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(child: Text('$error')),
               data: (data) => _Body(
                 reading: data,
                 cardKey: _cardKey,
-                onShare: () => unawaited(
+                onShare: () {
                   ref
-                      .read(shareControllerProvider.notifier)
-                      .share(
-                        _cardKey,
-                        text: 'My reading from Sanctum',
-                      ),
-                ),
-                onContinue: widget.onContinue,
+                      .read(analyticsProvider)
+                      .track(const AnalyticsEvent.payoffShared());
+                  unawaited(
+                    ref
+                        .read(shareControllerProvider.notifier)
+                        .share(
+                          _cardKey,
+                          text: 'My reading from Sanctum',
+                        ),
+                  );
+                },
+                // The permission prompt belongs here and nowhere
+                // else. The user has just read a reading that ended by
+                // quoting their own answer about showing up daily, so
+                // the ask is the natural next sentence. Asked on first
+                // launch instead, it gets declined once and can never be
+                // asked again.
+                onContinue: () {
+                  unawaited(
+                    ref
+                        .read(reminderControllerProvider.notifier)
+                        .enable(),
+                  );
+                  widget.onContinue();
+                },
               ),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sanctum/src/core/analytics/analytics_event.dart';
 import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/core/time/clock.dart';
@@ -9,9 +10,13 @@ import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
+import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/models/streak_summary.dart';
+import 'package:sanctum/src/domain/models/transit.dart';
 import 'package:sanctum/src/domain/services/daily_attunement_selector.dart';
+import 'package:sanctum/src/domain/services/energy_pattern.dart';
 import 'package:sanctum/src/domain/services/moon_phase_calculator.dart';
+import 'package:sanctum/src/domain/services/transit_composer.dart';
 
 part 'today_view_model.g.dart';
 
@@ -30,6 +35,9 @@ class TodayUiState {
     required this.affirmation,
     required this.streak,
     required this.energy,
+    required this.pattern,
+    required this.cardDrawCount,
+    this.transit,
   });
 
   /// The local date this state describes.
@@ -53,8 +61,26 @@ class TodayUiState {
   /// Today's energy check-in, if recorded.
   final EnergyCheckIn? energy;
 
+  /// What the sky is doing to this user today.
+  ///
+  /// `null` only when we have no birth date — everyone who finished
+  /// onboarding has one, but the screen must not assume it.
+  final DailyTransitReading? transit;
+
+  /// What their own check-ins add up to.
+  final EnergyPattern pattern;
+
+  /// How many times today's card has come up before, this window.
+  final int cardDrawCount;
+
   /// Whether today's check-in is still outstanding.
   bool get needsCheckIn => energy == null;
+
+  /// Whether today's card is one they have drawn before.
+  ///
+  /// A repeat is the only thing that gives a daily draw any continuity —
+  /// otherwise every day is independent and there is no thread to pull.
+  bool get cardIsRepeat => cardDrawCount > 1;
 }
 
 /// The live draw state for [day].
@@ -71,6 +97,16 @@ Stream<StreakSummary> streak(Ref ref, DateTime day) =>
 @riverpod
 Stream<EnergyCheckIn?> energyFor(Ref ref, DateTime day) =>
     ref.watch(energyRepositoryProvider).watchFor(day);
+
+/// The user's recent check-ins.
+@riverpod
+Stream<List<EnergyCheckIn>> recentEnergy(Ref ref) =>
+    ref.watch(energyRepositoryProvider).watchRecent();
+
+/// Every card the user has ever turned over.
+@riverpod
+Stream<List<String>> revealedCards(Ref ref) =>
+    ref.watch(oracleRepositoryProvider).watchRevealedHistory();
 
 /// Composes the Today screen's state.
 @riverpod
@@ -104,10 +140,19 @@ Future<TodayUiState> todayState(Ref ref) async {
   final draw = await ref.watch(oracleDrawProvider(today).future);
   final streakSummary = await ref.watch(streakProvider(today).future);
   final energy = await ref.watch(energyForProvider(today).future);
+  final history = await ref.watch(recentEnergyProvider.future);
+  final drawn = await ref.watch(revealedCardsProvider.future);
 
   final storedCard = draw == null
       ? card
       : catalog.cardById(draw.cardId) ?? card;
+
+  // The birth date onboarding already collected. Reading it here rather
+  // than asking again is the difference between an app that remembers
+  // and a form.
+  final answers = (await ref.watch(quizRepositoryProvider).load())
+      .getOrElse(const QuizAnswers());
+  final birthDate = answers.dates['birth_date'];
 
   return TodayUiState(
     date: today,
@@ -117,6 +162,14 @@ Future<TodayUiState> todayState(Ref ref) async {
     affirmation: affirmation,
     streak: streakSummary,
     energy: energy,
+    transit: birthDate == null
+        ? null
+        : TransitComposer.compose(birthDate: birthDate, day: today),
+    pattern: EnergyPatternCalculator.analyse(
+      checkIns: history,
+      today: today,
+    ),
+    cardDrawCount: drawn.where((id) => id == storedCard.id).length,
   );
 }
 
@@ -133,12 +186,16 @@ class TodayController extends _$TodayController {
 
   /// Flips today's card.
   Future<void> revealCard() async {
+    ref.read(analyticsProvider).track(const AnalyticsEvent.cardRevealed());
     final today = ref.read(clockProvider).today();
     await _run(() => ref.read(oracleRepositoryProvider).reveal(today));
   }
 
   /// Records today's energy check-in.
   Future<void> recordEnergy(EnergyLevel level) async {
+    ref
+        .read(analyticsProvider)
+        .track(AnalyticsEvent.energyCheckedIn(level: level.name));
     final today = ref.read(clockProvider).today();
     await _run(
       () => ref.read(energyRepositoryProvider).record(level: level, day: today),

@@ -54,7 +54,7 @@ final class QuizControllerProvider
   QuizController create() => QuizController();
 }
 
-String _$quizControllerHash() => r'4c6792b4a94d2719d447d5e6ea49c2ac4f7a8a41';
+String _$quizControllerHash() => r'14379f929f8785d3b69f577c35a4df220f740b48';
 
 /// Drives the onboarding quiz.
 ///

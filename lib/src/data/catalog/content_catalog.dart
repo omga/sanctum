@@ -1,3 +1,4 @@
+import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
@@ -13,6 +14,7 @@ class ContentCatalog {
     required this.affirmations,
     required this.rituals,
     required this.quizQuestions,
+    required this.celebrities,
   });
 
   /// The oracle deck.
@@ -29,6 +31,21 @@ class ContentCatalog {
 
   /// The onboarding quiz, in order.
   final List<QuizQuestion> quizQuestions;
+
+  /// Public figures the user can match themselves against.
+  final List<Celebrity> celebrities;
+
+  /// The celebrities in [group], in catalogue order.
+  List<Celebrity> celebritiesIn(CelebrityGroup group) =>
+      [for (final one in celebrities) if (one.group == group) one];
+
+  /// The celebrity with [id], or `null`.
+  Celebrity? celebrityById(String id) {
+    for (final one in celebrities) {
+      if (one.id == id) return one;
+    }
+    return null;
+  }
 
   /// The ritual for [phase], or `null` if that phase has none.
   ///

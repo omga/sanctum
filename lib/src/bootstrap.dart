@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/app.dart';
+import 'package:sanctum/src/core/analytics/posthog_analytics_service.dart';
 import 'package:sanctum/src/core/logging/logger.dart';
+import 'package:sanctum/src/core/observability/crash_reporting.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
 
@@ -36,6 +38,27 @@ Future<void> bootstrap() async {
     logger.error('Uncaught', error: error, stackTrace: stackTrace);
     return true;
   };
+
+  // Crash reporting goes last of the three error hooks, and that order
+  // matters: Sentry's integrations capture whatever `FlutterError.onError`
+  // and `PlatformDispatcher.onError` are already set to and call them
+  // after reporting. Installing it before the handlers above would mean
+  // Sentry chains to Flutter's defaults and the logging here is lost.
+  try {
+    await CrashReporting.start();
+  } on Object catch (error) {
+    logger.warning('Crash reporting setup failed', error: error);
+  }
+
+  // Analytics before runApp so the SDK is live for the very first
+  // screen. Failure here must never stop the app starting — an app that
+  // will not launch because a reporting endpoint is down is a far worse
+  // outcome than a missing funnel.
+  try {
+    await PostHogAnalyticsService.configure();
+  } on Object catch (error) {
+    logger.warning('Analytics setup failed', error: error);
+  }
 
   // Starts the background audio service and returns the one handler the
   // whole app shares. Must happen before runApp: the handler binds a

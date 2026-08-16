@@ -12,6 +12,23 @@
          breaks in release. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The daily reading. Runtime-requested on Android 13+, and asked
+         for at the payoff screen rather than on launch, so the prompt
+         follows the promise instead of preceding it.
+
+         SCHEDULE_EXACT_ALARM is deliberately NOT declared. The
+         reminders schedule inexactly, which needs no Play Console
+         policy declaration — a reading arriving at 08:07 rather than
+         08:00 is indistinguishable to the user. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- PostHog is configured from Dart (see analytics_service.dart),
+         not from meta-data here. One place for the project token, and
+         `debug` can follow kDebugMode instead of being a hardcoded
+         literal that ships true to production. Without this flag the
+         plugin auto-inits on attach, finds no token, and logs an
+         error on every launch. -->
+
     <!-- Lets ExoPlayer hold a partial wake lock so a session keeps
          playing with the screen off. Without it playback stalls when the
          device dozes, which for a sleep-adjacent app is the main use. -->
@@ -30,6 +47,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:networkSecurityConfig="@xml/network_security_config">
+
+        <meta-data
+            android:name="com.posthog.posthog.AUTO_INIT"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

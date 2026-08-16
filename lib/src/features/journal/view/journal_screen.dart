@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/atoms/sanctum_dialog.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
@@ -24,6 +26,7 @@ class JournalScreen extends ConsumerWidget {
       child: Stack(
         children: [
           entries.when(
+            skipLoadingOnReload: true,
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Center(child: Text('$error')),
             data: (data) => ListView(
@@ -80,6 +83,7 @@ class JournalScreen extends ConsumerWidget {
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
+        useRootNavigator: true,
         builder: (_) => const _ComposerSheet(),
       ),
     );
@@ -118,28 +122,195 @@ class _EntryTile extends StatelessWidget {
     final colors = context.colors;
     final type = context.type;
 
-    return GlassCard.flat(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Semantics(
+      button: true,
+      label: 'Journal entry, ${entry.kind.displayName}',
+      child: GestureDetector(
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          unawaited(
+            showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              // Root navigator, or the shell's floating nav bar draws
+              // on top of the sheet — a modal with a tab bar sitting
+              // over its buttons.
+              useRootNavigator: true,
+              builder: (_) => _ReaderSheet(entry: entry),
+            ),
+          );
+        },
+        child: GlassCard.flat(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                entry.kind.displayName.toUpperCase(),
-                style: type.caption.copyWith(color: colors.gold),
+              Row(
+                children: [
+                  Text(
+                    entry.kind.displayName.toUpperCase(),
+                    style: type.caption.copyWith(color: colors.gold),
+                  ),
+                  const Spacer(),
+                  Text(_formatDate(entry.createdAt), style: type.caption),
+                  const SizedBox(width: SanctumSpacing.xs),
+                  // The affordance. Without it there is nothing on the
+                  // card to suggest the text continues past the ellipsis.
+                  Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: colors.textTertiary,
+                  ),
+                ],
               ),
-              const Spacer(),
-              Text(_formatDate(entry.createdAt), style: type.caption),
+              const SizedBox(height: SanctumSpacing.sm),
+              Text(entry.preview, style: type.bodyMedium),
             ],
           ),
-          const SizedBox(height: SanctumSpacing.sm),
-          Text(entry.preview, style: type.bodyMedium),
-        ],
+        ),
       ),
     );
   }
 
   String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
+}
+
+/// One entry, in full.
+///
+/// `JournalEntry.preview` truncates at 80 characters, and until now that
+/// was the only way an entry was ever rendered — so anything longer than
+/// a sentence was written, stored, and permanently unreadable. For a
+/// journal that is not a missing feature, it is the feature failing.
+///
+/// This is also the first place `prompt` and `delete` surface. Both were
+/// written end to end and reachable from nowhere: entries answering a
+/// ritual prompt never showed what they were answering, and nothing the
+/// user wrote could ever be removed.
+class _ReaderSheet extends ConsumerWidget {
+  const _ReaderSheet({required this.entry});
+
+  final JournalEntry entry;
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await SanctumDialog.show(
+      context,
+      title: 'Delete this entry?',
+      message: 'It is only on this phone, so this cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Keep',
+    );
+    if (!confirmed || !context.mounted) return;
+
+    await ref.read(journalControllerProvider.notifier).delete(entry.id);
+    if (context.mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final type = context.type;
+    ref.watch(journalControllerProvider);
+
+    return ConstrainedBox(
+      // Tall enough for a long entry, short enough that the sheet still
+      // reads as a sheet rather than a screen that arrived sideways.
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: SanctumSpacing.lg,
+          right: SanctumSpacing.lg,
+          top: SanctumSpacing.md,
+          bottom:
+              MediaQuery.paddingOf(context).bottom + SanctumSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  borderRadius: SanctumRadii.pillAll,
+                  color: colors.glassBorder,
+                ),
+              ),
+            ),
+            const SizedBox(height: SanctumSpacing.lg),
+            Row(
+              children: [
+                Text(
+                  entry.kind.displayName.toUpperCase(),
+                  style: type.caption.copyWith(
+                    color: colors.gold,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+                const Spacer(),
+                Text(_longDate(entry.createdAt), style: type.caption),
+              ],
+            ),
+            const SizedBox(height: SanctumSpacing.lg),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (entry.prompt case final prompt?) ...[
+                      Text(prompt, style: type.quote),
+                      const SizedBox(height: SanctumSpacing.md),
+                      Divider(color: colors.divider, height: 1),
+                      const SizedBox(height: SanctumSpacing.md),
+                    ],
+                    // The whole thing, wrapping and scrolling. No
+                    // maxLines anywhere below this point.
+                    SelectableText(entry.body, style: type.bodyLarge),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: SanctumSpacing.lg),
+            Row(
+              children: [
+                SanctumButton(
+                  label: 'Delete',
+                  icon: Icons.delete_outline,
+                  variant: SanctumButtonVariant.quiet,
+                  onPressed: () => unawaited(_delete(context, ref)),
+                ),
+                const Spacer(),
+                SanctumButton(
+                  label: 'Done',
+                  variant: SanctumButtonVariant.ghost,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _longDate(DateTime date) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
 }
 
 class _ComposerSheet extends ConsumerStatefulWidget {

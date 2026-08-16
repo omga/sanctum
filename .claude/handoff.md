@@ -32,6 +32,30 @@ entitlements sit behind an interface, so a second product is a second
 asset set plus a second bundle ID. The expensive part of "two apps" is
 two store listings and two creative pipelines, not the engineering.
 
+### Direction, decided 2026-08-16
+
+Build **one** app, not two. The two-app plan was really a hedge against
+positioning uncertainty, and positioning can be tested far more cheaply
+with two TikTok accounts pointing at one binary than with two store
+listings and two creative pipelines. The codebase stays flavour-*ready*;
+nothing ships a second bundle ID until one app has a content loop that
+reliably works. Splitting a two-person team's posting volume across two
+accounts is the one cost the strategy cannot absorb.
+
+Viral formats, ranked by how well they actually travel:
+
+1. **The camera is on the person** — palm and face reading. The filming
+   *is* the content. Strongest format, and the best paywall moment.
+2. **The output is about a relationship** — compatibility, celebrity
+   matches. Invites a second person, so it duets and stitches.
+3. **The output is a card about you** — the payoff card. Good retention
+   surface, weak acquisition one, because a screenshot is not watchable.
+
+Compatibility was built first because it is days of work on top of the
+zodiac engine, the birth-date wheel and `ReadingComposer` that already
+existed, and it buys a dozen filmable formats immediately. Video export
+and palm scan are the next two bets, in that order.
+
 ### Known strategic tension (unresolved)
 
 The owner's own feature ranking put **meditation audio last** ("commodity,
@@ -53,6 +77,11 @@ See `README.md` for the layer diagram. The rule that matters:
 
 Almost all interesting logic lives in `domain/` as pure functions, which
 is why the test suite is fast and covers the things that actually break.
+
+`device-testing.md` in this folder covers running and verifying on real
+hardware: simulator coordinates, resetting onboarding, and where the
+build sizes actually come from. Read it before you spend an afternoon
+concluding that taps do not reach Flutter.
 
 ---
 
@@ -144,6 +173,383 @@ names what the user just did.
 Weekly pricing was also advised against (highest-refund configuration in
 the category) though the stub still lists monthly + yearly only.
 
+### Journal entries open, and can be deleted
+
+`JournalEntry.preview` truncates at 80 characters, and that was the only
+way an entry was ever rendered — so anything longer than a sentence was
+written, stored, and permanently unreadable. Tapping a tile now opens a
+reader sheet with the whole body, scrolling for long entries.
+
+That sheet is also where two more already-built, unreachable things
+finally surface: `prompt` was stored on every entry and never shown, so
+an entry answering a ritual prompt never displayed what it was
+answering; and `delete` existed in both the repository *and* the view
+model with no UI calling either. A journal you cannot delete from is a
+worse product than one that never offered it.
+
+Both sheets pass `useRootNavigator: true`. Without it the shell's
+floating nav bar draws on top of the sheet — a modal with a tab bar
+sitting over its own buttons.
+
+**Pattern worth noticing:** this is the fourth repository method found
+written, tested at the data layer, and called from nowhere
+(`watchRecent`, `watchRevealedHistory`, `delete`, plus the `rhythm`
+answer). When adding a repository method here, add the call site in the
+same change or it will sit dead for months.
+
+### Tab switching cross-fades, and every branch stays mounted
+
+`BranchSwitcher` replaces go_router's default `IndexedStack` via
+`StatefulShellRouteData`'s `$navigatorContainerBuilder` hook, which the
+generator picks up automatically.
+
+It is a `Stack`, not an `AnimatedSwitcher`, and that is the whole point
+of a stateful shell: Sound keeps playing, Journal keeps its scroll
+offset, Today does not refetch. An `AnimatedSwitcher` would dispose the
+outgoing branch and undo all of it.
+
+Three things keep the cost down, which matters because a fragment shader
+and a starfield ticker are already running behind every screen:
+
+- A branch at opacity 0 is **not painted at all** — `AnimatedOpacity`
+  short-circuits — so idle branches cost only layout, and unchanged
+  subtrees are relayout boundaries.
+- The outgoing branch leaves in 110 ms while the incoming takes 260 ms,
+  so the window where two layers composite is about a third of the
+  transition rather than all of it.
+- Inactive branches have their tickers switched off. Without that, every
+  `flutter_animate` entry and `TweenAnimationBuilder` on three hidden
+  screens keeps driving frames for a user looking at the fourth.
+
+The movement is transform-only — a small rise and a hair of scale —
+because transforms are effectively free next to compositing. See the
+gotcha above about where `TickerMode` has to sit.
+
+### Crash reporting is Sentry, and it sees handled failures
+
+Sentry over Crashlytics for one codebase-specific reason: this app
+converts almost everything into an `AppFailure` and degrades rather than
+crashing. A corrupt blob, a failed write, a share sheet that will not
+open — none of those are crashes, and none would ever reach a crash-only
+reporter. They are most of what actually goes wrong here.
+
+So `Result.guard` — documented as *the only place the codebase turns
+exceptions into results* — calls `ResultReporting.report`. That hook is a
+static in `core/result` holding nothing but a nullable callback, so the
+result layer stays vendor-free and tests leave it unset. Handled
+failures arrive in Sentry at **warning** level so genuine crashes stay
+distinguishable in the inbox.
+
+**Wired by hand, not by `sentry-wizard`.** The wizard rewrites the entry
+point to wrap `runApp` in `SentryFlutter.init(appRunner:)` and
+reintroduces `runZonedGuarded` — which `bootstrap` deliberately does not
+use, because `PlatformDispatcher.instance.onError` has caught async
+errors since Flutter 3.3 and does not fight the test binding's zone. It
+would also have installed 21 Homebrew formulae including a `node`
+upgrade.
+
+**Ordering in `bootstrap` is load-bearing.** Sentry goes in *after* the
+app's own `FlutterError.onError` and `PlatformDispatcher.onError`,
+because its integrations capture whatever handler is already installed
+and call it after reporting. Install it first and Sentry chains to
+Flutter's defaults and the app's logging is silently lost.
+
+Switched off on purpose: `attachScreenshot` and `attachViewHierarchy`
+(both would capture the text on screen — journal entries, a name, two
+birth dates), performance tracing (the free tier is 5k events/month),
+and `SentryNavigatorObserver` — same route hazard as PostHog's observer,
+with `_scrub` as a second line of defence on breadcrumb data.
+
+Verified: on the iOS simulator a probe exception was delivered and the
+envelope queue drained. On a real Pixel 6, `libsentry.so` and
+`libsentry-android.so` load, `AUTO_INIT is disabled!` confirms the
+PostHog flag works, PostHog received feature flags over the network, and
+a forced JVM crash was captured. Android *delivery* was not directly
+observed — a release build is not debuggable, so its envelope cache
+cannot be inspected.
+
+### Analytics is typed, closed, and has no vendor
+
+`AnalyticsEvent` is a class with a private constructor and ~23 named
+constructors. There is no `track(String, Map)`, on purpose: free-form
+analytics rots, and within a year nobody remembers whether the event is
+`quiz_done` or `quiz_complete`, half the dashboards measure the wrong
+one, and somebody has passed a user's name as a property because it was
+convenient.
+
+More importantly, **call sites cannot leak personal data because no
+constructor accepts any**. That is the type system rather than a
+convention somebody has to catch in review. `analytics_test.dart` backs
+it with a denylist of property names, a primitives-only check and a
+length check that would catch prose. New events must be added to
+`_everyEvent` in that test — the guarantees are only worth anything if
+the list is exhaustive.
+
+Not even the star sign is reported: it is derived straight from the
+birth date we promise stays local, and no decision would change based on
+how Geminis convert. Question and option *ids* do travel — they come
+from bundled JSON, are identical for every user, and are exactly what
+answers "which question loses people".
+
+**PostHog is wired** (US cloud, project 561208).
+`LoggingAnalyticsService` stays available for local debugging; the vendor
+is one line in `core_providers.dart`.
+
+Configured **from Dart**, not from the manifest. PostHog's guide has you
+paste the token into `AndroidManifest.xml` *and* `Info.plist`; doing it
+in `PostHogAnalyticsService.configure()` instead keeps the token in one
+place and stops `debug: true` — which their snippet hardcodes — shipping
+to production. Native auto-init is switched off on both platforms via
+`com.posthog.posthog.AUTO_INIT`, or the plugin inits on attach, finds no
+token, and logs an error every launch.
+
+The `phc_` token is committed with a `POSTHOG_KEY` dart-define override.
+It is write-only ingestion and extractable from any shipped binary, so
+it is not a secret; the override exists so debug builds can point at a
+separate project instead of polluting production funnels.
+
+Two things are off on purpose:
+
+- **Session replay.** Supported on Flutter and masked by default, but
+  these screens carry journal entries, the user's name, their birth date
+  and their partner's. "Masking would probably hold" is not the standard
+  for the one claim the product is differentiated on.
+- **`PosthogObserver`.** The navigator observer that auto-captures screen
+  views is deliberately not installed, and this one is sharper than it
+  looks: **`MatchResultRoute` carries `name` and `birth` as query
+  parameters**, so autocapturing routes would post a partner's name and
+  birth date to a third party. Screens are reported through the typed
+  taxonomy or not at all.
+
+That route shape is a standing hazard, not just an analytics one — deep
+link URLs also surface in crash-reporter breadcrumbs and OS logs. If
+Sentry or Crashlytics is added, check what it records about navigation
+before enabling it.
+
+Verified on the simulator: the SDK initialises under the project token,
+`posthog.remoteConfig` holds a real server response (so the round trip
+works), the replay buffer stays empty, and the event queue drains on
+backgrounding.
+
+**Caveat worth knowing before you trust the log implementation:**
+`ConsoleLogger` uses `dart:developer`'s `log`, which goes to the VM
+service — so events are visible in an IDE or `flutter run` console and
+**not** in `flutter logs` or `simctl log stream` from a detached device.
+It is a development aid, not a way to watch a real user's funnel. That
+is an argument for wiring a real vendor sooner rather than later.
+
+### The privacy promise, and what it now says
+
+The app used to claim, in three places, that "nothing leaves your
+phone". Analytics, RevenueCat and any AI feature all make that false.
+The copy is now precise instead of absolute, which is still a strong
+claim and has the advantage of being true:
+
+> "No account, ever. Your name, your birth date and your journal stay on
+> this phone."
+
+That survives event analytics carrying no PII, and it survives
+RevenueCat's anonymous app user IDs. **It does not survive AI chat** —
+that would send a user's chart and their question to a third party, and
+needs its own explicit consent gate, not a reworded sentence. Design
+that in from the start if the advisor gets built.
+
+### The daily reading is a transit, not a random draw
+
+The home screen used to show an affirmation drawn from a bag of 22 and
+an oracle card picked by hashing the date. Both are stable, and neither
+is *connected* to yesterday or tomorrow — so there was never a reason to
+open the app on any particular day.
+
+`TransitCalculator` now compares today's planets against the user's
+natal positions. It changes because the sky moved, it differs between
+two people born a week apart, and — the part that matters — it is
+knowable in advance, which is the only honest open loop the app has. The
+"Tomorrow" line on the transit panel is a real promise, not a tease.
+
+Three things are load-bearing:
+
+- **Only slow bodies are used as natal points** (Sun, Venus, Mars,
+  Saturn). A birth date with no time pins a body only as tightly as that
+  body is slow. Adding the Moon means adding a birth-time question.
+- **A body never aspects its own natal position.** The Sun meeting your
+  Sun is a birthday; the slow ones are the background of a life rather
+  than news about a Tuesday.
+- **Quiet days are admitted.** When nothing is in orb the app says so.
+  A product that claims every Tuesday is significant has already spent
+  its credibility.
+
+Retrograde detection is free — apparent longitude decreasing — and
+Mercury retrograde is the most culturally legible thing in astrology, so
+it gets a banner. Pinned to the real August 2024 window in tests.
+
+### Reminders: the promise onboarding was already making
+
+`rhythm` — "when do you want your reading?" — was collected during
+onboarding and **read by no code in the app**, while
+`flutter_local_notifications` had been removed. The app asked people to
+commit to a time and then had no way to reach them. That is now wired.
+
+Three decisions worth keeping:
+
+- **Inexact scheduling.** Exact alarms need `SCHEDULE_EXACT_ALARM`,
+  which needs a Play Console policy declaration Google rejects without
+  alarm-clock-grade justification. A reading at 08:07 instead of 08:00
+  is indistinguishable, so `inexactAllowWhileIdle` is used and the
+  permission never comes up. The manifest comment says so; do not "fix"
+  it by adding the permission.
+- **The notification carries the whole reading.** Nothing of ours runs
+  when one fires, so each day's transit line is composed in advance and
+  travels with it. That makes the queue a snapshot, which is why it is
+  rewritten on every launch — one cancel, seven schedules.
+- **Permission is requested at the payoff screen**, immediately after
+  the reading has quoted the user's own answer about showing up daily.
+  Asked on first launch it gets declined once and can never be asked
+  again.
+
+Scheduled instants are converted to absolute UTC rather than a named
+zone, avoiding a timezone-name dependency. The trade: someone who
+crosses a DST boundary without opening the app drifts by an hour until
+the next launch rewrites the queue.
+
+### The check-in loop is closed
+
+`EnergyRepository.watchRecent` was implemented and called from nowhere:
+the app asked how you felt every day, stored it, and never mentioned it
+again. `EnergyPatternCalculator` reads it back — a 30-day strip that
+shows gaps as gaps, plus a finding correlating energy against real lunar
+phase.
+
+It **refuses to speak most of the time**: a finding needs three
+check-ins in each of two phases and a gap of 0.7 on the 1–5 scale.
+Anything looser and the app starts announcing patterns in four data
+points, which is how something claiming to know you gets caught not
+knowing you. This is also the natural premium surface — the user's own
+data arguing for the app's premise is a better sales pitch than copy.
+
+### Compatibility runs on real planetary positions
+
+`Ephemeris` computes Sun, Venus, Mars and Saturn from Keplerian elements
+with linear rates — the standard JPL approximation. Validated against
+three documented events: Saturn at the 2020 great conjunction lands
+**0.03° from 0°29' Aquarius**, Venus' 2020 greatest elongation is 0.1°
+out, and the December solstice falls exactly on 0° Capricorn. A separate
+test agrees with the hand-written sun-sign date table on every non-cusp
+day across seven decades, which validates the whole chain — Kepler
+solve, heliocentric-to-geocentric transform, and the precession
+correction that turns J2000 longitudes into tropical ones.
+
+**Do not swap this for a library.** The obvious choice, `sweph`, is
+**AGPL-3.0** unless you buy a professional Swiss Ephemeris licence from
+Astrodienst — AGPL in a closed-source app means publishing the app's
+source. It also ships ~20 MB of data files. We need half a degree of
+precision, not arcseconds, so none of that is worth taking on.
+
+Only slow bodies are used, and that is a correctness constraint rather
+than laziness: a birth date with no time pins a body only as tightly as
+that body is slow. Venus and Mars move under 1.25°/day and Saturn takes
+two and a half years to cross a sign. **The Moon moves 13°/day and its
+sign genuinely cannot be known without a birth time**, so it is not used
+and not faked. Adding it means adding that question.
+
+### Aspects are harmonic, not orb-gated
+
+Traditional astrology counts an aspect only inside an orb. Modelled
+literally that gives a product where most planet pairs contribute
+nothing, every score sits on its baseline, and the occasional pair
+spikes — flat with spikes, which is the worst possible distribution for
+something people compare with friends.
+
+So `Aspects` uses the harmonic form: `cos(4θ)` peaks at the hard angles
+(0°, 90°, 180°) and `cos(6θ)` at the flowing ones (0°, 60°, 120°, 180°).
+Continuous, always defined, and a square is simultaneously maximum heat
+and minimum ease — which is what lets Spark and Trust disagree about the
+same couple.
+
+### Six facets, and two that are deliberately lopsided
+
+Spark, Vibe, Trust, Drama, Depth, Future — each owned by one planetary
+contact, so any score traces to a specific claim. The earlier set
+(Spark, Communication, Trust, Staying power) read like a performance
+review; nobody describes a relationship in those words.
+
+The names are all one short word **because of localisation**. These are
+hexagon axis labels, and "Communication" becomes "Общение",
+"Staying power" becomes "Долговечность". Short in English is the only
+way to stay short in Russian.
+
+`pullShare` and `powerShare` are **directional** and this is the most
+important product decision in the feature. Everything was symmetric
+before, and symmetry is exactly what nobody posts: "we are 86%
+compatible" is a fact about a couple, "they are 62% of this and you are
+38%" is a fact about a person. It is also the correct astrology — your
+Mars on their Venus is a different contact from theirs on yours, and
+Saturn is famously one-way.
+
+Both are damped toward even (`_share`), so two people with no strong
+contacts get 50/50 rather than a dramatic split decided by rounding
+noise. The model should not be loudest where it knows least.
+
+### What is presentation and what is modelling
+
+`_toScale` widens the distribution so a 96 is reachable. That is a
+single monotonic curve applied identically to every pair, so it never
+changes which of two couples scores higher.
+
+The term it replaced — `((a.index + b.index) % 5) - 2`, a per-pair nudge
+that existed so two different trines would not both return 94 — *did*
+change orderings, and was the one genuinely arbitrary number in the app.
+Keep that distinction if you touch this: uniform presentation curves are
+fine, per-pair fudges are not.
+
+### The sun-sign aspect still names the reading
+
+The distance between the two sun signs no longer scores anything, but it
+still *names* the reading — the "Magnetic" chip — and still selects the
+opening paragraph. `ZodiacAspect` is declared in distance order because
+`aspectBetween` indexes `values` by the step count; reordering the enum
+silently reassigns every reading in the app, and a test pins it.
+
+Scores are clamped to **45–98**. A 9% match is funny exactly once; the
+modal user is checking themselves against someone they like, and a
+product that tells people their relationship is doomed gets deleted
+rather than posted. The range is honest, just not cruel.
+
+Copy comes from two independent axes — aspect for the dynamic, element
+pair for the texture — plus two lines keyed to whichever facet actually
+scored highest and lowest. Keying everything to the aspect alone would
+make every Aries-and-Leo reading word-for-word identical to every
+Taurus-and-Virgo one, and users compare results with their friends. That
+is the whole distribution plan, so identical copy is not cosmetic.
+
+### The first reading costs an invite, the second costs money
+
+`CompatibilityGate` is pure and exhaustively tested. Rules: anything
+already revealed stays revealed forever; premium opens everything; with
+nothing revealed yet, an invite unlocks exactly one reading; after that
+it is the paywall.
+
+The ordering is the point. The invite is the only acquisition channel
+this product has, and asking for it *before* the reveal — while
+curiosity is at its peak and the user has not yet had the thing they
+came for — is the only moment it converts. A second invite instead of
+money was rejected: it teaches people the paywall can always be shared
+away.
+
+`revealedIds` is a set, not a count, so reopening the free reading a week
+later does not consume the free slot again and then demand payment for a
+screen the user has already seen.
+
+What the app can know is limited and worth being honest about:
+`ShareController.shareInvite` reports that the user *picked a target
+app*, not that a message was sent. Nothing can tell us the latter.
+
+**No celebrity photographs, ever.** A public figure's birth date is a
+fact; their likeness is not, and a face beside a compatibility score
+implies an endorsement that does not exist. The picker draws an
+element-tinted disc with the sign glyph instead, which is also better
+looking than a grid of scraped press photos.
+
 ### Background audio via audio_service, and `moveTaskToBack`
 
 Playback runs in an Android foreground service / iOS audio background
@@ -194,15 +600,51 @@ the obvious-sounding choice, contains zero of the twelve.
 - Journal with persistence; 4 moon rituals gated by real moon phase
 - Paywall: monthly/yearly, 7-day trial framing, gating, purchase unlocks
 - Exit dialog; Android and iOS both build and run
+- **Daily transit, retrograde banner, tomorrow tease, energy pattern
+  strip and card repeat count** — all on Today, verified 2026-08-16 on
+  the iOS 26.1 simulator.
+- **Daily reading notifications** — permission prompt verified firing at
+  the payoff screen on the simulator, and the schedule call completes
+  cleanly. **Delivery itself has not been observed** — the first one is
+  due at 08:00 the following day. Watch for it on a real device before
+  trusting it.
+- **Compatibility** (`features/compatibility/`) — fourth tab, verified
+  2026-08-16 on the iOS 26.1 simulator end to end: manual entry and 46
+  celebrities, the invite gate, unlock, persistence, the second-match
+  paywall, and the shareable card.
+- **Payoff screen** (`features/payoff/`) — verified 2026-08-16 on an
+  Android device and on the iOS 26.1 simulator. The reading composes
+  from the answers, addresses the user by name, and "Share this" puts a
+  real 3x capture of the card into the share sheet. iOS labels it "Plain
+  Text and 1 Document" because the payload is text *plus* a file; the
+  image itself is recognised (Print and Assign to Contact are offered),
+  and setting an explicit `image/png` mime type on the `XFile` was tried
+  and changed nothing.
 
-### Built but NOT yet verified on a device
+### Size, measured
 
-- **Payoff screen** (`features/payoff/`) — the reading, the shareable
-  card, and `share_plus` capture at 3x. Compiled and analyzer-clean, but
-  the last build/install cycle was cut short. **Test this first.**
+A debug build reads as **~170 MB app + ~93 MB "user data"** on a Pixel 6
+and neither number means anything: the debug APK carries an 85 MB
+`kernel_blob.bin`, an unstripped 38.8 MB engine and 15 MB of Vulkan
+validation layers, and `flutter run` leaves a *second* copy of the kernel
+blob in `app_flutter/` for hot reload, which Android files under user
+data. The app's real persisted state is **~40 KB**.
+
+The release APK is **28.8 MB** for arm64, of which ~19 MB is the Flutter
+engine plus our AOT code. It was 23.8 MB before
+`flutter_local_notifications` (plus Android core-library desugaring),
+`posthog_flutter`, and `sentry_flutter` — Sentry's native SDK is the
+largest single addition at roughly 3.8 MB. Full breakdown and the commands to reproduce it
+are in `device-testing.md`.
 
 ### Stubbed or missing
 
+- **The 46 celebrity birth dates have not been verified against a
+  source.** They are from memory, and the birth date is the single
+  factual claim this feature makes about a real person — a wrong one
+  shows the wrong sign beside their name. `celebrities.json` needs one
+  pass against a reference before launch. Tests check the dates are
+  plausible and the ids unique; nothing checks they are *right*.
 - **Billing is a local stub.** `LocalSubscriptionRepository` writes a
   bool to preferences. Swapping in RevenueCat is one class implementing
   `SubscriptionRepository` + `EntitlementRepository` and one changed
@@ -228,20 +670,46 @@ the obvious-sounding choice, contains zero of the twelve.
 
 ## 5. Exact next steps
 
-1. **Verify the payoff screen on a device.** Build, run through the quiz,
-   check the reading composes correctly and that "Share this" produces a
-   real image in the share sheet.
-2. **Personalise the paywall headline from quiz answers.** The data is
+1. **Verify the celebrity birth dates**, then post twenty videos of the
+   compatibility flow before building anything else. The riskiest
+   assumption is not the feature, it is whether this team can make
+   content that moves — and that costs nothing to test.
+2. **Replace `MatchResultRoute`'s query parameters with an opaque id.**
+   It currently carries `name` and `birth`. Both PostHog's and Sentry's
+   navigation observers are disabled specifically because of it, and
+   `_scrub` patches breadcrumbs after the fact — but the real fix is to
+   stop putting a partner's name and birth date in a URL at all. Until
+   then, any new observability tool has to be audited for it.
+3. **RevenueCat.** `LocalSubscriptionRepository` is a bool in prefs
+   behind `EntitlementRepository`, so it is genuinely a drop-in. Free
+   under $2.5k monthly tracked revenue, and its own dashboard covers a
+   chunk of subscription analytics.
+4. **Localise: Spanish, Russian, French.** Nothing is wired yet — no
+   `flutter_localizations`, no ARB files, every string is inline. The
+   engineering is routine; the real cost is that this app's value *is*
+   its copy. There are roughly forty paragraphs of deliberately literary
+   prose across the quiz, readings, compatibility and paywall, and
+   machine translation will strip exactly the quality people are being
+   asked to pay for. Budget for a human translator per language, and
+   treat the reading copy as the expensive part.
+
+   Already designed for: facet names are one short word each, hexagon
+   labels sit in fixed-width boxes that wrap to two lines, and no text
+   sits in a fixed-width container. Re-check the paywall and the nav bar
+   — German-length strings in a four-item glass pill are the next thing
+   to break.
+9. **Personalise the paywall headline from quiz answers.** The data is
    persisted and `ReadingComposer` already selects copy from it; the
    paywall just doesn't read it yet. Someone who ticked "I keep repeating
    a pattern" should see that sentence back. This is the highest-value
    remaining conversion work.
-3. **Wire the reminder time** to real local notifications, or remove the
+4. **Wire the reminder time** to real local notifications, or remove the
    question. Shipping it as-is is a broken promise.
-4. **Add the entertainment disclaimer** to first launch.
-5. **Replace the placeholder icon** and set up build flavors if the
+5. **Add the entertainment disclaimer** to first launch. It is already on
+   the payoff screen and nowhere else.
+6. **Replace the placeholder icon** and set up build flavors if the
    two-app experiment is going ahead.
-6. Then: RevenueCat, energy insights, golden tests, low-end Android
+7. Then: 9:16 video export of the reveal, palm scan, RevenueCat, energy insights, golden tests, low-end Android
    profiling.
 
 ---
@@ -271,6 +739,41 @@ the obvious-sounding choice, contains zero of the twelve.
   next `ref.read` inside an async action throws `UnmountedRefException` —
   the button looks alive and does nothing. `ref.watch(provider)` in
   `build` keeps it alive. This shipped twice before being caught.
+- **`QuizFlow.next` counts a multi-select question as answered the
+  moment the first option lands**, because `QuizAnswers.has` is just
+  "is there a non-empty selection". Ticking one box therefore used to
+  auto-advance both multi-select steps. The controller's cursor is what
+  holds the screen: `QuizController.toggle` pins it to the question and
+  only `advance()` releases it. Anything that writes a multi-select
+  answer must go through `toggle`, not `choose`.
+- **`AsyncValue.when` shows a spinner when a *dependency* changes.**
+  `skipLoadingOnRefresh` defaults to `true`, so an explicit refresh
+  keeps rendering the old data — but `skipLoadingOnReload` defaults to
+  **`false`**, and a Drift stream emitting after a write is a *reload*.
+  The effect: tapping the daily card or logging energy swapped the whole
+  `ListView` for a `CircularProgressIndicator` for a frame, which
+  destroyed the `Scrollable` and rebuilt it at offset zero — the list
+  jumped to the top on every tap. Every `when` in `features/` now passes
+  `skipLoadingOnReload: true`. A screen that already has content should
+  never flash a spinner because a stream ticked.
+- **In `BranchSwitcher`, `TickerMode` must sit *inside* the animated
+  widgets.** With it outside, switching tabs disables the ticker on the
+  very frame the outgoing branch starts leaving, which freezes the
+  `AnimatedOpacity` driving its own fade-out. The branch stops at
+  whatever opacity it reached and stays there, permanently painted over
+  the incoming one. This does not fail a widget test; it looks like a
+  stuck screen on a device, and it is how it was found.
+- **`flutter pub add sentry_flutter` resolves 8.14.2, which does not
+  compile.** Its Swift plugin calls `SentryBinaryImageCache.image`,
+  which the native SDK that Swift Package Manager resolves no longer
+  has, and the iOS build fails. Ask for `^9.27.0` explicitly. Sentry 9
+  also deprecates `SentryEvent.copyWith` in favour of mutating the
+  instance, which is what `_scrub` does.
+- **A Gradle failure with a full disk looks like an AGP problem.** A
+  build that ran out of space reported "Starting AGP 9+, only the new
+  DSL interface will be read" — a Flutter Fix box pattern-matched onto
+  unrelated output. `android.newDsl=false` was already set and AGP was
+  never the cause. Check free space before believing that message.
 - **A `part` file only sees its owning library's imports.** Drift's
   generated code needed `JournalKind` imported into
   `sanctum_database.dart` even though `tables.dart` already had it.

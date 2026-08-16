@@ -10,8 +10,10 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/features/rituals/view_model/ritual_view_model.dart';
+import 'package:sanctum/src/features/today/view/widgets/energy_pattern_strip.dart';
 import 'package:sanctum/src/features/today/view/widgets/moon_disc.dart';
 import 'package:sanctum/src/features/today/view/widgets/oracle_card_view.dart';
+import 'package:sanctum/src/features/today/view/widgets/transit_panel.dart';
 import 'package:sanctum/src/features/today/view_model/today_view_model.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
@@ -26,7 +28,14 @@ class TodayScreen extends ConsumerWidget {
 
     return SafeArea(
       bottom: false,
+      // skipLoadingOnReload: a write here makes a Drift stream emit,
+      // which counts as a *dependency change* rather than a refresh — and
+      // `when` renders the loading branch for those by default. That
+      // swapped the whole list for a spinner on every tap, destroying the
+      // Scrollable and rebuilding it at offset zero. A screen that already
+      // has content should never flash a spinner because a stream ticked.
       child: state.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _TodayError(message: '$error'),
         data: (data) => _TodayContent(state: data),
@@ -115,7 +124,15 @@ class _TodayContent extends ConsumerWidget {
         ),
         const SizedBox(height: SanctumSpacing.xl),
 
-        // The affirmation leads, because it asks nothing of the user.
+        // The transit leads. It is the only thing on this screen that
+        // is true of *this* user on *this* day — the affirmation is one
+        // of twenty-two and the card is a hash — so it is what earns the
+        // open.
+        if (state.transit case final transit?) ...[
+          TransitPanel(reading: transit),
+          const SizedBox(height: SanctumSpacing.lg),
+        ],
+
         GlassCard.flat(
           child: Text(state.affirmation, style: type.quote),
         ),
@@ -126,6 +143,15 @@ class _TodayContent extends ConsumerWidget {
           revealed: state.cardRevealed,
           onReveal: controller.revealCard,
         ),
+        if (state.cardIsRepeat) ...[
+          const SizedBox(height: SanctumSpacing.sm),
+          Text(
+            'You have drawn this one '
+            '${state.cardDrawCount} times before.',
+            textAlign: TextAlign.center,
+            style: type.caption.copyWith(color: colors.gold),
+          ),
+        ],
         const SizedBox(height: SanctumSpacing.lg),
 
         // Only rendered on the four phases that carry a ritual, so it
@@ -138,6 +164,14 @@ class _TodayContent extends ConsumerWidget {
           _EnergyRecorded(level: state.energy!.level),
 
         const SizedBox(height: SanctumSpacing.lg),
+
+        // Directly under the check-in on purpose: the question and the
+        // answer to it belong next to each other, so giving the app your
+        // state and getting something back is one motion rather than a
+        // deposit that disappears.
+        EnergyPatternStrip(pattern: state.pattern),
+        const SizedBox(height: SanctumSpacing.lg),
+
         _StreakRow(
           current: state.streak.current,
           longest: state.streak.longest,

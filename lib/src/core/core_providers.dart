@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sanctum/src/core/analytics/analytics_service.dart';
+import 'package:sanctum/src/core/analytics/posthog_analytics_service.dart';
 import 'package:sanctum/src/core/logging/logger.dart';
 import 'package:sanctum/src/core/time/clock.dart';
 
@@ -40,3 +42,11 @@ Clock clock(Ref ref) {
 /// The app-wide logger.
 @Riverpod(keepAlive: true)
 Logger logger(Ref ref) => const ConsoleLogger();
+
+/// Product analytics.
+///
+/// The instrumentation is the durable part and is vendor-free; this
+/// line is the only thing that knows which product receives it.
+/// `LoggingAnalyticsService` remains available for local debugging.
+@Riverpod(keepAlive: true)
+AnalyticsService analytics(Ref ref) => const PostHogAnalyticsService();

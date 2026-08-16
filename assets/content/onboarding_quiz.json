@@ -5,7 +5,7 @@
       "id": "name",
       "kind": "text",
       "title": "What should we call you?",
-      "subtitle": "Only ever used to address you. It stays on this phone."
+      "subtitle": "Only ever used to address you, and it never leaves this phone."
     },
     {
       "id": "goals",

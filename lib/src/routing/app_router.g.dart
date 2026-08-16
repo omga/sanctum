@@ -15,6 +15,7 @@ List<RouteBase> get $appRoutes => [
 ];
 
 RouteBase get $sanctumShellRoute => StatefulShellRouteData.$route(
+  navigatorContainerBuilder: SanctumShellRoute.$navigatorContainerBuilder,
   factory: $SanctumShellRouteExtension._fromState,
   branches: [
     StatefulShellBranchData.$branch(
@@ -28,6 +29,27 @@ RouteBase get $sanctumShellRoute => StatefulShellRouteData.$route(
               path: 'ritual',
               hasOverriddenOnExit: false,
               factory: $RitualRoute._fromState,
+            ),
+          ],
+        ),
+      ],
+    ),
+    StatefulShellBranchData.$branch(
+      routes: [
+        GoRouteData.$route(
+          path: '/match',
+          hasOverriddenOnExit: false,
+          factory: $MatchRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: 'new',
+              hasOverriddenOnExit: false,
+              factory: $MatchEntryRoute._fromState,
+            ),
+            GoRouteData.$route(
+              path: 'result',
+              hasOverriddenOnExit: false,
+              factory: $MatchResultRoute._fromState,
             ),
           ],
         ),
@@ -91,6 +113,80 @@ mixin $RitualRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/today/ritual');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $MatchRoute on GoRouteData {
+  static MatchRoute _fromState(GoRouterState state) => const MatchRoute();
+
+  @override
+  String get location => GoRouteData.$location('/match');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $MatchEntryRoute on GoRouteData {
+  static MatchEntryRoute _fromState(GoRouterState state) =>
+      const MatchEntryRoute();
+
+  @override
+  String get location => GoRouteData.$location('/match/new');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $MatchResultRoute on GoRouteData {
+  static MatchResultRoute _fromState(GoRouterState state) => MatchResultRoute(
+    name: state.uri.queryParameters['name']!,
+    birth: state.uri.queryParameters['birth']!,
+    celebrityId: state.uri.queryParameters['celebrity-id'],
+  );
+
+  MatchResultRoute get _self => this as MatchResultRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/match/result',
+    queryParams: {
+      'name': _self.name,
+      'birth': _self.birth,
+      if (_self.celebrityId != null) 'celebrity-id': _self.celebrityId,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

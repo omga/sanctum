@@ -91,12 +91,26 @@ abstract final class QuizFlow {
     List<QuizQuestion> questions,
     QuizAnswers answers,
     String questionId,
-  ) {
-    var result = QuizAnswers(
+  ) => prune(
+    questions,
+    QuizAnswers(
       selections: {...answers.selections}..remove(questionId),
       dates: {...answers.dates}..remove(questionId),
       texts: {...answers.texts}..remove(questionId),
-    );
+    ),
+  );
+
+  /// Drops answers to questions that are no longer visible.
+  ///
+  /// Unticking an option on a multi-select question can close a branch
+  /// the user has already walked into: dropping "love" must take "where
+  /// are you with it?" with it, or the payoff and the paywall read back
+  /// a reply to a question the user is no longer being asked.
+  static QuizAnswers prune(
+    List<QuizQuestion> questions,
+    QuizAnswers answers,
+  ) {
+    var result = answers;
 
     // Repeat until stable, since a dropped branch can orphan another.
     var changed = true;

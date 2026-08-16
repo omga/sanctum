@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show AssetBundle, rootBundle;
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/catalog/content_catalog.dart';
+import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/models/ritual.dart';
@@ -43,6 +44,10 @@ class AssetContentCatalogSource implements ContentCatalogSource {
           'affirmations',
         );
         final quiz = await _readList('onboarding_quiz.json', 'questions');
+        final famous = await _readList(
+          'celebrities.json',
+          'celebrities',
+        );
 
         return ContentCatalog(
           oracleCards: [
@@ -61,6 +66,10 @@ class AssetContentCatalogSource implements ContentCatalogSource {
           quizQuestions: [
             for (final entry in quiz)
               QuizQuestionMapper.fromMap(entry! as Map<String, dynamic>),
+          ],
+          celebrities: [
+            for (final entry in famous)
+              CelebrityMapper.fromMap(entry! as Map<String, dynamic>),
           ],
         );
       },

@@ -102,6 +102,7 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
         child: Starfield(
           child: SafeArea(
             child: catalog.when(
+   skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(child: Text('$error')),
               data: (data) {

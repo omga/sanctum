@@ -1,8 +1,10 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/catalog/content_catalog.dart';
 import 'package:sanctum/src/data/catalog/content_catalog_source.dart';
 import 'package:sanctum/src/data/database/sanctum_database.dart';
+import 'package:sanctum/src/data/repositories/compatibility_repository.dart';
 import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
 import 'package:sanctum/src/data/repositories/journal_repository.dart';
@@ -12,6 +14,7 @@ import 'package:sanctum/src/data/repositories/quiz_repository.dart';
 import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
+import 'package:sanctum/src/data/services/reminders/reminder_service.dart';
 
 part 'data_providers.g.dart';
 
@@ -58,6 +61,16 @@ Future<String> installSalt(Ref ref) async {
     Err(:final failure) => throw failure,
   };
 }
+
+/// Schedules the daily reading notification.
+@Riverpod(keepAlive: true)
+ReminderService reminderService(Ref ref) =>
+    LocalNotificationReminderService(FlutterLocalNotificationsPlugin());
+
+/// Compatibility matches and what the user has unlocked.
+@Riverpod(keepAlive: true)
+CompatibilityRepository compatibilityRepository(Ref ref) =>
+    const PreferencesCompatibilityRepository();
 
 /// Onboarding quiz answers.
 @Riverpod(keepAlive: true)

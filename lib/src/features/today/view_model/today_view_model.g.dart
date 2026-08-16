@@ -260,6 +260,96 @@ final class EnergyForFamily extends $Family
   String toString() => r'energyForProvider';
 }
 
+/// The user's recent check-ins.
+
+@ProviderFor(recentEnergy)
+final recentEnergyProvider = RecentEnergyProvider._();
+
+/// The user's recent check-ins.
+
+final class RecentEnergyProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<EnergyCheckIn>>,
+          List<EnergyCheckIn>,
+          Stream<List<EnergyCheckIn>>
+        >
+    with
+        $FutureModifier<List<EnergyCheckIn>>,
+        $StreamProvider<List<EnergyCheckIn>> {
+  /// The user's recent check-ins.
+  RecentEnergyProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'recentEnergyProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$recentEnergyHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<EnergyCheckIn>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<EnergyCheckIn>> create(Ref ref) {
+    return recentEnergy(ref);
+  }
+}
+
+String _$recentEnergyHash() => r'a6d79033634f85cac1ffdcfa316890ed1f5b356c';
+
+/// Every card the user has ever turned over.
+
+@ProviderFor(revealedCards)
+final revealedCardsProvider = RevealedCardsProvider._();
+
+/// Every card the user has ever turned over.
+
+final class RevealedCardsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<String>>,
+          List<String>,
+          Stream<List<String>>
+        >
+    with $FutureModifier<List<String>>, $StreamProvider<List<String>> {
+  /// Every card the user has ever turned over.
+  RevealedCardsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'revealedCardsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$revealedCardsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<String>> create(Ref ref) {
+    return revealedCards(ref);
+  }
+}
+
+String _$revealedCardsHash() => r'1163b9aea316e9f36ad1e1cc9b7e13bcd2652268';
+
 /// Composes the Today screen's state.
 
 @ProviderFor(todayState)
@@ -302,7 +392,7 @@ final class TodayStateProvider
   }
 }
 
-String _$todayStateHash() => r'0cd90ad57932619a6fdaa086f077e184c14fca74';
+String _$todayStateHash() => r'2d2ed70dff91fc205078fe7b99b664f0c9416128';
 
 /// Actions the Today screen can take.
 ///
@@ -347,7 +437,7 @@ final class TodayControllerProvider
   TodayController create() => TodayController();
 }
 
-String _$todayControllerHash() => r'4fbab04e2ed1c911b385f203a1233bafd027b269';
+String _$todayControllerHash() => r'a2d1a7f60b867c4f08aa0bfa25b3f631e65bec3d';
 
 /// Actions the Today screen can take.
 ///

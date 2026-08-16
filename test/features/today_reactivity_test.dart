@@ -10,6 +10,7 @@ import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
+import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
 import 'package:sanctum/src/domain/models/ritual.dart';
@@ -54,7 +55,10 @@ class StreamingOracleRepository implements OracleRepository {
   }
 
   @override
-  Stream<List<String>> watchRevealedHistory() => const Stream.empty();
+  // Must emit, not merely close: todayState awaits this stream's
+  // first value, and an empty stream never produces one.
+  Stream<List<String>> watchRevealedHistory() =>
+      Stream.value(const <String>[]);
 
   void dispose() => _controller.close();
 }
@@ -110,6 +114,7 @@ void main() {
             affirmations: [for (var i = 0; i < 22; i++) 'a$i'],
             rituals: const <Ritual>[],
             quizQuestions: const [],
+            celebrities: const <Celebrity>[],
           ),
         ),
         installSaltProvider.overrideWith((ref) async => 'salt'),

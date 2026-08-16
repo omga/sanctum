@@ -30,6 +30,7 @@ class RitualScreen extends ConsumerWidget {
         child: Starfield(
           child: SafeArea(
             child: state.when(
+   skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(child: Text('$error')),
               data: (data) {

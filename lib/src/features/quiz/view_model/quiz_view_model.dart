@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sanctum/src/core/analytics/analytics_event.dart';
+import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
@@ -49,6 +51,7 @@ class QuizUiState {
 @riverpod
 class QuizController extends _$QuizController {
   String? _cursorId;
+  String? _reportedId;
 
   @override
   Future<QuizUiState> build() async {
@@ -59,7 +62,46 @@ class QuizController extends _$QuizController {
     // the user from an empty answer set rather than an error screen.
     final answers = loaded.getOrElse(const QuizAnswers());
 
-    return _stateFor(catalog.quizQuestions, answers);
+    final state = _stateFor(catalog.quizQuestions, answers);
+    _reportShown(state);
+    return state;
+  }
+
+  /// Emits `quiz_question_shown` when the question on screen changes.
+  ///
+  /// Reported here rather than from the widget because the widget
+  /// rebuilds for reasons that are not a new question — a toggle, a
+  /// keyboard, a theme change — and each of those would inflate the
+  /// denominator of the only funnel anybody actually wants to read.
+  void _reportShown(QuizUiState state) {
+    final question = state.current;
+    if (question == null || question.id == _reportedId) return;
+    _reportedId = question.id;
+
+    final visible = QuizFlow.visible(state.questions, state.answers);
+    ref
+        .read(analyticsProvider)
+        .track(
+          AnalyticsEvent.quizQuestionShown(
+            questionId: question.id,
+            index: visible.indexOf(question),
+          ),
+        );
+  }
+
+  void _reportAnswered(String questionId) {
+    final current = state.value;
+    if (current == null) return;
+
+    final visible = QuizFlow.visible(current.questions, current.answers);
+    ref
+        .read(analyticsProvider)
+        .track(
+          AnalyticsEvent.quizQuestionAnswered(
+            questionId: questionId,
+            index: visible.indexWhere((q) => q.id == questionId),
+          ),
+        );
   }
 
   QuizUiState _stateFor(List<QuizQuestion> questions, QuizAnswers answers) {
@@ -90,7 +132,9 @@ class QuizController extends _$QuizController {
     if (current == null) return;
 
     _cursorId = cursorId;
-    state = AsyncData(_stateFor(current.questions, answers));
+    final next = _stateFor(current.questions, answers);
+    state = AsyncData(next);
+    _reportShown(next);
     await ref.read(quizRepositoryProvider).save(answers);
   }
 
@@ -106,13 +150,56 @@ class QuizController extends _$QuizController {
         ? QuizFlow.clearFrom(current.questions, current.answers, questionId)
         : current.answers;
 
+    _reportAnswered(questionId);
     await _apply(base.withSelection(questionId, optionIds));
+  }
+
+  /// Toggles [optionId] on a multi-select question, staying put.
+  ///
+  /// Ticking must not advance: a multi-select question is only finished
+  /// when the user presses Continue. Pinning the cursor to [questionId]
+  /// is what stops [QuizFlow.next] — which counts the question as
+  /// answered the moment the first option lands — from sliding the user
+  /// onto the next screen mid-answer.
+  Future<void> toggle(String questionId, String optionId) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final chosen = [...current.answers.optionsFor(questionId)];
+    chosen.contains(optionId)
+        ? chosen.remove(optionId)
+        : chosen.add(optionId);
+
+    // Unticking can close a branch the user already answered, so drop
+    // the orphans now rather than carrying them into the payoff.
+    final answers = QuizFlow.prune(
+      current.questions,
+      current.answers.withSelection(questionId, chosen),
+    );
+
+    await _apply(answers, cursorId: questionId);
+  }
+
+  /// Leaves the question on screen for whatever comes next.
+  ///
+  /// Used by Continue on questions that record their answer as the user
+  /// works — multi-select — where there is nothing left to write and the
+  /// only job is to release the cursor.
+  Future<void> advance() async {
+    final current = state.value;
+    if (current == null) return;
+
+    final showing = current.current;
+    if (showing != null) _reportAnswered(showing.id);
+
+    await _apply(current.answers);
   }
 
   /// Records a date for [questionId] and advances.
   Future<void> chooseDate(String questionId, DateTime date) async {
     final current = state.value;
     if (current == null) return;
+    _reportAnswered(questionId);
     await _apply(current.answers.withDate(questionId, date));
   }
 
@@ -120,6 +207,8 @@ class QuizController extends _$QuizController {
   Future<void> chooseText(String questionId, String value) async {
     final current = state.value;
     if (current == null) return;
+    // The id only. The answer itself is their name.
+    _reportAnswered(questionId);
     await _apply(current.answers.withText(questionId, value.trim()));
   }
 
@@ -146,6 +235,19 @@ class QuizController extends _$QuizController {
 
   /// Marks the quiz finished.
   Future<void> finish() async {
+    final current = state.value;
+    if (current != null) {
+      ref
+          .read(analyticsProvider)
+          .track(
+            AnalyticsEvent.quizCompleted(
+              answered: QuizFlow.visible(
+                current.questions,
+                current.answers,
+              ).length,
+            ),
+          );
+    }
     await ref.read(quizRepositoryProvider).markComplete();
   }
 }

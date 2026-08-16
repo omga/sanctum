@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
+import 'package:sanctum/src/core/result/result_reporting.dart';
 
 /// The outcome of an operation that is allowed to fail: either [Ok] with a
 /// value, or [Err] with an [AppFailure].
@@ -48,7 +49,11 @@ sealed class Result<T> {
     try {
       return Ok(await body());
     } on Object catch (error, stackTrace) {
-      return Err(onError(error, stackTrace));
+      final failure = onError(error, stackTrace);
+      // The single choke point for handled failures, which is exactly
+      // why the reporting hook lives here and nowhere else.
+      ResultReporting.report(failure);
+      return Err(failure);
     }
   }
 }

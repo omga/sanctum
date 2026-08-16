@@ -10,12 +10,14 @@ import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
+import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
 import 'package:sanctum/src/domain/models/ritual.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/models/streak_summary.dart';
 import 'package:sanctum/src/features/today/view/today_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _Oracle implements OracleRepository {
   OracleDrawState? current;
@@ -44,7 +46,10 @@ class _Oracle implements OracleRepository {
   }
 
   @override
-  Stream<List<String>> watchRevealedHistory() => const Stream.empty();
+  // Must emit, not merely close: todayState awaits this stream's
+  // first value, and an empty stream never produces one.
+  Stream<List<String>> watchRevealedHistory() =>
+      Stream.value(const <String>[]);
 }
 
 class _Practice implements PracticeRepository {
@@ -80,6 +85,13 @@ class _Energy implements EnergyRepository {
 }
 
 void main() {
+  // todayState reads the user's birth date from the quiz answers to
+  // compose the transit, and that repository is preferences-backed.
+  // Without this the real plugin never answers, todayState stays
+  // loading, and the spinner animates forever — which surfaces as
+  // `pumpAndSettle timed out` with no underlying error to chase.
+  setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
+
   late _Oracle oracle;
   late _Energy energy;
 
@@ -106,6 +118,7 @@ void main() {
               affirmations: [for (var i = 0; i < 22; i++) 'Affirmation $i'],
               rituals: const <Ritual>[],
               quizQuestions: const [],
+              celebrities: const <Celebrity>[],
             ),
           ),
           installSaltProvider.overrideWith((ref) async => 'salt'),

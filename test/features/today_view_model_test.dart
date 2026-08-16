@@ -8,6 +8,7 @@ import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
+import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
@@ -103,6 +104,7 @@ ContentCatalog _catalog() => ContentCatalog(
   affirmations: [for (var i = 0; i < 22; i++) 'Affirmation $i'],
   rituals: const <Ritual>[],
   quizQuestions: const [],
+  celebrities: const <Celebrity>[],
 );
 
 void main() {

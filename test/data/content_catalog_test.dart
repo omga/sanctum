@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/catalog/content_catalog.dart';
 import 'package:sanctum/src/data/catalog/content_catalog_source.dart';
+import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 
 void main() {
@@ -26,6 +27,53 @@ void main() {
       expect(catalog.sessions, isNotEmpty);
       expect(catalog.affirmations, isNotEmpty);
       expect(catalog.rituals, isNotEmpty);
+      expect(catalog.celebrities, isNotEmpty);
+    });
+
+    test('celebrity ids are unique', () {
+      final ids = catalog.celebrities.map((c) => c.id).toList();
+      expect(ids.toSet(), hasLength(ids.length));
+    });
+
+    test('every celebrity has a usable birth date', () {
+      // The birth date is the one factual claim this feature makes about
+      // a real person, and it is the only input the reading uses. A date
+      // in the future or a placeholder year is a wrong sign shown next to
+      // someone's name.
+      final now = DateTime.now();
+      for (final one in catalog.celebrities) {
+        expect(
+          one.birthDate.isBefore(now),
+          isTrue,
+          reason: '${one.name} is not born yet',
+        );
+        expect(
+          one.birthDate.year,
+          greaterThan(1900),
+          reason: '${one.name} has a placeholder year',
+        );
+        expect(one.name.trim(), isNotEmpty);
+        expect(one.knownFor.trim(), isNotEmpty);
+      }
+    });
+
+    test('every group has someone in it', () {
+      // An empty section renders as a heading with nothing under it.
+      for (final group in CelebrityGroup.values) {
+        expect(
+          catalog.celebritiesIn(group),
+          isNotEmpty,
+          reason: 'nobody in ${group.displayName}',
+        );
+      }
+    });
+
+    test('the picker covers a decent spread of signs', () {
+      // Not all twelve — that would be a content constraint nobody can
+      // meet with real people — but a list that is all Leos makes the
+      // match scores look broken.
+      final signs = catalog.celebrities.map((c) => c.sign).toSet();
+      expect(signs.length, greaterThanOrEqualTo(10));
     });
 
     test('the deck is large enough for a week-long no-repeat guarantee', () {

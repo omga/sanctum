@@ -223,6 +223,106 @@ final class InstallSaltProvider
 
 String _$installSaltHash() => r'a87574b587746ed84c31dbf0eb13eecd4084e8e8';
 
+/// Schedules the daily reading notification.
+
+@ProviderFor(reminderService)
+final reminderServiceProvider = ReminderServiceProvider._();
+
+/// Schedules the daily reading notification.
+
+final class ReminderServiceProvider
+    extends
+        $FunctionalProvider<ReminderService, ReminderService, ReminderService>
+    with $Provider<ReminderService> {
+  /// Schedules the daily reading notification.
+  ReminderServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'reminderServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$reminderServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ReminderService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ReminderService create(Ref ref) {
+    return reminderService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ReminderService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ReminderService>(value),
+    );
+  }
+}
+
+String _$reminderServiceHash() => r'4ebee5682557549ca1d37aee79b660046f520bfd';
+
+/// Compatibility matches and what the user has unlocked.
+
+@ProviderFor(compatibilityRepository)
+final compatibilityRepositoryProvider = CompatibilityRepositoryProvider._();
+
+/// Compatibility matches and what the user has unlocked.
+
+final class CompatibilityRepositoryProvider
+    extends
+        $FunctionalProvider<
+          CompatibilityRepository,
+          CompatibilityRepository,
+          CompatibilityRepository
+        >
+    with $Provider<CompatibilityRepository> {
+  /// Compatibility matches and what the user has unlocked.
+  CompatibilityRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'compatibilityRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$compatibilityRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<CompatibilityRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CompatibilityRepository create(Ref ref) {
+    return compatibilityRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CompatibilityRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CompatibilityRepository>(value),
+    );
+  }
+}
+
+String _$compatibilityRepositoryHash() =>
+    r'c958058b59701ec57cc6b30c26ff96bc6e597a08';
+
 /// Onboarding quiz answers.
 
 @ProviderFor(quizRepository)
