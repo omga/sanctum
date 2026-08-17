@@ -14,6 +14,14 @@ enum CelebrityGroup {
   /// Film and television.
   screen('Film & TV'),
 
+  /// Creators — YouTube, TikTok, streaming, podcasts, modelling.
+  ///
+  /// Its own section rather than folded into [screen] because the picker
+  /// is browsed by people looking for a *specific* name, and someone
+  /// hunting a streamer will not scroll a list of film actors to find
+  /// one. Declaration order here is section order in the picker.
+  influencer('Creators'),
+
   /// Athletes.
   sport('Sport');
 

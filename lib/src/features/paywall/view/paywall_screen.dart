@@ -111,11 +111,23 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               error: (error, _) => Center(child: Text('$error')),
               data: (unordered) {
                 // Yearly leads: it is the default selection and the
-                // one the CTA describes.
+                // one the CTA describes. Lifetime is filtered out rather
+                // than ordered last — the store offering may contain it,
+                // but a one-off price next to two subscriptions changes
+                // what this screen is asking for. It belongs on its own
+                // surface, reached by its own trigger.
+                final sellable = unordered.where(
+                  (p) => p.period != BillingPeriod.lifetime,
+                );
                 final data = [
-                  ...unordered.where((p) => p.period == BillingPeriod.yearly),
-                  ...unordered.where((p) => p.period != BillingPeriod.yearly),
+                  ...sellable.where((p) => p.period == BillingPeriod.yearly),
+                  ...sellable.where((p) => p.period != BillingPeriod.yearly),
                 ];
+                if (data.isEmpty) {
+                  return const Center(
+                    child: Text('Plans are unavailable right now.'),
+                  );
+                }
                 final selected = _selectedPlanId ?? data.first.id;
                 final plan = data.firstWhere((p) => p.id == selected);
 
@@ -314,10 +326,17 @@ class _PlanTile extends StatelessWidget {
                     Text(
                       // Both numbers, always: the headline per-month
                       // figure and the actual amount that gets charged.
-                      isYearly
-                          ? '${plan.displayPricePerMonth} / month · '
-                                'billed ${plan.displayPrice} yearly'
-                          : '${plan.displayPrice} / ${plan.period.unitLabel}',
+                      // The store does not always break a yearly price
+                      // down per month, and inventing the number here
+                      // would mean formatting currency ourselves.
+                      switch ((isYearly, plan.displayPricePerMonth)) {
+                        (true, final perMonth?) =>
+                          '$perMonth / month · billed '
+                              '${plan.displayPrice} yearly',
+                        (true, _) => '${plan.displayPrice} / year',
+                        _ =>
+                          '${plan.displayPrice} / ${plan.period.unitLabel}',
+                      },
                       style: type.bodySmall,
                     ),
                   ],

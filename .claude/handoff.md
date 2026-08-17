@@ -544,11 +544,134 @@ What the app can know is limited and worth being honest about:
 `ShareController.shareInvite` reports that the user *picked a target
 app*, not that a message was sent. Nothing can tell us the latter.
 
+### The catalogue is verified against Wikidata, not memory
+
+141 people, and every birth date comes from Wikidata's `P569` rather
+than from anybody's recollection. The original 46 were written from
+memory and one of them was wrong — Barry Keoghan was 17 October, and is
+18 October. One in 46 is about the rate you should expect from memory,
+which is why `tool/verify_celebrities.py` exists and why it exits
+non-zero: run it before a release.
+
+Three things it does that a naive check would not:
+
+- **Resolves through the English Wikipedia article, not Wikidata search.**
+  Search is fuzzy and confidently wrong on mononyms: "Rihanna" matched
+  a *given name* entity and "Dua Lipa" matched the album. Names that
+  need help are pinned in `tool/celebrity_titles.json`, by Q-id where
+  the article title is contested — "Lisa (Thai rapper)" resolved one
+  day and 404'd the next when the page moved.
+- **Rejects imprecise dates.** Wikidata stores year- and month-precision
+  values, and a year-precision date renders as 1 January — which passes
+  a naive string check and shows the wrong sign. Only `precision == 11`
+  is accepted. Note the converse: Noah Kahan, Ice Spice, Tate McRae and
+  Charli D'Amelio genuinely are 1 Jan / 1 Jul / 1 May, confirmed against
+  article prose, so a "looks like a placeholder" heuristic would be
+  wrong to reject them.
+- **Excludes minors**, and `content_catalog_test.dart` asserts it. This
+  is a romantic compatibility feature whose output — "who wants it
+  more", beside a name — is designed to be posted publicly. A child in
+  that list is a different category of mistake from a wrong date.
+
+The `influencer` group ("Creators") was added alongside: someone hunting
+a streamer will not scroll a list of film actors to find one. Enum
+declaration order is section order in the picker.
+
 **No celebrity photographs, ever.** A public figure's birth date is a
 fact; their likeness is not, and a face beside a compatibility score
 implies an endorsement that does not exist. The picker draws an
 element-tinted disc with the sign glyph instead, which is also better
 looking than a grid of scraped press photos.
+
+That rule holds even when the *user* supplies the photograph. The
+Photoshop analogy — "nobody bans the tool" — breaks on two points here:
+this app ships a celebrity picker, a score, a template and a watermark,
+so it structures the output rather than providing a blank canvas; and
+the export is an acquisition asset for a paid product, which is the
+commercial use that right-of-publicity claims are actually about. The
+intended answer is that the creator adds the face in TikTok, where the
+tool really is neutral — which also performs better, because content
+that looks made in TikTok beats content that looks exported from an app.
+The 9:16 template leaves the celebrity side as a glyph disc for exactly
+this reason.
+
+### The reveal makes you wait, on purpose
+
+`MatchComputing` holds the compatibility screen for ~2.9 s before the
+reading opens. The reading is already computed — the ephemeris runs in
+well under a millisecond — so this is theatre and worth saying so. It
+earns its place twice: a number that appears instantly reads as a
+lookup, and this is the screen the acquisition plan asks people to film.
+
+Two constraints on it. **The captions name work that actually happens** —
+placing the planets, reading Venus and Mars, measuring the angles,
+weighing six facets — because inventing steps here would be the same
+lie as inventing a score, just prettier. And **it runs once per match**:
+`_opened` is decided from `revealedIds` on the first build, before
+`_persistIfNeeded` writes the id, since that is the only moment a first
+reveal can be told from a revisit. Re-reading your own result is not a
+reveal and should not cost three seconds.
+
+### The reveal exports as a four-frame carousel
+
+`features/compatibility/.../carousel/` renders the match as four 9:16
+frames and hands all four to the share sheet at once. Cover, then the
+hexagon, then the directional split, then the verdict — and the order is
+the argument. The cover has to be legible as a thumbnail an inch tall,
+and the split is on frame three because it is the only claim in this app
+that is about a *person*, which is what gets defended in a comment.
+
+**The share is deliberately not gated.** An earlier design traded the
+reveal for a social post. Three reasons it is not built that way: the
+platform only reports that an app was picked, never that anything was
+posted (see `ShareController.shareInvite`), so the gate is unenforceable;
+requiring a public post to unlock functionality is the shape of thing
+App Review rejects; and the export *is* the acquisition channel, so
+charging friction for it taxes the only growth this product has. The
+gate stays where it already works — the second reading.
+
+Four things about the implementation are load-bearing:
+
+- **The canvas is 360x640 logical, captured at 4x → 1440x2560.** Laying
+  it out at full pixel size would mean a parallel "but four times
+  bigger" value for every token in the design system, and the first one
+  anybody forgot would be invisible until it was in a stranger's feed.
+  3x was the first choice and came back visibly soft next to the single
+  card: TikTok draws the image wider than the screen to fill a 20:9
+  phone, so a 1080-wide file is upscaled ~8% *before* its own
+  recompression, and fine serif type on a dark gradient is the worst
+  case for that. Frames are ~1.5 MB each and deleted after the share.
+- **The preview must not constrain the slide.** A `SizedBox` is clamped
+  by its constraints, so a slide previewed inside a viewport shorter
+  than 640 lays out at the *viewport's* height and the capture writes
+  that to disk. This shipped once as 1080x1689 files that looked perfect
+  on screen. `FittedBox` lays its child out unbounded; `Transform.scale`
+  does not. `story_slide_test.dart` pins it from a deliberately cramped
+  parent — the first version of that test gave the slide room and
+  therefore passed against the bug.
+- **The gutters are measured, not guessed.** Posted to TikTok on a Pixel
+  6 and read off the result: the caption/username/sound block covers the
+  bottom **16.8%**, the action rail the right **15%**, and on a 20:9
+  screen TikTok *crops 3.6% off each side* to fill. The first version
+  reserved 14.4% and 8.9% and both were short — the facet pills landed
+  under "Add 1st" and the closing quote ran beneath the like button.
+  `railGutter` is applied to both sides so the composition stays centred,
+  because the same file goes to Instagram Stories where the overlays sit
+  somewhere else. `story_slide_test.dart` asserts the three fractions.
+- **Rows inside a slide must not carry fixed widths.** The safe-zone fix
+  narrowed the content column from 296 to 252 and every hard-coded
+  `SizedBox(width:)` in the slides overflowed at once. They are
+  `Expanded` now, and the hexagon takes `StorySlide.contentWidth`.
+- **Content scales rather than overflows.** Copy length is not fixed —
+  a longer directional line, or any translation — and on this canvas an
+  overflow is not a debug stripe, it is a clipped sentence in a
+  published post.
+
+`CarouselCaption` composes the caption in `domain/`, leading with the
+split rather than the score for the reason above, and falling back to
+the share line when `isBalanced` says the model has nothing worth
+claiming. A "Copy caption" button sits beside the share because Android
+receivers routinely ignore `EXTRA_TEXT`.
 
 ### Background audio via audio_service, and `moveTaskToBack`
 
@@ -571,6 +694,52 @@ user-dismissible, so that flag likely cannot deliver this any more. This
 was **not verified against the audio_service source** — treat it as an
 open question, not a fact. The safety net is in place regardless:
 `onNotificationDeleted()` routes to `stopSession()`, which fades out.
+
+### RevenueCat, without its paywall
+
+`RevenueCatSubscriptionRepository` implements `BillingRepository` — the
+marker interface that is both halves of billing — and one provider picks
+it. That is the whole migration, exactly as the seam promised.
+
+**`purchases_ui_flutter` was rejected, and not on taste.** RevenueCat
+Paywalls and Customer Center require `MainActivity` to subclass
+`FlutterFragmentActivity`; ours subclasses `AudioServiceActivity`, which
+extends `FlutterActivity`. Changing it is the thing that gives audio a
+second headless engine. The escape hatch is real if it is ever needed —
+`AudioServiceActivity` is fourteen lines whose only job is one
+`provideFlutterEngine` override, and `AudioServicePlugin.getFlutterEngine`
+is `public static`, so a `FlutterFragmentActivity` subclass could do the
+same thing — but it means maintaining a copy of a third-party class.
+
+The product reason is stronger than the technical one: a remote paywall
+template cannot read a local quiz answer, and personalising the headline
+from the quiz is the highest-value conversion work left. `PaywallTrigger`
+stays ours either way; RevenueCat has no equivalent of earned moments
+with exponential backoff.
+
+**The user is never identified.** `configure` passes no `appUserID`, so
+RevenueCat generates an anonymous one, and that is the only reason the
+privacy sentence survives having a payment vendor. `Purchases.logIn` with
+anything derived from the quiz would break the one claim this product is
+differentiated on.
+
+**Prices are never computed here.** `priceString` and
+`pricePerMonthString` come from the store already localised;
+`displayPricePerMonth` is nullable because not every product has one, and
+the paywall omits the line rather than dividing and formatting a
+currency itself. Only `savingsPercent` is calculated, because a ratio of
+two prices in one currency is not a currency.
+
+**Lifetime is modelled but not sold.** `BillingPeriod.lifetime` exists so
+the repository does not silently drop a configured product, and the
+paywall filters it out. A one-off offer is now a screen to write, not a
+data migration. `PackageType.weekly` is deliberately unmapped — highest
+refund rate in the category — so adding one in the dashboard will not
+make it appear in the app.
+
+**Cancelling is not a failure.** `purchaseCancelledError` returns `Ok`.
+Left to `Result.guard` it would reach Sentry as a handled failure and
+show the user an error for a decision they made on purpose.
 
 ### Fonts are bundled, never fetched
 
@@ -612,6 +781,14 @@ the obvious-sounding choice, contains zero of the twelve.
   2026-08-16 on the iOS 26.1 simulator end to end: manual entry and 46
   celebrities, the invite gate, unlock, persistence, the second-match
   paywall, and the shareable card.
+- **Carousel export** (`features/compatibility/.../carousel/`) —
+  verified 2026-08-17 on the iOS 26.1 simulator end to end: all four
+  frames render, the share sheet reports "Plain Text and 4 Documents",
+  and the files on disk are 1440x2560 each. **Verified on TikTok** on a
+  real Pixel 6, 2026-08-17: it accepts all four as one photo carousel,
+  and it **drops the caption** — `EXTRA_TEXT` does not survive, which is
+  what the "Copy caption" button is for. Do not remove it.
+  **Instagram is untested.**
 - **Payoff screen** (`features/payoff/`) — verified 2026-08-16 on an
   Android device and on the iOS 26.1 simulator. The reading composes
   from the answers, addresses the user by name, and "Share this" puts a
@@ -620,6 +797,12 @@ the obvious-sounding choice, contains zero of the twelve.
   image itself is recognised (Print and Assign to Contact are offered),
   and setting an explicit `image/png` mime type on the `XFile` was tried
   and changed nothing.
+
+- **RevenueCat** — SDK wired, verified 2026-08-17 on a real Pixel 6: a
+  release build launches clean with the Test Store guard active, and the
+  merged manifest carries `com.android.vending.BILLING`. **No purchase
+  has been made**, because the dashboard has no products yet and a test
+  key cannot run in release. That is the next thing to verify.
 
 ### Size, measured
 
@@ -630,7 +813,8 @@ validation layers, and `flutter run` leaves a *second* copy of the kernel
 blob in `app_flutter/` for hot reload, which Android files under user
 data. The app's real persisted state is **~40 KB**.
 
-The release APK is **28.8 MB** for arm64, of which ~19 MB is the Flutter
+The release APK is **30.3 MB** for arm64 (28.8 MB before
+RevenueCat), of which ~19 MB is the Flutter
 engine plus our AOT code. It was 23.8 MB before
 `flutter_local_notifications` (plus Android core-library desugaring),
 `posthog_flutter`, and `sentry_flutter` — Sentry's native SDK is the
@@ -639,24 +823,12 @@ are in `device-testing.md`.
 
 ### Stubbed or missing
 
-- **The 46 celebrity birth dates have not been verified against a
-  source.** They are from memory, and the birth date is the single
-  factual claim this feature makes about a real person — a wrong one
-  shows the wrong sign beside their name. `celebrities.json` needs one
-  pass against a reference before launch. Tests check the dates are
-  plausible and the ids unique; nothing checks they are *right*.
-- **Billing is a local stub.** `LocalSubscriptionRepository` writes a
-  bool to preferences. Swapping in RevenueCat is one class implementing
-  `SubscriptionRepository` + `EntitlementRepository` and one changed
-  provider. Prices are placeholders — real ones must come from the store
-  at runtime.
-- **Reminder time is collected and never used.** The quiz asks when the
-  user wants their reading and nothing schedules it. This is a promise
-  the app does not keep. Needs notifications wiring, which means
-  re-adding `flutter_local_notifications` *and* Android core-library
-  desugaring (it was removed precisely because it was unused and forced
-  that).
-- **No energy-over-time chart**, though the paywall advertises "insights".
+- **Billing is wired to RevenueCat but has no products yet.** The code
+  is done; the dashboard is not. Needs: the entitlement identifier
+  confirmed (`sanctum_pro` is assumed), an offering with monthly and
+  annual packages, real products in App Store Connect / Play Console,
+  and platform `appl_`/`goog_` keys. Until then the paywall reports that
+  plans are unavailable, which is correct behaviour, not a bug.
 - **No golden tests** (`alchemist` is installed, none written).
 - **No launcher icon of your own** — the current crescent mark is a
   placeholder generated in-repo.
@@ -670,20 +842,21 @@ are in `device-testing.md`.
 
 ## 5. Exact next steps
 
-1. **Verify the celebrity birth dates**, then post twenty videos of the
-   compatibility flow before building anything else. The riskiest
-   assumption is not the feature, it is whether this team can make
-   content that moves — and that costs nothing to test.
+1. **Post twenty videos of the compatibility flow before building
+   anything else.** The riskiest assumption is not the feature, it is
+   whether this team can make content that moves — and that costs
+   nothing to test. The catalogue and the carousel are both done; there
+   is nothing left to build before this.
 2. **Replace `MatchResultRoute`'s query parameters with an opaque id.**
    It currently carries `name` and `birth`. Both PostHog's and Sentry's
    navigation observers are disabled specifically because of it, and
    `_scrub` patches breadcrumbs after the fact — but the real fix is to
    stop putting a partner's name and birth date in a URL at all. Until
    then, any new observability tool has to be audited for it.
-3. **RevenueCat.** `LocalSubscriptionRepository` is a bool in prefs
-   behind `EntitlementRepository`, so it is genuinely a drop-in. Free
-   under $2.5k monthly tracked revenue, and its own dashboard covers a
-   chunk of subscription analytics.
+3. **Finish RevenueCat in the dashboard.** The SDK side is done — see
+   §3. What remains is entirely configuration: confirm the entitlement
+   *identifier*, build the offering, create the store products, and get
+   the platform keys.
 4. **Localise: Spanish, Russian, French.** Nothing is wired yet — no
    `flutter_localizations`, no ARB files, every string is inline. The
    engineering is routine; the real cost is that this app's value *is*
@@ -703,14 +876,13 @@ are in `device-testing.md`.
    paywall just doesn't read it yet. Someone who ticked "I keep repeating
    a pattern" should see that sentence back. This is the highest-value
    remaining conversion work.
-4. **Wire the reminder time** to real local notifications, or remove the
-   question. Shipping it as-is is a broken promise.
 5. **Add the entertainment disclaimer** to first launch. It is already on
-   the payoff screen and nowhere else.
+   the payoff screen and on the carousel's closing frame, nowhere else.
 6. **Replace the placeholder icon** and set up build flavors if the
    two-app experiment is going ahead.
-7. Then: 9:16 video export of the reveal, palm scan, RevenueCat, energy insights, golden tests, low-end Android
-   profiling.
+7. Then: 9:16 *video* export of the reveal (the carousel is the still
+   version of this and should be measured first), palm scan, RevenueCat,
+   energy insights, golden tests, low-end Android profiling.
 
 ---
 
@@ -725,11 +897,83 @@ are in `device-testing.md`.
   but none exists. Synthesised tones are the current content.
 - Pricing: the stub lists £6.99/mo and £39.99/yr as placeholders. Real
   products need creating in App Store Connect / Play Console.
+- Instagram: does a four-image share reach Stories as four cards, or does
+  Instagram take only the first? 9:16 *is* the Story format so the
+  frames need no change there — but IG **feed** carousels cap at 4:5
+  (1080x1350), so feed reach would need a second aspect on `StorySlide`.
+  Worth building only once TikTok has shown the format moves.
 
 ---
 
 ## 7. Gotchas that will waste your time
 
+- **The resource shrinker strips anything only Dart refers to, and only
+  in release.** R8 walks Java, Kotlin and XML to decide what is
+  reachable; it cannot read a Dart string. Two casualties, both in the
+  audio feature, both invisible in debug:
+
+  * `ic_notification`, from `androidNotificationIcon:` in bootstrap.
+  * **`audio_service_play_arrow` / `_pause` / `_stop`** — the plugin's
+    *own* transport icons, named by `MediaControl.play`/`pause`/`stop`.
+    These are easiest to miss because they are not this app's files.
+
+  The second set is the damaging one, and it fails in a way that looks
+  like nothing: `AudioService.setState` throws
+  `IllegalArgumentException: You must specify an icon resource id to
+  build a CustomAction` **before** reaching
+  `if (!wasPlaying && playing) enterPlayingState()`, so the foreground
+  service is never started. Audio plays, the UI updates correctly, and
+  there is simply no notification — the exception goes to `System.err`
+  only, once per state broadcast (every 250 ms here, which is what makes
+  it findable in logcat).
+
+  `android/app/src/main/res/raw/keep.xml` pins both, with a wildcard on
+  `audio_service_*` so adding a skip or rewind control later cannot
+  reintroduce it. **Any future resource named only from Dart goes
+  there.** Verify a build before shipping:
+
+  ```bash
+  for n in ic_notification audio_service_play_arrow audio_service_pause; do
+    echo "$n: $($ANDROID_HOME/build-tools/<ver>/aapt2 dump resources \
+      build/app/outputs/flutter-apk/app-release.apk | grep -c drawable/$n)"
+  done
+  ```
+
+  Confirmed fixed on a Pixel 6, Android 16: `isForeground=true`,
+  `types=0x2` (mediaPlayback), notification on channel
+  `com.soulheals.sanctum.audio`, and tapping it lands on the player.
+
+  Worth remembering *how* this went: there were three independent bugs
+  behind one symptom — the `await player.play()` deadlock below, then
+  `ic_notification`, then the transport icons. Each fix was necessary
+  and none was sufficient, and after each one it was tempting to declare
+  victory. "I found *a* cause" is not "I found *the* cause"; the only
+  reliable check was `dumpsys activity services | grep isForeground`.
+- **The media notification's destination is decided at the app root.**
+  `AudioService.notificationClicked` is listened to in `SanctumApp`, not
+  on the player screen — the notification is tappable exactly when the
+  app is backgrounded and no sound screen is mounted, so a listener
+  living on the player would be disposed precisely when it was needed.
+  Navigation is deferred a frame because the stream is a seeded
+  `BehaviorSubject` and can replay a tap during `initState`.
+- **`await player.play()` never returns on a looping source.** just_audio
+  documents it: the future "completes when the playback completes or is
+  paused or stopped". `ToneAudioSource` loops with `LoopMode.one`, so
+  awaiting it in `SanctumAudioHandler.start` blocked forever and the two
+  lines after it never ran. One missing `unawaited` produced four
+  symptoms at once — no media notification, dead transport buttons, no
+  position updates, and `start()` itself never completing — while audio
+  played out of the speakers the whole time, which made it look like a
+  UI bug. `play()` publishes `playing: true` synchronously before its
+  first internal await, so not awaiting it is safe and `_broadcast()`
+  immediately after still reports the right state. This was in the
+  first commit; it is not a regression from anything recent.
+- **audio_service enters the foreground off `playbackState.playing`.**
+  If that flag never goes true there is no notification and no
+  lock-screen control, and `dumpsys activity services` shows the service
+  *started but not foreground* — which is the fastest way to tell this
+  apart from a permissions problem. `POST_NOTIFICATIONS` being granted
+  does not help if nothing ever asks to be foregrounded.
 - **`dart run build_runner build` now takes ~100 s.** It is not hung.
 - **Riverpod 3 removed `AsyncValue.valueOrNull`.** Use `.value` (it is
   nullable). This bit twice.
@@ -763,6 +1007,15 @@ are in `device-testing.md`.
   whatever opacity it reached and stays there, permanently painted over
   the incoming one. This does not fail a widget test; it looks like a
   stuck screen on a device, and it is how it was found.
+- **A RevenueCat Test Store key crashes a release build, on purpose.**
+  The SDK launches its own `SimulatedStoreErrorDialogActivity` and throws
+  from `onPause`: *"Test Store API key used in release build."* Their
+  reasoning is sound — an app submitted with a test key is rejected in
+  review — but this repo builds release APKs to test on real hardware,
+  so `configure` skips the SDK entirely when it holds a `test_` key in
+  release mode. The app then runs with billing dead rather than not
+  running at all, and every path fails closed to `free`. **Purchases can
+  only be exercised in a debug build** until real platform keys exist.
 - **`flutter pub add sentry_flutter` resolves 8.14.2, which does not
   compile.** Its Swift plugin calls `SentryBinaryImageCache.image`,
   which the native SDK that Swift Package Manager resolves no longer

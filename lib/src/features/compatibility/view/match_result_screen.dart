@@ -1,6 +1,6 @@
+
 import 'dart:async';
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,8 +13,10 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/services/compatibility_gate.dart';
+import 'package:sanctum/src/features/compatibility/view/match_carousel_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/direction_bar.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/hexagon_chart.dart';
+import 'package:sanctum/src/features/compatibility/view/widgets/match_computing.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/match_share_card.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/score_dial.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
@@ -52,6 +54,14 @@ class MatchResultScreen extends ConsumerStatefulWidget {
 class _MatchResultState extends ConsumerState<MatchResultScreen> {
   final GlobalKey _cardKey = GlobalKey();
   bool _persisting = false;
+
+  /// Whether the computing sequence has finished, or was never needed.
+  ///
+  /// Null until the first build has seen the persisted state, because
+  /// that is the only moment we can tell a first reveal from a revisit:
+  /// [_persistIfNeeded] writes the id immediately afterwards, so asking
+  /// again later would always say "already seen".
+  bool? _opened;
 
   MatchPerson get _them => MatchPerson(
     name: widget.name,
@@ -121,8 +131,22 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
           }
 
           final access = data.accessFor(match.id);
-          if (access == CompatibilityAccess.unlocked) {
-            _persistIfNeeded(data, match);
+          final unlocked = access == CompatibilityAccess.unlocked;
+
+          // Decided once, before the reveal is recorded. A locked
+          // reading skips the sequence too — there is nothing to build
+          // up to behind a blur.
+          _opened ??= !unlocked || data.revealedIds.contains(match.id);
+
+          if (unlocked) _persistIfNeeded(data, match);
+
+          if (_opened == false) {
+            return MatchComputing(
+              match: match,
+              onDone: () {
+                if (mounted) setState(() => _opened = true);
+              },
+            );
           }
 
           return _Result(
@@ -130,6 +154,9 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
             access: access,
             cardKey: _cardKey,
             onInvite: () => unawaited(_sendInvite(match)),
+            onPost: () => unawaited(
+              MatchCarouselScreen.open(context, match),
+            ),
             onShare: () => unawaited(
               ref
                   .read(shareControllerProvider.notifier)
@@ -149,6 +176,7 @@ class _Result extends StatelessWidget {
     required this.cardKey,
     required this.onInvite,
     required this.onShare,
+    required this.onPost,
   });
 
   final CompatibilityMatch match;
@@ -156,6 +184,7 @@ class _Result extends StatelessWidget {
   final GlobalKey cardKey;
   final VoidCallback onInvite;
   final VoidCallback onShare;
+  final VoidCallback onPost;
 
   bool get _locked => access != CompatibilityAccess.unlocked;
 
@@ -237,8 +266,20 @@ class _Result extends StatelessWidget {
                     child: MatchShareCard(match: match),
                   ),
                   const SizedBox(height: SanctumSpacing.lg),
+
+                  // The carousel is the primary action and the card is
+                  // the fallback, not the other way round. One still is
+                  // a screenshot; four frames is a post, and posts are
+                  // the only acquisition channel this product has.
                   SanctumButton(
-                    label: 'Share this',
+                    label: 'Share to TikTok',
+                    icon: Icons.auto_awesome_motion,
+                    expand: true,
+                    onPressed: _locked ? null : onPost,
+                  ),
+                  const SizedBox(height: SanctumSpacing.sm),
+                  SanctumButton(
+                    label: 'Share just this card',
                     icon: Icons.ios_share,
                     variant: SanctumButtonVariant.ghost,
                     expand: true,

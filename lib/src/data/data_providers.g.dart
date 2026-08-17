@@ -634,6 +634,12 @@ String _$oracleRepositoryHash() => r'd85c6ed579933f78a5f5333a21fd9f134f558f95';
 /// One object serves both interfaces below, exactly as RevenueCat's
 /// `Purchases` does. Replacing it means changing these three providers
 /// and nothing else in the app.
+///
+/// `LocalSubscriptionRepository` is still here and still works — set
+/// `SANCTUM_LOCAL_BILLING=true` to get it back. It is the only way to
+/// exercise the paywall on a machine with no store account, and its
+/// `resetForTesting` is the only way to see the paywall twice on one
+/// device; RevenueCat has no equivalent short of clearing app data.
 
 @ProviderFor(subscriptionStore)
 final subscriptionStoreProvider = SubscriptionStoreProvider._();
@@ -643,20 +649,32 @@ final subscriptionStoreProvider = SubscriptionStoreProvider._();
 /// One object serves both interfaces below, exactly as RevenueCat's
 /// `Purchases` does. Replacing it means changing these three providers
 /// and nothing else in the app.
+///
+/// `LocalSubscriptionRepository` is still here and still works — set
+/// `SANCTUM_LOCAL_BILLING=true` to get it back. It is the only way to
+/// exercise the paywall on a machine with no store account, and its
+/// `resetForTesting` is the only way to see the paywall twice on one
+/// device; RevenueCat has no equivalent short of clearing app data.
 
 final class SubscriptionStoreProvider
     extends
         $FunctionalProvider<
-          LocalSubscriptionRepository,
-          LocalSubscriptionRepository,
-          LocalSubscriptionRepository
+          BillingRepository,
+          BillingRepository,
+          BillingRepository
         >
-    with $Provider<LocalSubscriptionRepository> {
+    with $Provider<BillingRepository> {
   /// The local stand-in for a real store.
   ///
   /// One object serves both interfaces below, exactly as RevenueCat's
   /// `Purchases` does. Replacing it means changing these three providers
   /// and nothing else in the app.
+  ///
+  /// `LocalSubscriptionRepository` is still here and still works — set
+  /// `SANCTUM_LOCAL_BILLING=true` to get it back. It is the only way to
+  /// exercise the paywall on a machine with no store account, and its
+  /// `resetForTesting` is the only way to see the paywall twice on one
+  /// device; RevenueCat has no equivalent short of clearing app data.
   SubscriptionStoreProvider._()
     : super(
         from: null,
@@ -673,25 +691,25 @@ final class SubscriptionStoreProvider
 
   @$internal
   @override
-  $ProviderElement<LocalSubscriptionRepository> $createElement(
+  $ProviderElement<BillingRepository> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  LocalSubscriptionRepository create(Ref ref) {
+  BillingRepository create(Ref ref) {
     return subscriptionStore(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(LocalSubscriptionRepository value) {
+  Override overrideWithValue(BillingRepository value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<LocalSubscriptionRepository>(value),
+      providerOverride: $SyncValueProvider<BillingRepository>(value),
     );
   }
 }
 
-String _$subscriptionStoreHash() => r'f179b1c4d66a720d3a612cc6fb47b6fa7d492789';
+String _$subscriptionStoreHash() => r'e676724e86a37c6f8cf849a6d13f1d3c10a6f343';
 
 /// What the user has access to. Most features depend only on this.
 

@@ -54,6 +54,18 @@ void main() {
         );
         expect(one.name.trim(), isNotEmpty);
         expect(one.knownFor.trim(), isNotEmpty);
+        // Nobody in the catalogue may be a minor. This is a romantic
+        // compatibility feature — "who wants it more" is rendered beside
+        // the name and posted publicly — and a child in that list is a
+        // different kind of mistake from a wrong date. The catalogue is
+        // built from a script that already enforces this; the test is
+        // what stops a hand-added entry slipping past it.
+        final age = now.difference(one.birthDate).inDays ~/ 365;
+        expect(
+          age,
+          greaterThanOrEqualTo(18),
+          reason: '${one.name} is under 18',
+        );
       }
     });
 

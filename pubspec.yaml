@@ -49,21 +49,15 @@ dependencies:
   timezone: ^0.11.1
   posthog_flutter: ^5.36.2
   sentry_flutter: ^9.27.0
+  purchases_flutter: ^10.9.0
 
   # ── Platform ──────────────────────────────────────────────────
-  # NOTE: flutter_local_notifications was removed. It was never imported
-  # by any code, but it forces Android core-library desugaring and drags
-  # in POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / RECEIVE_BOOT_COMPLETED
-  # — and SCHEDULE_EXACT_ALARM needs a Play Console policy declaration.
-  # Shipping all that for a feature that does not exist is worse than not
-  # having it. To re-add when streak reminders are actually built:
-  #   1. flutter pub add flutter_local_notifications
-  #   2. android/app/build.gradle.kts:
-  #        compileOptions { isCoreLibraryDesugaringEnabled = true }
-  #        dependencies {
-  #          coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
-  #        }
-  #   3. Declare only the notification permissions actually used.
+  # NOTE: flutter_local_notifications (above) forces Android core-library
+  # desugaring — see android/app/build.gradle.kts — and pulls in
+  # POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / RECEIVE_BOOT_COMPLETED.
+  # SCHEDULE_EXACT_ALARM is deliberately NOT declared: reminders use
+  # inexactAllowWhileIdle precisely so that Play Console policy
+  # declaration is never needed. Do not "fix" that by adding it.
 
 dev_dependencies:
   flutter_test:

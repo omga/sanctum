@@ -7,6 +7,7 @@ import 'package:sanctum/src/core/analytics/posthog_analytics_service.dart';
 import 'package:sanctum/src/core/logging/logger.dart';
 import 'package:sanctum/src/core/observability/crash_reporting.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/data/repositories/revenuecat_subscription_repository.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
 
 /// Starts Sanctum.
@@ -58,6 +59,16 @@ Future<void> bootstrap() async {
     await PostHogAnalyticsService.configure();
   } on Object catch (error) {
     logger.warning('Analytics setup failed', error: error);
+  }
+
+  // Billing, on the same terms as the two above: a store that will not
+  // answer must not stop the app opening. Everything Sanctum does is
+  // computed on the device, so a failure here costs the user the paywall
+  // and nothing else — `watch` reports free and the free tier works.
+  try {
+    await RevenueCatSubscriptionRepository.configure();
+  } on Object catch (error) {
+    logger.warning('Billing setup failed', error: error);
   }
 
   // Starts the background audio service and returns the one handler the

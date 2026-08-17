@@ -9,12 +9,24 @@ enum BillingPeriod {
   monthly('month'),
 
   /// Renews yearly.
-  yearly('year');
+  yearly('year'),
+
+  /// Bought once, never renews.
+  ///
+  /// Deliberately not on the paywall. It sits in the model because the
+  /// store offering contains it and a repository that silently dropped a
+  /// configured product would be lying about what is for sale; the
+  /// paywall filters it out, so a one-off offer is a screen to write
+  /// rather than a data-layer migration to do first.
+  lifetime('once');
 
   const BillingPeriod(this.unitLabel);
 
   /// Word used after the price: "£4.99 / month".
   final String unitLabel;
+
+  /// Whether the store will charge for this again.
+  bool get renews => this != BillingPeriod.lifetime;
 }
 
 /// One purchasable plan.
@@ -49,7 +61,14 @@ class SubscriptionPlan with SubscriptionPlanMappable {
   /// Shown alongside the yearly plan because a yearly total looks
   /// expensive next to a monthly one until it is expressed in the same
   /// unit. This is honest framing, not a trick: both numbers are shown.
-  final String displayPricePerMonth;
+  ///
+  /// Null for [BillingPeriod.lifetime], which has no monthly equivalent,
+  /// and null for any product the store declines to break down. It comes
+  /// from the store's own `pricePerMonthString` rather than a division
+  /// we do ourselves — dividing a price and formatting the result is how
+  /// an app ends up showing "€3.33" to someone whose locale writes
+  /// "3,33 €".
+  final String? displayPricePerMonth;
 
   /// Length of the introductory free trial, in days. `0` for none.
   final int trialDays;

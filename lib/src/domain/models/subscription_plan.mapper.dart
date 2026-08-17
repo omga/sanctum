@@ -31,6 +31,8 @@ class BillingPeriodMapper extends EnumMapper<BillingPeriod> {
         return BillingPeriod.monthly;
       case r'yearly':
         return BillingPeriod.yearly;
+      case r'lifetime':
+        return BillingPeriod.lifetime;
       default:
         throw MapperException.unknownEnumValue(value);
     }
@@ -43,6 +45,8 @@ class BillingPeriodMapper extends EnumMapper<BillingPeriod> {
         return r'monthly';
       case BillingPeriod.yearly:
         return r'yearly';
+      case BillingPeriod.lifetime:
+        return r'lifetime';
     }
   }
 }
@@ -81,7 +85,7 @@ class SubscriptionPlanMapper extends ClassMapperBase<SubscriptionPlan> {
     'displayPrice',
     _$displayPrice,
   );
-  static String _$displayPricePerMonth(SubscriptionPlan v) =>
+  static String? _$displayPricePerMonth(SubscriptionPlan v) =>
       v.displayPricePerMonth;
   static const Field<SubscriptionPlan, String> _f$displayPricePerMonth = Field(
     'displayPricePerMonth',
@@ -210,7 +214,7 @@ class _SubscriptionPlanCopyWithImpl<$R, $Out>
     String? id,
     BillingPeriod? period,
     String? displayPrice,
-    String? displayPricePerMonth,
+    Object? displayPricePerMonth = $none,
     int? trialDays,
     Object? savingsPercent = $none,
   }) => $apply(
@@ -218,7 +222,7 @@ class _SubscriptionPlanCopyWithImpl<$R, $Out>
       if (id != null) #id: id,
       if (period != null) #period: period,
       if (displayPrice != null) #displayPrice: displayPrice,
-      if (displayPricePerMonth != null)
+      if (displayPricePerMonth != $none)
         #displayPricePerMonth: displayPricePerMonth,
       if (trialDays != null) #trialDays: trialDays,
       if (savingsPercent != $none) #savingsPercent: savingsPercent,

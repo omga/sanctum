@@ -1,0 +1,18 @@
+{
+  "_comment": "English Wikipedia titles, or Wikidata Q-ids, for people whose catalogue name does not resolve on its own — mononyms, stage names and shared names. Prefer a Q-id when the article title is contested. Used by tool/verify_celebrities.py.",
+  "drake": "Drake (musician)",
+  "jungkook": "Jung Kook",
+  "lisa": "Q26707663",
+  "tom-holland": "Tom Holland",
+  "chris-evans": "Chris Evans (actor)",
+  "v-bts": "V (singer)",
+  "rm-bts": "RM (musician)",
+  "jin-bts": "Jin (singer)",
+  "suga-bts": "Suga",
+  "rose-blackpink": "Rosé (singer)",
+  "nikkietutorials": "Nikkie de Jager",
+  "alex-cooper": "Alex Cooper (podcaster)",
+  "peso-pluma": "Peso Pluma",
+  "mrbeast": "MrBeast",
+  "jennie": "Q26262599"
+}

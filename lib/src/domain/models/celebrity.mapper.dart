@@ -31,6 +31,8 @@ class CelebrityGroupMapper extends EnumMapper<CelebrityGroup> {
         return CelebrityGroup.music;
       case r'screen':
         return CelebrityGroup.screen;
+      case r'influencer':
+        return CelebrityGroup.influencer;
       case r'sport':
         return CelebrityGroup.sport;
       default:
@@ -45,6 +47,8 @@ class CelebrityGroupMapper extends EnumMapper<CelebrityGroup> {
         return r'music';
       case CelebrityGroup.screen:
         return r'screen';
+      case CelebrityGroup.influencer:
+        return r'influencer';
       case CelebrityGroup.sport:
         return r'sport';
     }

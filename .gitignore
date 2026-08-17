@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Signing material. Never commit these — the android/ rules do not
+# reach the repository root, and a keystore here is one `git add .`
+# away from being public forever.
+*.jks
+*.keystore
+key.properties

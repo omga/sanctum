@@ -164,7 +164,30 @@ class SanctumAudioHandler extends BaseAudioHandler
           ),
         );
 
-        await _player.play();
+        // NOT awaited, and this is the whole bug that was here.
+        //
+        // just_audio's `play()` returns a future that completes when
+        // playback *finishes* — "completes when the playback completes
+        // or is paused or stopped", per its own docs. This player loops
+        // a tone with `LoopMode.one`, so that future never completes,
+        // and awaiting it meant the two lines below never ran:
+        //
+        //   * `_broadcast()` never fired, so `playbackState` never said
+        //     `playing: true`. audio_service decides whether to enter
+        //     the foreground from exactly that flag — so there was no
+        //     media notification, no lock-screen controls, and the
+        //     service sat started-but-not-foreground.
+        //   * `_startTicker()` never ran, so position never advanced and
+        //     the fade envelope never applied.
+        //   * `start()` itself never completed, so the caller's `await`
+        //     hung and the UI's transport button kept its old state.
+        //
+        // One missing `unawaited` produced all four symptoms, and audio
+        // came out of the speakers the whole time, which is what made it
+        // look like a UI bug. `play()` publishes `playing: true`
+        // synchronously before its first internal await, so `_broadcast`
+        // immediately below still reports the correct state.
+        unawaited(_player.play());
         _startTicker();
         _broadcast();
       },
@@ -196,7 +219,8 @@ class SanctumAudioHandler extends BaseAudioHandler
     if (session == null) return;
 
     _elapsed.start();
-    await _player.play();
+    // Same reason as in `start()`: awaiting this never returns.
+    unawaited(_player.play());
 
     // Fade back up rather than letting the next tick snap the volume
     // from 0 to full. pauseSession() ramps down to silence, so without

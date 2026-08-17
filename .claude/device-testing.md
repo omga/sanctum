@@ -209,5 +209,45 @@ read` — a Flutter Fix box pattern-matched onto unrelated output.
 `df -h /` before believing that message; iOS and Android build outputs
 together run to several GB and `build/` is safe to delete.
 
-**Release currently signs with the debug keystore** (`build.gradle.kts`
-has the TODO). That must be fixed before any store upload.
+### Release-only failures
+
+Two things differ enough from debug to hide bugs, and both bit this
+project in the same feature:
+
+* **Resources referenced only from Dart are shrunk away.** See
+  `res/raw/keep.xml`. Diff the two APKs when something visual works in
+  debug and not in release:
+  ```bash
+  for apk in app-debug app-release; do
+    echo "$apk: $($ANDROID_HOME/build-tools/<ver>/aapt2 dump resources \
+      build/app/outputs/flutter-apk/$apk.apk | grep -c ic_notification)"
+  done
+  ```
+* **A Test Store RevenueCat key crashes release builds on purpose.** See
+  `handoff.md`.
+
+### Release signing
+
+Release is signed from `android/key.properties`, which is **gitignored**,
+or from `SANCTUM_STORE_FILE` / `SANCTUM_STORE_PASSWORD` /
+`SANCTUM_KEY_ALIAS` / `SANCTUM_KEY_PASSWORD` in the environment when that
+file is absent. With neither, the build falls back to the debug keystore
+and logs a warning — so a fresh clone still builds, and the resulting APK
+is simply rejected by Play, which is the right failure.
+
+**The keystore lives outside the repository.** `android/.gitignore`
+covers `**/*.jks`, but those patterns are relative to `android/`, so a
+keystore dropped at the repo root is *not* ignored — `git status` will
+happily offer it to you. Root-level `*.jks`, `*.keystore` and
+`key.properties` rules were added to `.gitignore` as a second line of
+defence, but the file itself belongs somewhere else entirely.
+
+Confirm what a build was actually signed with before uploading:
+
+```bash
+$ANDROID_HOME/build-tools/<ver>/apksigner verify --print-certs \
+  build/app/outputs/flutter-apk/app-release.apk
+```
+
+The SHA-256 must match `keytool -list -v -keystore <your.jks>`. If it
+says `CN=Android Debug`, the signing config did not load.

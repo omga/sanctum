@@ -51,7 +51,7 @@ final class ShareControllerProvider
   ShareController create() => ShareController();
 }
 
-String _$shareControllerHash() => r'2f3a107e187358dd2091fe2d8724edbd9b4b3f9d';
+String _$shareControllerHash() => r'1942b59b19ead2b3818b19484dba349c9676e36e';
 
 /// Puts a captured card, or an invite, into the system share sheet.
 ///

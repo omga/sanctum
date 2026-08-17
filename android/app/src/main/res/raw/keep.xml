@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drawables named only from Dart strings.
+
+  The resource shrinker walks Java, Kotlin and XML to decide what is
+  reachable. It cannot read a Dart string, so a drawable referenced only
+  from Flutter looks unused and is deleted from release builds — and
+  only release builds, which is what makes this so hard to see.
+
+  Two separate casualties here, both in the audio feature:
+
+  * `ic_notification` — named as `androidNotificationIcon:
+    'drawable/ic_notification'` in bootstrap.dart.
+  * `audio_service_*` — audio_service's own transport icons, named by
+    `MediaControl.play`/`pause`/`stop` as `androidIcon:
+    'drawable/audio_service_play_arrow'` and friends. These live in the
+    plugin, not this app, which makes them easy to forget entirely.
+
+  Losing the transport icons is worse than losing the notification icon,
+  because it fails *earlier* and louder-but-invisibly: the platform
+  throws `IllegalArgumentException: You must specify an icon resource id
+  to build a CustomAction` out of `AudioService.setState`, before the
+  `if (!wasPlaying && playing) enterPlayingState()` branch that starts
+  the foreground service. So playback works, the UI updates, and there
+  is simply never a notification — with the exception going only to
+  System.err, once per state broadcast.
+
+  The wildcard is deliberate: adding a rewind or skip control later must
+  not silently reintroduce this.
+-->
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_notification,@drawable/audio_service_*" />

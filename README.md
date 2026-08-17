@@ -2,7 +2,8 @@
 
 A spiritual-wellness app for iOS and Android. A daily reading computed
 from the user's own birth chart, compatibility readings against anyone
-(or a catalogue of public figures), live moon phase, an oracle card,
+(or a catalogue of public figures) that export as a four-frame 9:16
+carousel for TikTok and Reels, live moon phase, an oracle card,
 sound-bath sessions, moon rituals, and a journal — with a personalising
 onboarding quiz and a subscription paywall.
 

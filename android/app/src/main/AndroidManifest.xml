@@ -12,6 +12,12 @@
          breaks in release. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Google Play Billing, via RevenueCat. Play Billing's own
+         manifest merges this in too, but declaring it here keeps the
+         app's permission surface readable in one file rather than
+         only in the merged output. -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
     <!-- The daily reading. Runtime-requested on Android 13+, and asked
          for at the payoff screen rather than on launch, so the prompt
          follows the promise instead of preceding it.

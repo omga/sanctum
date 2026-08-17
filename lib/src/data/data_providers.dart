@@ -11,6 +11,7 @@ import 'package:sanctum/src/data/repositories/journal_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
 import 'package:sanctum/src/data/repositories/quiz_repository.dart';
+import 'package:sanctum/src/data/repositories/revenuecat_subscription_repository.dart';
 import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
@@ -106,9 +107,17 @@ OracleRepository oracleRepository(Ref ref) =>
 /// One object serves both interfaces below, exactly as RevenueCat's
 /// `Purchases` does. Replacing it means changing these three providers
 /// and nothing else in the app.
+///
+/// `LocalSubscriptionRepository` is still here and still works — set
+/// `SANCTUM_LOCAL_BILLING=true` to get it back. It is the only way to
+/// exercise the paywall on a machine with no store account, and its
+/// `resetForTesting` is the only way to see the paywall twice on one
+/// device; RevenueCat has no equivalent short of clearing app data.
 @Riverpod(keepAlive: true)
-LocalSubscriptionRepository subscriptionStore(Ref ref) =>
-    LocalSubscriptionRepository();
+BillingRepository subscriptionStore(Ref ref) =>
+    const bool.fromEnvironment('SANCTUM_LOCAL_BILLING')
+    ? LocalSubscriptionRepository()
+    : RevenueCatSubscriptionRepository();
 
 /// What the user has access to. Most features depend only on this.
 @Riverpod(keepAlive: true)

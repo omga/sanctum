@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
@@ -102,6 +103,74 @@ class ShareController extends _$ShareController {
         state = AsyncError(failure, StackTrace.current);
         return false;
       }(),
+    };
+  }
+
+  /// Captures several boundaries in order and shares them as one post.
+  ///
+  /// [beforeEach] is awaited before frame `index` is read. The slides
+  /// live in a `PageView`, and only a page that is actually on screen
+  /// has painted a layer for [RenderRepaintBoundary.toImage] to read —
+  /// so the caller uses this hook to bring each page forward, while
+  /// every touch of the file system and the share sheet stays here.
+  ///
+  /// Files are numbered because the receiving app is handed a list and
+  /// orders a photo post by file name. An unnumbered set arrives as a
+  /// carousel in whatever order the OS chose, and the cover is the one
+  /// slide that cannot afford to be wrong.
+  ///
+  /// Each [ui.Image] is disposed as soon as it is encoded. Four frames
+  /// at 1080x1920 are about 33 MB of image memory held at once, which is
+  /// a real risk on the low-end Android this is aimed at.
+  Future<void> shareAll(
+    List<GlobalKey> keys, {
+    required double pixelRatio,
+    String? text,
+    Future<void> Function(int index)? beforeEach,
+  }) async {
+    state = const AsyncLoading();
+
+    final result = await Result.guard(
+      () async {
+        final directory = await getTemporaryDirectory();
+        final files = <XFile>[];
+
+        for (final (index, key) in keys.indexed) {
+          await beforeEach?.call(index);
+
+          final object = key.currentContext?.findRenderObject();
+          if (object == null || object is! RenderRepaintBoundary) {
+            throw StateError('slide $index is not a RepaintBoundary');
+          }
+
+          final image = await object.toImage(pixelRatio: pixelRatio);
+          final ByteData? bytes;
+          try {
+            bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+          } finally {
+            image.dispose();
+          }
+          if (bytes == null) throw StateError('could not encode a slide');
+
+          final file = File('${directory.path}/sanctum_slide_$index.png');
+          await file.writeAsBytes(bytes.buffer.asUint8List());
+          files.add(XFile(file.path));
+        }
+
+        await SharePlus.instance.share(
+          ShareParams(files: files, text: text),
+        );
+      },
+      onError: (error, stackTrace) => UnexpectedFailure(
+        'Could not build your post',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+
+    state = switch (result) {
+      Ok() => const AsyncData(null),
+      Err(:final failure) => AsyncError(failure, StackTrace.current),
     };
   }
 }

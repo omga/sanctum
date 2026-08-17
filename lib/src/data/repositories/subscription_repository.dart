@@ -24,6 +24,16 @@ abstract interface class SubscriptionRepository {
   Future<Result<void>> restore();
 }
 
+/// Both halves of billing, served by one object.
+///
+/// `Purchases` is a single SDK that answers "what can they buy" and "what
+/// do they own", and every implementation here mirrors that. The
+/// interfaces stay separate because almost every feature needs only the
+/// second one; this exists so a provider can hand out one instance
+/// without the call site casting.
+abstract interface class BillingRepository
+    implements SubscriptionRepository, EntitlementRepository {}
+
 /// A local stand-in for a real store.
 ///
 /// ## Why this exists
@@ -41,8 +51,7 @@ abstract interface class SubscriptionRepository {
 /// The prices below are placeholders. Real ones must come from the store
 /// at runtime; hard-coding prices is both a localisation bug and an App
 /// Store rejection.
-class LocalSubscriptionRepository
-    implements SubscriptionRepository, EntitlementRepository {
+class LocalSubscriptionRepository implements BillingRepository {
   /// Creates the local store.
   LocalSubscriptionRepository();
 
