@@ -69,7 +69,7 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
   /// paywall never unlocks, and nothing anywhere throws.
   static const String entitlementId = String.fromEnvironment(
     'REVENUECAT_ENTITLEMENT',
-    defaultValue: 'sanctum_pro',
+    defaultValue: 'Sanctum Pro',
   );
 
   /// Whether [apiKey] is a RevenueCat Test Store key.
@@ -230,15 +230,16 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
   }
 
   @override
-  Future<Result<void>> restore() => Result.guard(
+  Future<Result<bool>> restore() => Result.guard(
     () async {
       if (!_configured) throw StateError('billing is not configured');
-      // The listener drives `watch`, so nothing needs doing with the
-      // result. Restore must exist regardless of whether it usually
-      // finds anything: App Store review requires a way back for
-      // somebody who reinstalls, and with anonymous ids this is the only
-      // one there is.
-      await Purchases.restorePurchases();
+      // Restore must exist regardless of whether it usually finds
+      // anything: store review requires a way back for somebody who
+      // reinstalls, and with anonymous ids this is the only one there
+      // is. The returned CustomerInfo is the answer to "did it work",
+      // and the listener that drives `watch` updates independently.
+      final info = await Purchases.restorePurchases();
+      return info.entitlements.active.containsKey(entitlementId);
     },
     onError: (error, stackTrace) => UnexpectedFailure(
       'Could not restore purchases',

@@ -106,6 +106,17 @@ void main() {
     });
   });
 
+  group('restore', () {
+    test('reports whether anything came back, not just success', () async {
+      // `Result<void>` cannot distinguish "worked, found nothing" from
+      // "worked, restored a subscription". It shipped that way once and
+      // the button looked dead to anyone reinstalling: the call
+      // succeeded, the UI only spoke on error, and so it said nothing.
+      final restore = RevenueCatSubscriptionRepository().restore();
+      expect(restore, isA<Future<Result<bool>>>());
+    });
+  });
+
   group('billing period', () {
     test('only lifetime does not renew', () {
       expect(BillingPeriod.monthly.renews, isTrue);
@@ -121,6 +132,16 @@ void main() {
       // it configures anything. The committed default is a test key.
       expect(RevenueCatSubscriptionRepository.usingTestStore, isTrue);
       expect(RevenueCatSubscriptionRepository.apiKey, startsWith('test_'));
+    });
+
+    test('the entitlement id matches the RevenueCat dashboard', () {
+      // Verbatim from the dashboard, spaces and capitals included. A
+      // mismatch here does not throw — `entitlements.active` is simply
+      // always empty and the paywall never unlocks.
+      expect(
+        RevenueCatSubscriptionRepository.entitlementId,
+        'Sanctum Pro',
+      );
     });
 
     test('nothing is configured in a test binding', () {
@@ -142,7 +163,7 @@ void main() {
 
       expect(await repository.plans(), isA<Err<List<SubscriptionPlan>>>());
       expect(await repository.purchase('anything'), isA<Err<void>>());
-      expect(await repository.restore(), isA<Err<void>>());
+      expect(await repository.restore(), isA<Err<bool>>());
     });
   });
 }

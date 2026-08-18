@@ -30,8 +30,13 @@ abstract interface class EntitlementRepository {
   /// The current entitlement, updated when it changes.
   Stream<SanctumEntitlement> watch();
 
-  /// Restores a previous purchase. A no-op until billing is wired.
-  Future<Result<void>> restore();
+  /// Restores a previous purchase.
+  ///
+  /// Resolves to whether the user holds an entitlement *after* the
+  /// attempt. A plain `Result<void>` cannot express "that worked and
+  /// found nothing", which is the single most common outcome and the
+  /// one a user most needs told — otherwise the button looks broken.
+  Future<Result<bool>> restore();
 }
 
 /// Grants everything, always.
@@ -47,5 +52,5 @@ class UnlockedEntitlementRepository implements EntitlementRepository {
       Stream.value(SanctumEntitlement.premium);
 
   @override
-  Future<Result<void>> restore() async => const Result.ok(null);
+  Future<Result<bool>> restore() async => const Result.ok(true);
 }

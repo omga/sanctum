@@ -20,8 +20,8 @@ abstract interface class SubscriptionRepository {
   /// Purchases [planId].
   Future<Result<void>> purchase(String planId);
 
-  /// Restores a previous purchase.
-  Future<Result<void>> restore();
+  /// Restores a previous purchase. See [EntitlementRepository.restore].
+  Future<Result<bool>> restore();
 }
 
 /// Both halves of billing, served by one object.
@@ -102,10 +102,12 @@ class LocalSubscriptionRepository implements BillingRepository {
   }
 
   @override
-  Future<Result<void>> restore() {
+  Future<Result<bool>> restore() {
     return Result.guard(
       () async {
-        _controller.add(await _read());
+        final entitlement = await _read();
+        _controller.add(entitlement);
+        return entitlement.isPremium;
       },
       onError: (error, stackTrace) => UnexpectedFailure(
         'Could not restore purchases',
