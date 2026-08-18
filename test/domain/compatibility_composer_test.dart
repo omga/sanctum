@@ -33,6 +33,42 @@ CompatibilityMatch _compose(DateTime a, DateTime b) =>
     );
 
 void main() {
+  group('match identity', () {
+    test('is the pair, not just the second person', () {
+      // The id was `them.key` while the user was always the first side.
+      // Once any two people can be compared that collides: "Taylor and
+      // Doja" and "you and Doja" would be the same saved reading, and
+      // unlocking one would unlock the other.
+      final youAndB = _compose(
+        _dateIn(ZodiacSign.aries),
+        _dateIn(ZodiacSign.leo),
+      );
+      final aAndB = CompatibilityComposer.compose(
+        you: _person('Someone Else', _dateIn(ZodiacSign.virgo)),
+        them: _person('Them', _dateIn(ZodiacSign.leo)),
+        now: _now,
+      );
+
+      expect(youAndB.id, isNot(aAndB.id));
+      expect(youAndB.id, contains(youAndB.you.key));
+      expect(youAndB.id, contains(youAndB.them.key));
+    });
+
+    test('is directional, because the reading is', () {
+      // Who wants it more is not a symmetric question, so A-then-B and
+      // B-then-A are different readings and must not share storage.
+      final a = _person('A', _dateIn(ZodiacSign.aries));
+      final b = _person('B', _dateIn(ZodiacSign.libra));
+
+      final forward =
+          CompatibilityComposer.compose(you: a, them: b, now: _now);
+      final backward =
+          CompatibilityComposer.compose(you: b, them: a, now: _now);
+
+      expect(forward.id, isNot(backward.id));
+    });
+  });
+
   group('coverage', () {
     test('every aspect has a dynamic line and a share line', () {
       for (final aspect in ZodiacAspect.values) {

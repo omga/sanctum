@@ -35,8 +35,37 @@ class MatchResultScreen extends ConsumerStatefulWidget {
     required this.name,
     required this.birth,
     this.celebrityId,
+    this.first,
     super.key,
   });
+
+  /// Opens a reading between two people, neither of whom is the user.
+  ///
+  /// Pushed with objects rather than routed. `MatchResultRoute` already
+  /// carries one name and birth date in its query string — the standing
+  /// hazard the handoff names — and a two-person route would put two
+  /// people's details in a URL that reaches crash breadcrumbs and OS
+  /// logs. Nothing about this screen needs deep-linking.
+  static Future<void> openPair(
+    BuildContext context,
+    MatchPerson first,
+    MatchPerson second,
+  ) {
+    final birth = second.birthDate;
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MatchResultScreen(
+          name: second.name,
+          birth:
+              '${birth.year.toString().padLeft(4, '0')}-'
+              '${birth.month.toString().padLeft(2, '0')}-'
+              '${birth.day.toString().padLeft(2, '0')}',
+          celebrityId: second.celebrityId,
+          first: first,
+        ),
+      ),
+    );
+  }
 
   /// Their name.
   final String name;
@@ -46,6 +75,9 @@ class MatchResultScreen extends ConsumerStatefulWidget {
 
   /// Set when they came from the celebrity catalogue.
   final String? celebrityId;
+
+  /// The first side of the reading. Null means the user themselves.
+  final MatchPerson? first;
 
   @override
   ConsumerState<MatchResultScreen> createState() => _MatchResultState();
@@ -123,7 +155,10 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('$error')),
         data: (data) {
-          final match = data.matchWith(_them);
+          final match = switch (widget.first) {
+            final first? => data.matchBetween(first, _them),
+            null => data.matchWith(_them),
+          };
           if (match == null) {
             return const Center(
               child: Text('Add your own birth date first.'),
@@ -133,10 +168,17 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
           final access = data.accessFor(match.id);
           final unlocked = access == CompatibilityAccess.unlocked;
 
-          // Decided once, before the reveal is recorded. A locked
-          // reading skips the sequence too — there is nothing to build
-          // up to behind a blur.
-          _opened ??= !unlocked || data.revealedIds.contains(match.id);
+          // Decided once, before the reveal is recorded: that write
+          // happens immediately below, so this is the only moment a
+          // first view can be told from a revisit.
+          //
+          // A locked reading runs the sequence too, and the order is the
+          // point. Computing, *then* the ask, *then* the result puts the
+          // invite at the moment curiosity peaks — after the app has
+          // visibly done the work and before the user has had the thing
+          // they came for. Showing the ask first, with nothing having
+          // happened yet, is a toll booth.
+          _opened ??= data.revealedIds.contains(match.id);
 
           if (unlocked) _persistIfNeeded(data, match);
 

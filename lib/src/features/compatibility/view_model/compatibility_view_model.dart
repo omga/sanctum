@@ -70,12 +70,29 @@ class CompatibilityUiState {
   CompatibilityMatch? matchWith(MatchPerson them) {
     final me = you;
     if (me == null) return null;
+    return matchBetween(me, them);
+  }
 
+  /// The reading between any two people, neither of whom need be the
+  /// user.
+  ///
+  /// The identity of a reading is the *pair*, in order — `you.key` and
+  /// `them.key` together. Keying it on the second person alone, which is
+  /// what it did while the user was always the first, would make
+  /// "Taylor and Doja" the same saved reading as "you and Doja", and
+  /// unlocking one would silently unlock the other. Order is kept
+  /// because the reading is directional: who wants it more is not a
+  /// symmetric question.
+  CompatibilityMatch matchBetween(MatchPerson first, MatchPerson second) {
+    final id = '${first.key}|${second.key}';
     for (final match in saved) {
-      if (match.id == them.key) return match;
+      if (match.id == id) return match;
     }
-
-    return CompatibilityComposer.compose(you: me, them: them, now: now);
+    return CompatibilityComposer.compose(
+      you: first,
+      them: second,
+      now: now,
+    );
   }
 }
 
