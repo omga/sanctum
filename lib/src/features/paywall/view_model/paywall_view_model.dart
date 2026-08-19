@@ -113,12 +113,21 @@ class PaywallController extends _$PaywallController {
   }
 
   /// Restores an existing subscription.
-  Future<void> restore() async {
+  ///
+  /// Returns whether anything was found. The screen needs that to say
+  /// something either way: a restore that legitimately finds nothing
+  /// looks exactly like a broken button otherwise, which is how this
+  /// shipped the first time.
+  Future<bool> restore() async {
     state = const AsyncLoading();
     final result = await ref.read(subscriptionRepositoryProvider).restore();
     state = switch (result) {
       Ok() => const AsyncData(null),
       Err(:final failure) => AsyncError(failure, StackTrace.current),
+    };
+    return switch (result) {
+      Ok(:final value) => value,
+      Err() => false,
     };
   }
 }

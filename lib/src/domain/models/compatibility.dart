@@ -283,7 +283,7 @@ class CompatibilityMatch with CompatibilityMatchMappable {
   final DateTime createdAt;
 
   /// Identity of this pairing, used for unlock bookkeeping.
-  String get id => them.key;
+  String get id => '${you.key}|${them.key}';
 
   /// The strongest facet.
   FacetScore get strongest =>

@@ -1,21 +1,25 @@
 # Sanctum
 
 A spiritual-wellness app for iOS and Android. A daily reading computed
-from the user's own birth chart, compatibility readings against anyone
-(or a catalogue of public figures) that export as a four-frame 9:16
-carousel for TikTok and Reels, live moon phase, an oracle card,
-sound-bath sessions, moon rituals, and a journal — with a personalising
-onboarding quiz and a subscription paywall.
+from the user's own birth chart, compatibility readings between the user
+and anyone — or between any two other people, including a catalogue of
+141 public figures — that export as a four-frame 9:16 carousel for
+TikTok and Reels, live moon phase, an oracle card, sound-bath sessions,
+moon rituals, and a journal, with a personalising onboarding quiz and a
+subscription paywall.
 
 **There is no backend and no account.** Every reading — the daily
 transit, compatibility, moon phase, the oracle draw — is computed on the
 device from bundled content and orbital mechanics, and works offline.
 
-The only network traffic is telemetry: anonymous product analytics
-(PostHog) and crash reporting (Sentry). Neither carries a name, a birth
-date, or journal text, and the onboarding copy promises exactly that.
-See `.claude/handoff.md` for how that promise is enforced in the type
-system.
+Network traffic is telemetry and billing, and nothing else: anonymous
+product analytics (PostHog), crash reporting (Sentry) and subscription
+status (RevenueCat, with anonymous app user IDs). None of them carries a
+name, a birth date, or journal text, and the onboarding copy promises
+exactly that. See `.claude/handoff.md` for how that promise is enforced
+in the type system — and note that it is the constraint an AI advisor
+would break, which is why `.claude/roadmap.md` gates that feature behind
+its own consent screen.
 
 ```bash
 flutter pub get
@@ -99,8 +103,12 @@ and the assertions are pinned to reality wherever reality exists:
 ## Docs
 
 - **`.claude/handoff.md`** — full context: why things are the way they
-  are, which alternatives were rejected, what is stubbed, and what to do
-  next. Read it before changing anything structural.
+  are, which alternatives were rejected, what is stubbed, and the
+  gotchas that will otherwise cost you an afternoon each. Read it before
+  changing anything structural.
+- **`.claude/roadmap.md`** — what to build next and why, ordered by
+  expected revenue per week of work, plus an explicit list of what *not*
+  to build.
 - **`.claude/device-testing.md`** — running and verifying on real
   hardware: simulator coordinates, resetting onboarding, adb, and where
   the build sizes actually come from.

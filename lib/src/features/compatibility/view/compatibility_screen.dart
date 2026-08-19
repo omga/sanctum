@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +15,7 @@ import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/zodiac.dart';
+import 'package:sanctum/src/features/compatibility/view/pair_entry_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/celebrity_tile.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
 import 'package:sanctum/src/features/compatibility/view_model/compatibility_view_model.dart';
@@ -165,6 +168,14 @@ class _BrowserState extends State<_Browser> {
           icon: Icons.add,
           expand: true,
           onPressed: () => const MatchEntryRoute().push<void>(context),
+        ),
+        const SizedBox(height: SanctumSpacing.sm),
+        SanctumButton(
+          label: 'Compare two other people',
+          icon: Icons.people_outline,
+          variant: SanctumButtonVariant.ghost,
+          expand: true,
+          onPressed: () => unawaited(PairEntryScreen.open(context)),
         ),
         if (state.saved.isNotEmpty) ...[
           const SizedBox(height: SanctumSpacing.xxl),

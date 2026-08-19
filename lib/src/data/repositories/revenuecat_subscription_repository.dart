@@ -69,7 +69,7 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
   /// paywall never unlocks, and nothing anywhere throws.
   static const String entitlementId = String.fromEnvironment(
     'REVENUECAT_ENTITLEMENT',
-    defaultValue: 'sanctum_pro',
+    defaultValue: 'Sanctum Pro',
   );
 
   /// Whether [apiKey] is a RevenueCat Test Store key.
@@ -162,7 +162,9 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
       if (!_configured) throw StateError('billing is not configured');
       final offering = (await Purchases.getOfferings()).current;
       if (offering == null) {
-        throw StateError('no current offering is configured');
+        throw StateError(
+          'No current offering is configured in RevenueCat',
+        );
       }
 
       final monthly = offering.availablePackages
@@ -176,12 +178,25 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
         plans.add(_planFrom(package, period, monthly));
       }
       if (plans.isEmpty) {
-        throw StateError('offering "${offering.identifier}" has no plans');
+        throw StateError(
+          'Offering "${offering.identifier}" has no monthly or annual '
+          'package for this store',
+        );
       }
       return plans;
     },
+    // Our own StateErrors are already specific — "no current offering is
+    // configured", "offering X has no plans" — and those are exactly the
+    // two dashboard mistakes that produce an empty paywall. Collapsing
+    // them into one generic string, which is what this did, throws away
+    // the only diagnosis available at the point of failure. Anything
+    // thrown by the SDK itself stays generic: a user does not need to
+    // read a network stack trace.
     onError: (error, stackTrace) => ContentFailure(
-      'Could not load the plans',
+      switch (error) {
+        StateError(:final message) => message,
+        _ => 'Could not reach the store',
+      },
       cause: error,
       stackTrace: stackTrace,
     ),
@@ -230,15 +245,16 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
   }
 
   @override
-  Future<Result<void>> restore() => Result.guard(
+  Future<Result<bool>> restore() => Result.guard(
     () async {
       if (!_configured) throw StateError('billing is not configured');
-      // The listener drives `watch`, so nothing needs doing with the
-      // result. Restore must exist regardless of whether it usually
-      // finds anything: App Store review requires a way back for
-      // somebody who reinstalls, and with anonymous ids this is the only
-      // one there is.
-      await Purchases.restorePurchases();
+      // Restore must exist regardless of whether it usually finds
+      // anything: store review requires a way back for somebody who
+      // reinstalls, and with anonymous ids this is the only one there
+      // is. The returned CustomerInfo is the answer to "did it work",
+      // and the listener that drives `watch` updates independently.
+      final info = await Purchases.restorePurchases();
+      return info.entitlements.active.containsKey(entitlementId);
     },
     onError: (error, stackTrace) => UnexpectedFailure(
       'Could not restore purchases',

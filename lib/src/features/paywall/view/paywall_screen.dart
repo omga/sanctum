@@ -71,6 +71,34 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     if (mounted) Navigator.of(context).maybePop();
   }
 
+  /// Restores, and says so either way.
+  ///
+  /// Store review requires a restore path, and a silent one fails the
+  /// spirit of it: the common case is a reinstall that finds nothing,
+  /// and a button that does nothing visible reads as broken. Errors are
+  /// already surfaced by the listener in `build`, so this only has to
+  /// speak when the call succeeded.
+  Future<void> _restore() async {
+    final restored = await ref
+        .read(paywallControllerProvider.notifier)
+        .restore();
+
+    if (!mounted) return;
+    if (ref.read(paywallControllerProvider).hasError) return;
+
+    if (restored) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'No previous purchase found on this store account.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _purchase(SubscriptionPlan plan) async {
     final analytics = ref.read(analyticsProvider)
       ..track(AnalyticsEvent.purchaseStarted(plan: plan.id));
@@ -185,6 +213,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         setState(() => _selectedPlanId = id);
                       },
                       onPurchase: () => _purchase(plan),
+                      onRestore: () => unawaited(_restore()),
                     ),
                   ],
                 );
@@ -410,6 +439,7 @@ class _Footer extends ConsumerWidget {
     required this.plan,
     required this.onSelect,
     required this.onPurchase,
+    required this.onRestore,
   });
 
   final List<SubscriptionPlan> plans;
@@ -417,6 +447,7 @@ class _Footer extends ConsumerWidget {
   final SubscriptionPlan plan;
   final ValueChanged<String> onSelect;
   final VoidCallback onPurchase;
+  final VoidCallback onRestore;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -464,8 +495,7 @@ class _Footer extends ConsumerWidget {
           ),
           const SizedBox(height: SanctumSpacing.sm),
           TextButton(
-            onPressed: () =>
-                ref.read(paywallControllerProvider.notifier).restore(),
+            onPressed: onRestore,
             child: Text('Restore purchases', style: type.caption),
           ),
         ],
