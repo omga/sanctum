@@ -741,6 +741,31 @@ make it appear in the app.
 Left to `Result.guard` it would reach Sentry as a handled failure and
 show the user an error for a decision they made on purpose.
 
+### The three RevenueCat layers, and which one empties a paywall
+
+Products, entitlements and offerings are separate, and only one of them
+feeds the paywall. This cost an evening:
+
+* **Products** are what the store sells (`sanctum_premium:monthly`).
+* **Entitlements** decide what is unlocked *after* a purchase. Ours is
+  `Sanctum Pro` — a space and two capitals, verbatim, because the SDK
+  matches on the identifier and a mismatch leaves `entitlements.active`
+  simply empty, with nothing thrown and nothing logged.
+* **Offerings** are what `plans()` reads. A package holds one product
+  *per store*, so `$rc_monthly` can carry the Test Store product and the
+  Play product at once and the SDK serves whichever matches the API key.
+
+The failure that looks like a bug: products created, entitlement
+attached, and the offering still holding only Test Store products. A
+Play-keyed build then finds nothing and the paywall is empty, while the
+dashboard looks complete. The SDK does say so —
+`ConfigurationError: ...no Play Store products registered ... for your
+offerings` — so read logcat for `[Purchases]` before touching code.
+
+`plans()` now surfaces its own `StateError` text rather than collapsing
+everything into one message, so the screen names which of the two
+mistakes it is.
+
 ### Fonts are bundled, never fetched
 
 `google_fonts` fetches at runtime — font flash, jank, wrong text offline.
@@ -765,18 +790,24 @@ the obvious-sounding choice, contains zero of the twelve.
   terminator, affirmation, energy check-in, streak
 - Oracle card 3-D flip
 - Sound: 9 sessions, synthesised tones, background playback, lock-screen
-  controls, notification with transport + seek
+  controls, notification with transport + seek. Verified on a real Pixel
+  6 (Android 16) 2026-08-17 after three stacked bugs — see the gotchas
+  for `await player.play()` and the resource shrinker. The check that
+  actually settles it is
+  `dumpsys activity services com.soulheals.sanctum | grep isForeground`.
 - Journal with persistence; 4 moon rituals gated by real moon phase
 - Paywall: monthly/yearly, 7-day trial framing, gating, purchase unlocks
 - Exit dialog; Android and iOS both build and run
 - **Daily transit, retrograde banner, tomorrow tease, energy pattern
   strip and card repeat count** — all on Today, verified 2026-08-16 on
   the iOS 26.1 simulator.
-- **Daily reading notifications** — permission prompt verified firing at
-  the payoff screen on the simulator, and the schedule call completes
-  cleanly. **Delivery itself has not been observed** — the first one is
-  due at 08:00 the following day. Watch for it on a real device before
-  trusting it.
+- **Daily reading notifications** — verified 2026-08-19 on a real Pixel
+  6: `dumpsys alarm | grep -c "Alarm{.*sanctum"` returns **7**, one
+  `RTC_WAKEUP` per day of the horizon at the hour the `rhythm` answer
+  chose, each with a `window=+1h` from inexact scheduling. Note that
+  **installing or updating the app clears its pending alarms** — they
+  are only re-queued the next time it is opened, so a silent morning
+  after an update is expected rather than a bug.
 - **Compatibility** (`features/compatibility/`) — fourth tab, verified
   2026-08-16 on the iOS 26.1 simulator end to end: manual entry and 46
   celebrities, the invite gate, unlock, persistence, the second-match
@@ -798,11 +829,16 @@ the obvious-sounding choice, contains zero of the twelve.
   and setting an explicit `image/png` mime type on the `XFile` was tried
   and changed nothing.
 
-- **RevenueCat** — SDK wired, verified 2026-08-17 on a real Pixel 6: a
-  release build launches clean with the Test Store guard active, and the
-  merged manifest carries `com.android.vending.BILLING`. **No purchase
-  has been made**, because the dashboard has no products yet and a test
-  key cannot run in release. That is the next thing to verify.
+- **RevenueCat — a real subscription has been bought.** Verified
+  2026-08-19 through Play internal testing on a Pixel 6, end to end:
+  offering loads with live localised prices, purchase completes,
+  entitlement unlocks, restore works. Entitlement identifier is
+  **`Sanctum Pro`** — with the space and the capitals, verbatim from the
+  dashboard, and pinned by a test because a mismatch fails *silently*.
+  **iOS billing has never been run.**
+- **Compare two other people** (`PairEntryScreen`) — any two people, not
+  just the user and someone. The engine always supported it; it only
+  ever received two birth dates.
 
 ### Size, measured
 
@@ -823,12 +859,9 @@ are in `device-testing.md`.
 
 ### Stubbed or missing
 
-- **Billing is wired to RevenueCat but has no products yet.** The code
-  is done; the dashboard is not. Needs: the entitlement identifier
-  confirmed (`sanctum_pro` is assumed), an offering with monthly and
-  annual packages, real products in App Store Connect / Play Console,
-  and platform `appl_`/`goog_` keys. Until then the paywall reports that
-  plans are unavailable, which is correct behaviour, not a bug.
+- **iOS billing is entirely untested.** Android is verified end to end;
+  the App Store side has no products, no `appl_` key, and has never been
+  run.
 - **No golden tests** (`alchemist` is installed, none written).
 - **No launcher icon of your own** — the current crescent mark is a
   placeholder generated in-repo.
@@ -840,49 +873,32 @@ are in `device-testing.md`.
 
 ---
 
-## 5. Exact next steps
+## 5. What to do next
 
-1. **Post twenty videos of the compatibility flow before building
-   anything else.** The riskiest assumption is not the feature, it is
-   whether this team can make content that moves — and that costs
-   nothing to test. The catalogue and the carousel are both done; there
-   is nothing left to build before this.
-2. **Replace `MatchResultRoute`'s query parameters with an opaque id.**
-   It currently carries `name` and `birth`. Both PostHog's and Sentry's
-   navigation observers are disabled specifically because of it, and
-   `_scrub` patches breadcrumbs after the fact — but the real fix is to
-   stop putting a partner's name and birth date in a URL at all. Until
-   then, any new observability tool has to be audited for it.
-3. **Finish RevenueCat in the dashboard.** The SDK side is done — see
-   §3. What remains is entirely configuration: confirm the entitlement
-   *identifier*, build the offering, create the store products, and get
-   the platform keys.
-4. **Localise: Spanish, Russian, French.** Nothing is wired yet — no
-   `flutter_localizations`, no ARB files, every string is inline. The
-   engineering is routine; the real cost is that this app's value *is*
-   its copy. There are roughly forty paragraphs of deliberately literary
-   prose across the quiz, readings, compatibility and paywall, and
-   machine translation will strip exactly the quality people are being
-   asked to pay for. Budget for a human translator per language, and
-   treat the reading copy as the expensive part.
+**Product and revenue priorities now live in `.claude/roadmap.md`**,
+ordered by expected revenue per week of work. The short version: the
+advisor sold as credits is the only item that changes the shape of the
+revenue curve; paywall personalisation and a price test are the cheap
+conversion work to do first; and posting twenty videos remains the
+riskiest untested assumption and costs nothing.
 
-   Already designed for: facet names are one short word each, hexagon
-   labels sit in fixed-width boxes that wrap to two lines, and no text
-   sits in a fixed-width container. Re-check the paywall and the nav bar
-   — German-length strings in a four-item glass pill are the next thing
-   to break.
-9. **Personalise the paywall headline from quiz answers.** The data is
-   persisted and `ReadingComposer` already selects copy from it; the
-   paywall just doesn't read it yet. Someone who ticked "I keep repeating
-   a pattern" should see that sentence back. This is the highest-value
-   remaining conversion work.
-5. **Add the entertainment disclaimer** to first launch. It is already on
-   the payoff screen and on the carousel's closing frame, nowhere else.
-6. **Replace the placeholder icon** and set up build flavors if the
-   two-app experiment is going ahead.
-7. Then: 9:16 *video* export of the reveal (the carousel is the still
-   version of this and should be measured first), palm scan, RevenueCat,
-   energy insights, golden tests, low-end Android profiling.
+What stays here is the engineering debt that is cheaper to fix now than
+later, none of which is on the revenue path:
+
+1. **Replace `MatchResultRoute`'s query parameters with an opaque id.**
+   It carries `name` and `birth`. Both PostHog's and Sentry's navigation
+   observers are disabled specifically because of it, and `_scrub`
+   patches breadcrumbs after the fact — the real fix is to stop putting
+   a partner's name and birth date in a URL at all. Until then, any new
+   observability tool has to be audited for it.
+2. **Add the entertainment disclaimer to first launch.** It is on the
+   payoff screen and the carousel's closing frame, nowhere else.
+3. **Replace the placeholder launcher icon.**
+4. **Run the billing integration on iOS at least once.** Everything in
+   §3's RevenueCat notes has only ever executed against Google Play.
+5. **Golden tests.** `alchemist` is installed and unused. The carousel
+   frames are the obvious first subject, since they are the one surface
+   whose output is published and cannot be corrected after the fact.
 
 ---
 
@@ -895,8 +911,9 @@ are in `device-testing.md`.
   catalogue or get its own?
 - Real guided-meditation audio: the catalogue is designed to absorb it,
   but none exists. Synthesised tones are the current content.
-- Pricing: the stub lists £6.99/mo and £39.99/yr as placeholders. Real
-  products need creating in App Store Connect / Play Console.
+- Pricing: £6.99/mo and £39.99/yr shipped to Play as-is and have never
+  been tested against anything. RevenueCat Experiments can serve
+  alternatives with no app update — see the roadmap.
 - Instagram: does a four-image share reach Stories as four cards, or does
   Instagram take only the first? 9:16 *is* the Story format so the
   frames need no change there — but IG **feed** carousels cap at 4:5
