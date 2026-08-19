@@ -162,7 +162,9 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
       if (!_configured) throw StateError('billing is not configured');
       final offering = (await Purchases.getOfferings()).current;
       if (offering == null) {
-        throw StateError('no current offering is configured');
+        throw StateError(
+          'No current offering is configured in RevenueCat',
+        );
       }
 
       final monthly = offering.availablePackages
@@ -176,12 +178,25 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
         plans.add(_planFrom(package, period, monthly));
       }
       if (plans.isEmpty) {
-        throw StateError('offering "${offering.identifier}" has no plans');
+        throw StateError(
+          'Offering "${offering.identifier}" has no monthly or annual '
+          'package for this store',
+        );
       }
       return plans;
     },
+    // Our own StateErrors are already specific — "no current offering is
+    // configured", "offering X has no plans" — and those are exactly the
+    // two dashboard mistakes that produce an empty paywall. Collapsing
+    // them into one generic string, which is what this did, throws away
+    // the only diagnosis available at the point of failure. Anything
+    // thrown by the SDK itself stays generic: a user does not need to
+    // read a network stack trace.
     onError: (error, stackTrace) => ContentFailure(
-      'Could not load the plans',
+      switch (error) {
+        StateError(:final message) => message,
+        _ => 'Could not reach the store',
+      },
       cause: error,
       stackTrace: stackTrace,
     ),
