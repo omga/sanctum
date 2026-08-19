@@ -982,7 +982,23 @@ are in `device-testing.md`.
   notifier with no listeners, so Riverpod disposes it immediately and the
   next `ref.read` inside an async action throws `UnmountedRefException` —
   the button looks alive and does nothing. `ref.watch(provider)` in
-  `build` keeps it alive. This shipped twice before being caught.
+  `build` keeps it alive.
+
+  **This has now shipped three times.** The third was
+  `ReminderController`: both callers are fire-and-forget — the shell on
+  launch, the payoff screen for permission — so neither ever watched it,
+  and daily reading notifications were silently never scheduled.
+  `dumpsys alarm | grep -ci sanctum` returned 0 on a device that was
+  onboarded, had a birth date and had granted POST_NOTIFICATIONS, with
+  no error anywhere — because the `UnmountedRefException` goes to
+  `ConsoleLogger`, which writes to the VM service and *not* to logcat.
+  It is now `@Riverpod(keepAlive: true)`.
+
+  The rule worth internalising: **a provider whose methods are only ever
+  reached through `ref.read(...notifier)` must be keepAlive.** If no
+  widget watches it, auto-dispose kills it before its own async body
+  finishes. Checking a scheduling feature is one command:
+  `adb shell dumpsys alarm | grep -ci sanctum`.
 - **`QuizFlow.next` counts a multi-select question as answered the
   moment the first option lands**, because `QuizAnswers.has` is just
   "is there a non-empty selection". Ticking one box therefore used to

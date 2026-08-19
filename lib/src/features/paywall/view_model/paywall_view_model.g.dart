@@ -275,7 +275,7 @@ final class PaywallControllerProvider
   PaywallController create() => PaywallController();
 }
 
-String _$paywallControllerHash() => r'f3614108e45772f8ee9506ed77cbe0db32823618';
+String _$paywallControllerHash() => r'548c9b7d1f74f27c241ab3bf5a41ce7bf0b7065d';
 
 /// Purchase, restore, and recording impressions.
 

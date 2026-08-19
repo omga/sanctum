@@ -19,7 +19,23 @@ part 'reminder_view_model.g.dart';
 /// notification. That makes the queue a snapshot, and a snapshot goes
 /// stale — so it is thrown away and rebuilt whenever the app opens,
 /// which is cheap and means the copy is never more than one session old.
-@riverpod
+/// Kept alive deliberately, and this is not a performance choice.
+///
+/// Both callers are fire-and-forget — the shell schedules on launch and
+/// the payoff screen asks for permission — so neither ever *watches*
+/// this provider. Under the generated default (auto-dispose) that means
+/// `ref.read(...notifier)` builds a notifier with no listeners, Riverpod
+/// disposes it on the spot, and the `ref.read` calls inside the async
+/// body below then throw `UnmountedRefException`. Nothing is scheduled,
+/// nothing is shown, and the error reaches `ConsoleLogger` — which goes
+/// to the VM service and not to logcat, so a release build says nothing
+/// at all.
+///
+/// That is the third time this exact pattern has bitten this codebase;
+/// see the gotchas in `handoff.md`. Scheduling is an app-lifetime
+/// concern, not a screen-scoped one, so keepAlive is also simply the
+/// correct answer.
+@Riverpod(keepAlive: true)
 class ReminderController extends _$ReminderController {
   @override
   FutureOr<void> build() {}
