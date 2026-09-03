@@ -68,6 +68,48 @@ abstract final class MoonPhaseCalculator {
     throw StateError('No occurrence of $phase within one synodic month');
   }
 
+  /// The first calendar day of the run of [phase] containing [date].
+  ///
+  /// A named phase is a *band*, several days wide, so "which new moon is
+  /// this" needs a single day that every date inside the band agrees on.
+  /// Walking back to the start of the run gives one, and it is stable:
+  /// open the app on the first evening of the band or the last and the
+  /// answer is the same date.
+  ///
+  /// Returns [date] unchanged when it does not fall in [phase] at all.
+  static DateTime occurrenceStart(MoonPhase phase, DateTime date) {
+    var cursor = DateTime.utc(date.year, date.month, date.day);
+    if (phaseFor(cursor) != phase) return cursor;
+
+    // A band is under four days wide; the cap is a guard, not a limit.
+    for (var i = 0; i < 8; i++) {
+      final previous = cursor.subtract(const Duration(days: 1));
+      if (phaseFor(previous) != phase) break;
+      cursor = previous;
+    }
+    return cursor;
+  }
+
+  /// Whole synodic months from a reference new moon to [moment].
+  ///
+  /// A cycle counter, used to rotate content that belongs to a lunar
+  /// event rather than to a date. Consecutive occurrences of the same
+  /// phase differ by exactly one, which is what makes a round-robin over
+  /// it actually round-robin instead of skipping entries.
+  ///
+  /// The reference is the new moon of 6 January 2000, the conventional
+  /// epoch for this. Its exact value is arbitrary — changing it shifts
+  /// which ritual opens a given month and nothing else — but it must not
+  /// change once shipped, or every user's rotation jumps.
+  ///
+  /// Note that the New Moon band straddles its own boundary: it opens a
+  /// day or two before the new moon instant, so a window's number can be
+  /// one less than the lunation it belongs to. That is harmless here —
+  /// the number only has to be constant within a window and increment
+  /// between them, and it is both.
+  static int lunationNumber(DateTime moment) =>
+      ((_julianDay(moment) - 2451550.1) / synodicMonth).floor();
+
   static double _radians(double degrees) => degrees * math.pi / 180.0;
 
   /// Julian Day for [moment].

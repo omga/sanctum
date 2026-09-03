@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The six facets, as a radar.
 ///
@@ -108,10 +110,19 @@ class HexagonChart extends StatelessWidget {
       width: labelWidth,
       child: Column(
         children: [
-          Text(
-            facet.facet.displayName,
-            textAlign: TextAlign.center,
-            style: type.caption.copyWith(color: colors.textSecondary),
+          // The axis labels are pinned to a fixed-width slot around the
+          // chart, so a long word would either wrap into the score
+          // beneath it or overflow the slot. The facets are named in one
+          // short word for exactly this reason — see CompatibilityFacet
+          // — and this is the backstop for when a language cannot.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              facet.facet.label(context.l10n),
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: type.caption.copyWith(color: colors.textSecondary),
+            ),
           ),
           Text(
             '${facet.score}',

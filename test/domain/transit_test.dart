@@ -1,11 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/planet.dart';
 import 'package:sanctum/src/domain/models/transit.dart';
 import 'package:sanctum/src/domain/services/ephemeris.dart';
 import 'package:sanctum/src/domain/services/transit_calculator.dart';
 import 'package:sanctum/src/domain/services/transit_composer.dart';
+import '../support/copy.dart';
 
 final _birth = DateTime(1996, 6, 15);
+
+final CopyBook _copy = loadEnglishCopy();
 
 void main() {
   group('retrograde', () {
@@ -110,7 +114,7 @@ void main() {
           birthDate: _birth,
           day: DateTime(2026, 3).add(Duration(days: day)),
         );
-        if (hit != null) seen.add(hit.headline);
+        if (hit != null) seen.add(hit.headlineIn(_copy));
       }
       expect(seen.length, greaterThan(3));
     });
@@ -124,7 +128,7 @@ void main() {
         birthDate: DateTime(1996, 6, 22),
         day: DateTime(2026, 5, 4),
       );
-      expect(a?.headline, isNot(b?.headline));
+      expect(a?.headlineIn(_copy), isNot(b?.headlineIn(_copy)));
     });
 
     test('most days have something to say', () {
@@ -150,7 +154,7 @@ void main() {
         for (final natal in Planet.natal) {
           if (transiting == natal) continue;
           expect(
-            TransitComposer.pairs[transiting]?[natal],
+            _copy.maybe('transit.pair.${transiting.name}.${natal.name}'),
             isNotNull,
             reason: 'no copy for $transiting to natal $natal',
           );
@@ -160,11 +164,11 @@ void main() {
 
     test('every aspect has an opener and every body a retrograde note', () {
       for (final aspect in TransitAspect.values) {
-        expect(TransitComposer.openers[aspect], isNotNull);
+        expect(_copy.has('transit.opener.${aspect.name}'), isTrue);
       }
       for (final planet in Planet.values) {
         if (!planet.canRetrograde) continue;
-        expect(TransitComposer.retrogradeNotes[planet], isNotNull);
+        expect(_copy.has('transit.retrograde.${planet.name}'), isTrue);
       }
     });
 
@@ -173,6 +177,7 @@ void main() {
         final reading = TransitComposer.compose(
           birthDate: _birth,
           day: DateTime(2026).add(Duration(days: day)),
+          copy: _copy,
         );
         expect(reading.line, isNotEmpty);
         expect(reading.line.length, greaterThan(40));
@@ -182,8 +187,8 @@ void main() {
     test('is deterministic', () {
       final day = DateTime(2026, 8, 16);
       expect(
-        TransitComposer.compose(birthDate: _birth, day: day).line,
-        TransitComposer.compose(birthDate: _birth, day: day).line,
+        TransitComposer.compose(birthDate: _birth, day: day, copy: _copy).line,
+        TransitComposer.compose(birthDate: _birth, day: day, copy: _copy).line,
       );
     });
 
@@ -195,6 +200,7 @@ void main() {
         final reading = TransitComposer.compose(
           birthDate: _birth,
           day: date,
+          copy: _copy,
         );
         if (reading.tomorrow == null) {
           same++;
@@ -216,6 +222,7 @@ void main() {
         final reading = TransitComposer.compose(
           birthDate: _birth,
           day: date,
+          copy: _copy,
         );
         if (reading.transit?.retrograde ?? false) {
           expect(reading.line, contains('rerun'));

@@ -8,6 +8,7 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/element_palette.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// The wait before a reading opens.
 ///
@@ -47,19 +48,28 @@ class MatchComputing extends StatefulWidget {
   /// Called once, when the last step finishes.
   final VoidCallback onDone;
 
+  /// How many steps the sequence has.
+  ///
+  /// A separate constant from the captions because [total] is used to
+  /// time the transition and must stay computable without a context.
+  static const int stepCount = 4;
+
   /// What the engine is doing, in the order it does it.
-  static const List<String> steps = [
-    'Placing the planets',
-    'Reading Venus and Mars',
-    'Measuring the angles',
-    'Weighing six facets',
-  ];
+  static List<String> stepsFor(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      l10n.computingStep1,
+      l10n.computingStep2,
+      l10n.computingStep3,
+      l10n.computingStep4,
+    ];
+  }
 
   /// How long each caption holds.
   static const Duration stepDuration = Duration(milliseconds: 720);
 
   /// Total time before the reading opens.
-  static Duration get total => stepDuration * steps.length;
+  static Duration get total => stepDuration * stepCount;
 
   @override
   State<MatchComputing> createState() => _MatchComputingState();
@@ -80,7 +90,7 @@ class _MatchComputingState extends State<MatchComputing>
     super.initState();
     _timer = Timer.periodic(MatchComputing.stepDuration, (timer) {
       if (!mounted) return;
-      if (_step >= MatchComputing.steps.length - 1) {
+      if (_step >= MatchComputing.stepCount - 1) {
         timer.cancel();
         widget.onDone();
         return;
@@ -116,7 +126,7 @@ class _MatchComputingState extends State<MatchComputing>
                   turns: _orbit.value,
                   yours: ElementPalette.lead(match.you.sign.element, colors),
                   theirs: ElementPalette.lead(match.them.sign.element, colors),
-                  progress: (_step + 1) / MatchComputing.steps.length,
+                  progress: (_step + 1) / MatchComputing.stepCount,
                   track: colors.glassBorder,
                 ),
                 child: child,
@@ -142,7 +152,7 @@ class _MatchComputingState extends State<MatchComputing>
             child: AnimatedSwitcher(
               duration: SanctumMotion.calm,
               child: Text(
-                MatchComputing.steps[_step],
+                MatchComputing.stepsFor(context)[_step],
                 key: ValueKey(_step),
                 style: type.title.copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,

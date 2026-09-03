@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/reading_composer.dart';
+import '../support/copy.dart';
 
 QuizAnswers answers({
   String? name,
@@ -22,6 +24,8 @@ QuizAnswers answers({
   return result;
 }
 
+final CopyBook _copy = loadEnglishCopy();
+
 void main() {
   group('composition', () {
     test('every line is keyed to something the user answered', () {
@@ -33,21 +37,28 @@ void main() {
           weight: ['drained'],
           commitment: ['most'],
         ),
+        _copy,
       );
 
       expect(reading.name, 'Andrii');
       expect(reading.sign, ZodiacSign.gemini);
-      expect(reading.opening, ReadingComposer.openings[ZodiacElement.air]);
-      expect(reading.recognition, ReadingComposer.recognitions['drained']);
-      expect(reading.intention, ReadingComposer.intentions['clarity']);
-      expect(reading.closing, ReadingComposer.commitments['most']);
+      expect(reading.opening, _copy.get('reading.opening.air'));
+      expect(reading.recognition, _copy.get('reading.recognition.drained'));
+      expect(reading.intention, _copy.get('reading.intention.clarity'));
+      expect(reading.closing, _copy.get('reading.commitment.most'));
     });
 
     test('is deterministic — same answers, same reading', () {
-      final a = ReadingComposer.compose(answers(birth: DateTime(1990, 8, 3)));
-      final b = ReadingComposer.compose(answers(birth: DateTime(1990, 8, 3)));
+      final a = ReadingComposer.compose(
+        answers(birth: DateTime(1990, 8, 3)),
+        _copy,
+      );
+      final b = ReadingComposer.compose(
+        answers(birth: DateTime(1990, 8, 3)),
+        _copy,
+      );
 
-      expect(a.headline, b.headline);
+      expect(a.headlineIn(_copy), b.headlineIn(_copy));
       expect(a.recognition, b.recognition);
       expect(a.opening, b.opening);
     });
@@ -56,8 +67,9 @@ void main() {
       // Stacking every weight turns a reading into a list of grievances.
       final reading = ReadingComposer.compose(
         answers(weight: ['letting_go', 'racing', 'stuck']),
+        _copy,
       );
-      expect(reading.recognition, ReadingComposer.recognitions['letting_go']);
+      expect(reading.recognition, _copy.get('reading.recognition.letting_go'));
     });
   });
 
@@ -65,34 +77,40 @@ void main() {
     test('addresses them by name when given', () {
       final reading = ReadingComposer.compose(
         answers(name: 'Mia', birth: DateTime(1991)),
+        _copy,
       );
-      expect(reading.headline, startsWith('Mia, you are a Capricorn'));
+      expect(reading.headlineIn(_copy), startsWith('Mia, you are a Capricorn'));
     });
 
     test('still reads properly without a name', () {
-      final reading = ReadingComposer.compose(answers(birth: DateTime(1991)));
-      expect(reading.headline, 'You are a Capricorn.');
+      final reading = ReadingComposer.compose(
+        answers(birth: DateTime(1991)),
+        _copy,
+      );
+      expect(reading.headlineIn(_copy), 'You are a Capricorn.');
     });
 
     test('uses the right article for vowel signs', () {
       // "a Aries" is the kind of thing that undoes a premium feel.
       final aries = ReadingComposer.compose(
         answers(birth: DateTime(1990, 4, 1)),
+        _copy,
       );
       final taurus = ReadingComposer.compose(
         answers(birth: DateTime(1990, 5, 1)),
+        _copy,
       );
 
-      expect(aries.headline, contains('an Aries'));
-      expect(taurus.headline, contains('a Taurus'));
+      expect(aries.headlineIn(_copy), contains('an Aries'));
+      expect(taurus.headlineIn(_copy), contains('a Taurus'));
     });
   });
 
   group('robustness', () {
     test('survives a completely empty answer set', () {
-      final reading = ReadingComposer.compose(const QuizAnswers());
+      final reading = ReadingComposer.compose(const QuizAnswers(), _copy);
 
-      expect(reading.headline, isNotEmpty);
+      expect(reading.headlineIn(_copy), isNotEmpty);
       expect(reading.opening, isNotEmpty);
       expect(reading.recognition, isNull);
       expect(reading.hasBirthDate, isFalse);
@@ -102,12 +120,14 @@ void main() {
       // Presenting a default sign as the user's own would make the whole
       // screen a lie, so the UI needs to know.
       expect(
-        ReadingComposer.compose(const QuizAnswers()).hasBirthDate,
+        ReadingComposer.compose(const QuizAnswers(), _copy).hasBirthDate,
         isFalse,
       );
       expect(
-        ReadingComposer.compose(answers(birth: DateTime(1996, 6, 15)))
-            .hasBirthDate,
+        ReadingComposer.compose(
+          answers(birth: DateTime(1996, 6, 15)),
+          _copy,
+        ).hasBirthDate,
         isTrue,
       );
     });
@@ -115,6 +135,7 @@ void main() {
     test('unknown option ids degrade to nothing, not to a crash', () {
       final reading = ReadingComposer.compose(
         answers(goals: ['nonsense'], weight: ['also_nonsense']),
+        _copy,
       );
       expect(reading.recognition, isNull);
       expect(reading.intention, isNull);
@@ -125,25 +146,25 @@ void main() {
     // Content drift guard. Adding an option to the JSON without adding a
     // line here produces a reading with a silent hole in it, which is
     // invisible until a real user picks exactly that option.
-    final raw = File('assets/content/onboarding_quiz.json').readAsStringSync();
+    final raw = File('assets/content/en/onboarding_quiz.json').readAsStringSync();
     final questions =
         (jsonDecode(raw) as Map<String, dynamic>)['questions'] as List;
 
     final missing = <String>[];
     for (final question in questions.cast<Map<String, dynamic>>()) {
-      final copy = switch (question['id'] as String) {
-        'weight' => ReadingComposer.recognitions,
-        'goals' => ReadingComposer.intentions,
-        'commitment' => ReadingComposer.commitments,
+      final group = switch (question['id'] as String) {
+        'weight' => 'reading.recognition',
+        'goals' => 'reading.intention',
+        'commitment' => 'reading.commitment',
         _ => null,
       };
-      if (copy == null) continue;
+      if (group == null) continue;
 
       for (final option
           in (question['options'] as List? ?? [])
               .cast<Map<String, dynamic>>()) {
         final id = option['id'] as String;
-        if (!copy.containsKey(id)) {
+        if (!_copy.has('$group.$id')) {
           missing.add('${question['id']}.$id');
         }
       }
@@ -154,7 +175,7 @@ void main() {
 
   test('every element has an opening', () {
     for (final element in ZodiacElement.values) {
-      expect(ReadingComposer.openings[element], isNotNull);
+      expect(_copy.has('reading.opening.${element.name}'), isTrue);
     }
   });
 }

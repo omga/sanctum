@@ -1,20 +1,24 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/core/analytics/analytics_event.dart';
 import 'package:sanctum/src/core/core_providers.dart';
+import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/reading.dart';
 import 'package:sanctum/src/features/payoff/view/widgets/shareable_card.dart';
 import 'package:sanctum/src/features/payoff/view_model/payoff_view_model.dart';
 import 'package:sanctum/src/features/sharing/view_model/share_controller.dart';
 import 'package:sanctum/src/features/today/view_model/reminder_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// The end of onboarding: what we heard, said back.
 ///
@@ -80,7 +84,7 @@ class _PayoffScreenState extends ConsumerState<PayoffScreen> {
                         .read(shareControllerProvider.notifier)
                         .share(
                           _cardKey,
-                          text: 'My reading from Sanctum',
+                          text: context.l10n.payoffShareText,
                         ),
                   );
                 },
@@ -107,7 +111,7 @@ class _PayoffScreenState extends ConsumerState<PayoffScreen> {
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body({
     required this.reading,
     required this.cardKey,
@@ -121,7 +125,8 @@ class _Body extends StatelessWidget {
   final VoidCallback onContinue;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final copy = ref.watch(contentCopyProvider).value ?? CopyBook.empty;
     final type = context.type;
     var beat = 0;
     Duration next() => Duration(milliseconds: 220 * beat++);
@@ -137,7 +142,7 @@ class _Body extends StatelessWidget {
         // Lines arrive one at a time rather than all at once. The pacing
         // is the difference between reading a result and being told
         // something.
-        Text(reading.headline, style: type.displayMedium)
+        Text(reading.headlineIn(copy), style: type.displayMedium)
             .animate(delay: next())
             .fadeIn(duration: SanctumMotion.calm)
             .slideY(begin: 0.12, end: 0),
@@ -186,7 +191,7 @@ class _Body extends StatelessWidget {
 
         const SizedBox(height: SanctumSpacing.xl),
         SanctumButton(
-          label: 'Share this',
+          label: context.l10n.payoffShare,
           icon: Icons.ios_share,
           variant: SanctumButtonVariant.ghost,
           expand: true,
@@ -195,7 +200,7 @@ class _Body extends StatelessWidget {
 
         const SizedBox(height: SanctumSpacing.md),
         SanctumButton(
-          label: 'Enter Sanctum',
+          label: context.l10n.payoffEnter,
           icon: Icons.auto_awesome,
           expand: true,
           onPressed: onContinue,
@@ -205,7 +210,7 @@ class _Body extends StatelessWidget {
         Text(
           // Required for store review of divination content, and it is
           // simply true.
-          'For entertainment purposes only.',
+          context.l10n.commonEntertainmentOnly,
           textAlign: TextAlign.center,
           style: type.caption,
         ).animate(delay: next()).fadeIn(),

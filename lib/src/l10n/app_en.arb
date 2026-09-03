@@ -1,0 +1,1107 @@
+{
+  "@@locale": "en",
+  "@_NOTE": {
+    "description": "UI chrome only. The reading copy — daily transits, compatibility prose, oracle cards, rituals, quiz questions — lives in assets/content/<locale>/ instead, because domain/ is pure Dart and cannot import a Flutter-generated class. See handoff.md before adding a long paragraph here."
+  },
+  "appTitle": "Sanctum",
+  "@appTitle": {
+    "description": "The app's own name. Shown in the task switcher and on the welcome screen. Not translated."
+  },
+  "commonContinue": "Continue",
+  "@commonContinue": {
+    "description": "Advances to the next step."
+  },
+  "commonStay": "Stay",
+  "@commonStay": {
+    "description": "Dismissive action in a confirmation dialog: remain in the app."
+  },
+  "commonBack": "Back",
+  "@commonBack": {
+    "description": "Returns to the previous screen."
+  },
+  "commonClose": "Close",
+  "@commonClose": {
+    "description": "Closes a sheet or dialog."
+  },
+  "commonEntertainmentOnly": "For entertainment purposes only.",
+  "@commonEntertainmentOnly": {
+    "description": "Disclaimer shown under a reading. Wording may be legally significant in some markets — check before rephrasing."
+  },
+  "navToday": "Today",
+  "@navToday": {
+    "description": "Bottom navigation label. Keep to one short word — four of these share a pill."
+  },
+  "navMatch": "Match",
+  "@navMatch": {
+    "description": "Bottom navigation label for compatibility. One short word."
+  },
+  "navSound": "Sound",
+  "@navSound": {
+    "description": "Bottom navigation label for sound baths. One short word."
+  },
+  "navJournal": "Journal",
+  "@navJournal": {
+    "description": "Bottom navigation label. One short word."
+  },
+  "onboardingBody": "A quiet room that is only yours.\n\nOne card, one tone, one honest sentence a day. No account, ever. Your name, your birth date and your journal stay on this phone.",
+  "@onboardingBody": {
+    "description": "Welcome copy. The second half is a privacy promise the product is differentiated on — it must stay literally true, so translate the claim exactly rather than loosening it."
+  },
+  "onboardingEnter": "Enter",
+  "@onboardingEnter": {
+    "description": "Button that starts the onboarding quiz."
+  },
+  "exitTitle": "Leave Sanctum?",
+  "@exitTitle": {
+    "description": "Confirmation dialog title when the user presses back from the app's root."
+  },
+  "exitMessagePlaying": "Your session keeps playing. Use the notification to pause or stop it.",
+  "@exitMessagePlaying": {
+    "description": "Shown when audio is playing. This describes actual behaviour — playback does continue — so do not soften it into 'may keep playing'."
+  },
+  "exitMessageIdle": "Your streak and your journal are already saved.",
+  "@exitMessageIdle": {
+    "description": "Shown when nothing is playing."
+  },
+  "exitConfirm": "Leave",
+  "@exitConfirm": {
+    "description": "Affirmative action on the leave dialog."
+  },
+  "birthTimeUnknown": "I do not know",
+  "@birthTimeUnknown": {
+    "description": "Segmented control: the user does not know their birth time. This is a real answer, not a skip."
+  },
+  "birthTimeKnown": "I know it",
+  "@birthTimeKnown": {
+    "description": "Segmented control: the user does know their birth time."
+  },
+  "birthTimeWithoutMoon": "Without it, the Moon is left out of the reading.",
+  "@birthTimeWithoutMoon": {
+    "description": "Explains what is lost by not giving a birth time. States a limit, not an upsell."
+  },
+  "birthTimeUnknownLabel": "Unknown",
+  "@birthTimeUnknownLabel": {
+    "description": "Displayed in place of a time when the user does not know it."
+  },
+  "@_MONTHS": {
+    "description": "Calendar month names for the birth-date wheel. Kept in ARB rather than taken from intl's locale data, which would pull every locale's date symbols into the binary and need an initialisation step, to save twelve short strings per language. Use the standard month names for the language — this is calendar data, not product copy."
+  },
+  "month01": "January",
+  "month02": "February",
+  "month03": "March",
+  "month04": "April",
+  "month05": "May",
+  "month06": "June",
+  "month07": "July",
+  "month08": "August",
+  "month09": "September",
+  "month10": "October",
+  "month11": "November",
+  "month12": "December",
+  "journalTitle": "Journal",
+  "greetingLateNight": "Still awake",
+  "@greetingLateNight": {
+    "description": "Greeting before 05:00. Wry rather than cheerful — the user is up at 3am."
+  },
+  "greetingMorning": "Good morning",
+  "@greetingMorning": {
+    "description": "Greeting from 05:00 to 11:59."
+  },
+  "greetingAfternoon": "Good afternoon",
+  "@greetingAfternoon": {
+    "description": "Greeting from 12:00 to 17:59."
+  },
+  "greetingEvening": "Good evening",
+  "@greetingEvening": {
+    "description": "Greeting from 18:00."
+  },
+  "todayCardRepeat": "{count, plural, =1{You have drawn this one once before.} other{You have drawn this one {count} times before.}}",
+  "@todayCardRepeat": {
+    "description": "Shown under the daily oracle card when the same card has come up before. Only ever shown for count >= 1.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayRitualOpen": "{moon} ritual is open",
+  "@todayRitualOpen": {
+    "description": "Row under the daily card. {moon} is a localised moon phase name, e.g. \"Full Moon\".",
+    "placeholders": {
+      "moon": {
+        "type": "String",
+        "example": "Full Moon"
+      }
+    }
+  },
+  "todayEnergyQuestion": "How is your energy?",
+  "@todayEnergyQuestion": {
+    "description": "Heading for the daily energy check-in."
+  },
+  "todayEnergyRecorded": "Today you felt {level}.",
+  "@todayEnergyRecorded": {
+    "description": "Confirmation after checking in. {level} is a localised energy level, lowercased by the caller — if the target language does not lowercase such a word mid-sentence, rephrase so it sits where a capital is acceptable.",
+    "placeholders": {
+      "level": {
+        "type": "String",
+        "example": "steady"
+      }
+    }
+  },
+  "streakNone": "No streak yet",
+  "@streakNone": {
+    "description": "Shown when the practice streak is zero."
+  },
+  "streakDays": "{count, plural, =1{1 day in a row} other{{count} days in a row}}",
+  "@streakDays": {
+    "description": "The current practice streak. Never shown for zero — streakNone covers that.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakBeginToday": "Begin one today.",
+  "@streakBeginToday": {
+    "description": "Sub-line under streakNone, inviting a first day."
+  },
+  "streakAtRisk": "Practise today to keep it.",
+  "@streakAtRisk": {
+    "description": "Sub-line when the streak will break unless the user practises today."
+  },
+  "streakLongest": "{count, plural, =1{Longest: 1 day} other{Longest: {count} days}}",
+  "@streakLongest": {
+    "description": "Sub-line showing the best streak so far.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "journalEntryCount": "{count, plural, =0{NO ENTRIES} =1{1 ENTRY} other{{count} ENTRIES}}",
+  "@journalEntryCount": {
+    "description": "Count under the Journal heading. Rendered in a small uppercase label style, so the source is written uppercase — match that if the language has a meaningful uppercase form, and use ordinary case if it does not.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "journalWrite": "Write",
+  "@journalWrite": {
+    "description": "Button that opens the entry composer."
+  },
+  "journalEmptyTitle": "Nothing written yet",
+  "@journalEmptyTitle": {
+    "description": "Heading of the empty journal state."
+  },
+  "journalEmptyBody": "The first entry is the hardest. It does not have to be good, or long, or true tomorrow.",
+  "@journalEmptyBody": {
+    "description": "Empty-state copy. Its job is to lower the bar, so keep it permissive rather than encouraging."
+  },
+  "journalEntrySemantics": "Journal entry, {kind}",
+  "@journalEntrySemantics": {
+    "description": "Screen-reader label for one entry tile. {kind} is a localised entry kind, e.g. \"Ritual\".",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "Ritual"
+      }
+    }
+  },
+  "journalDeleteTitle": "Delete this entry?",
+  "@journalDeleteTitle": {
+    "description": "Confirmation dialog title."
+  },
+  "journalDeleteMessage": "It is only on this phone, so this cannot be undone.",
+  "@journalDeleteMessage": {
+    "description": "Confirmation dialog body. States a fact about local-only storage — keep the \"cannot be undone\" part."
+  },
+  "journalDelete": "Delete",
+  "@journalDelete": {
+    "description": "Confirms deletion of a journal entry."
+  },
+  "journalKeep": "Keep",
+  "@journalKeep": {
+    "description": "Cancels deletion of a journal entry."
+  },
+  "journalDone": "Done",
+  "@journalDone": {
+    "description": "Closes the entry reader sheet."
+  },
+  "journalWriteHint": "Write freely.",
+  "@journalWriteHint": {
+    "description": "Placeholder inside the empty composer text field."
+  },
+  "journalSave": "Save",
+  "@journalSave": {
+    "description": "Saves a journal entry."
+  },
+  "dateShort": "{day}/{month}/{year}",
+  "@dateShort": {
+    "description": "Numeric date on an entry tile. Reorder the parts for the locale — this is a format, not a sentence.",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "dateLong": "{day} {month} {year}",
+  "@dateLong": {
+    "description": "Date with a spelled-out month, shown when an entry is opened. Reorder for the locale.",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      },
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "ritualBetween": "The moon is between rituals. This part of the cycle asks for nothing except that you keep going.",
+  "@ritualBetween": {
+    "description": "Shown on the four phases that carry no ritual. The product deliberately does not invent a daily chore, so keep the sense of \"nothing is required\"."
+  },
+  "ritualOpensToday": "{title} opens today",
+  "@ritualOpensToday": {
+    "description": "Teaser when the next ritual becomes available today.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Release"
+      }
+    }
+  },
+  "ritualOpensIn": "{count, plural, =1{{title} in 1 day} other{{title} in {count} days}}",
+  "@ritualOpensIn": {
+    "description": "Teaser for a ritual that opens later.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Release"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ritualCompletedEntry": "Completed {title}.",
+  "@ritualCompletedEntry": {
+    "description": "Body written into the journal when a ritual is finished with no reflection.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Release"
+      }
+    }
+  },
+  "ritualKeptInJournal": "Kept in your journal.",
+  "@ritualKeptInJournal": {
+    "description": "Confirmation after completing a ritual."
+  },
+  "ritualReflectionPrompt": "What came up?",
+  "@ritualReflectionPrompt": {
+    "description": "Heading above the optional reflection field."
+  },
+  "ritualReflectionHint": "Optional. A line is enough.",
+  "@ritualReflectionHint": {
+    "description": "Placeholder in the reflection field. Keep it explicitly optional."
+  },
+  "ritualComplete": "Complete ritual",
+  "@ritualComplete": {
+    "description": "Button that finishes a ritual."
+  },
+  "ritualStepsFirst": "Work through each step first.",
+  "@ritualStepsFirst": {
+    "description": "Explains why the complete button is disabled."
+  },
+  "soundTitle": "Sound",
+  "@soundTitle": {
+    "description": "Heading of the sound-bath library."
+  },
+  "soundSubtitle": "PURE TONE SESSIONS",
+  "@soundSubtitle": {
+    "description": "Overline under the Sound heading, in a small uppercase label style."
+  },
+  "sessionNotFound": "Session not found",
+  "@sessionNotFound": {
+    "description": "Shown when a deep link points at a session that no longer exists."
+  },
+  "matchAskBirthTitle": "When were you born?",
+  "@matchAskBirthTitle": {
+    "description": "Heading of the fallback screen for a user who reached the Match tab without a birth date."
+  },
+  "matchAskBirthBody": "Every match is read from your sign against theirs.",
+  "@matchAskBirthBody": {
+    "description": "Explains why the birth date is needed."
+  },
+  "matchAskTime": "Do you know what time?",
+  "@matchAskTime": {
+    "description": "Heading above the optional birth-time control."
+  },
+  "matchTitle": "Compatibility",
+  "@matchTitle": {
+    "description": "Heading of the Match tab."
+  },
+  "matchReadingAs": "Reading as {sign}",
+  "@matchReadingAs": {
+    "description": "Subtitle naming the user’s own sun sign.",
+    "placeholders": {
+      "sign": {
+        "type": "String",
+        "example": "Gemini"
+      }
+    }
+  },
+  "matchCheckSomeone": "Check someone new",
+  "@matchCheckSomeone": {
+    "description": "Primary action: read the user against another person."
+  },
+  "matchComparePair": "Compare two other people",
+  "@matchComparePair": {
+    "description": "Secondary action: read two people, neither of whom is the user."
+  },
+  "matchYourMatches": "Your matches",
+  "@matchYourMatches": {
+    "description": "Section heading above previously revealed readings."
+  },
+  "matchSomeoneFamous": "Or someone famous",
+  "@matchSomeoneFamous": {
+    "description": "Section heading above the celebrity catalogue."
+  },
+  "matchSearchByName": "Search by name",
+  "@matchSearchByName": {
+    "description": "Placeholder in the celebrity search field."
+  },
+  "matchPercent": "{score}%",
+  "@matchPercent": {
+    "description": "A compatibility score. A format, not a sentence — move the percent sign if the locale puts it elsewhere.",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "matchNeedBirthDate": "Add your own birth date first.",
+  "@matchNeedBirthDate": {
+    "description": "Shown when a reading cannot be composed because the user has no birth date."
+  },
+  "matchInviteMessage": "What's your birth date? I'm running us through Sanctum and I want to see what it says.",
+  "@matchInviteMessage": {
+    "description": "Message pre-filled into the share sheet when asking someone for their birth date. Written to be sent to a friend, so keep it casual."
+  },
+  "matchShareText": "Our match, from Sanctum",
+  "@matchShareText": {
+    "description": "Text accompanying the shared single card."
+  },
+  "matchWhatWorks": "WHAT WORKS",
+  "@matchWhatWorks": {
+    "description": "Label above the strongest-facet line. Small uppercase label style."
+  },
+  "matchWhatToWatch": "WHAT TO WATCH",
+  "@matchWhatToWatch": {
+    "description": "Label above the weakest-facet line. Small uppercase label style."
+  },
+  "matchShareTikTok": "Share to TikTok",
+  "@matchShareTikTok": {
+    "description": "Primary share action, exporting four story frames."
+  },
+  "matchShareCard": "Share just this card",
+  "@matchShareCard": {
+    "description": "Secondary share action, one still image."
+  },
+  "matchReadWithMoon": "Read from both charts, Moon included. For entertainment purposes only.",
+  "@matchReadWithMoon": {
+    "description": "Provenance line when both people supplied a birth time. Says what the reading actually used."
+  },
+  "matchReadWithoutMoon": "Read without the Moon — that needs a birth time for both of you. For entertainment purposes only.",
+  "@matchReadWithoutMoon": {
+    "description": "Provenance line when a birth time is missing. Phrased as a limit, not an upsell."
+  },
+  "matchLockedTitle": "Your reading is ready",
+  "@matchLockedTitle": {
+    "description": "Headline on the lock card covering an unrevealed reading."
+  },
+  "matchLockedInvite": "Invite one person and it opens. They do not have to reply — asking is the point.",
+  "@matchLockedInvite": {
+    "description": "Explains the invite gate. The second sentence matters: the app cannot detect a reply and must not imply it can."
+  },
+  "matchLockedPremium": "Sanctum Premium reads you against anyone, as often as you like.",
+  "@matchLockedPremium": {
+    "description": "Shown when the free reading is already spent."
+  },
+  "matchSendInvite": "Send an invite",
+  "@matchSendInvite": {
+    "description": "Action that opens the share sheet to unlock the first reading."
+  },
+  "matchSeePremium": "See Premium",
+  "@matchSeePremium": {
+    "description": "Action that opens the paywall."
+  },
+  "carouselCaptionCopied": "Caption copied.",
+  "@carouselCaptionCopied": {
+    "description": "Snackbar confirming the caption is on the clipboard."
+  },
+  "carouselTitle": "Your post",
+  "@carouselTitle": {
+    "description": "Heading of the carousel export screen."
+  },
+  "carouselShareAll": "Share all four",
+  "@carouselShareAll": {
+    "description": "Shares the four story frames at once."
+  },
+  "carouselCopyCaption": "Copy caption",
+  "@carouselCopyCaption": {
+    "description": "Copies the caption. Needed because Android receivers routinely drop shared text."
+  },
+  "carouselHint": "Pick TikTok or Instagram. All four go up as one carousel — paste the caption when it asks.",
+  "@carouselHint": {
+    "description": "Instructions under the export buttons."
+  },
+  "carouselBuilding": "Building your post",
+  "@carouselBuilding": {
+    "description": "Shown while the four frames are rendered."
+  },
+  "pairFirstPerson": "First person",
+  "@pairFirstPerson": {
+    "description": "Title of the picker when choosing the first of two people."
+  },
+  "pairSecondPerson": "Second person",
+  "@pairSecondPerson": {
+    "description": "Title of the picker when choosing the second of two people."
+  },
+  "pairTitle": "Two people",
+  "@pairTitle": {
+    "description": "App bar title for reading two people against each other."
+  },
+  "pairBody": "Read anyone against anyone. Two friends, two celebrities, or one of each — you do not have to be in it.",
+  "@pairBody": {
+    "description": "Explains that the user need not be part of the reading."
+  },
+  "pairSlotFirst": "FIRST PERSON",
+  "@pairSlotFirst": {
+    "description": "Label on the first slot. Small uppercase label style."
+  },
+  "pairSlotSecond": "SECOND PERSON",
+  "@pairSlotSecond": {
+    "description": "Label on the second slot. Small uppercase label style."
+  },
+  "pairRead": "Read them",
+  "@pairRead": {
+    "description": "Button that composes a reading between the two chosen people."
+  },
+  "pairChooseSomeone": "Choose someone",
+  "@pairChooseSomeone": {
+    "description": "Placeholder inside an empty person slot."
+  },
+  "partnerTitle": "Who are we reading?",
+  "@partnerTitle": {
+    "description": "Heading of the screen collecting the other person’s details."
+  },
+  "partnerBody": "Their birth date is all the reading needs. A time is optional and only places the Moon. Both stay on this phone.",
+  "@partnerBody": {
+    "description": "Explains what is collected and what it is for. The last sentence is a privacy claim and must stay true."
+  },
+  "partnerNameHint": "Their name",
+  "@partnerNameHint": {
+    "description": "Placeholder in the name field."
+  },
+  "partnerAskTime": "Do you know what time they were born?",
+  "@partnerAskTime": {
+    "description": "Heading above the optional birth-time control."
+  },
+  "partnerRead": "Read us",
+  "@partnerRead": {
+    "description": "Button that composes the reading."
+  },
+  "pickerManualEntry": "Enter a name and birth date",
+  "@pickerManualEntry": {
+    "description": "Switches the picker from the catalogue to manual entry."
+  },
+  "pickerNoResults": "Nobody by that name. Enter their birth date instead.",
+  "@pickerNoResults": {
+    "description": "Empty state for the celebrity search."
+  },
+  "pickerSignAndElement": "{sign} · {element}",
+  "@pickerSignAndElement": {
+    "description": "Sign and element together, e.g. \"Gemini · Air\". A format, not a sentence.",
+    "placeholders": {
+      "sign": {
+        "type": "String",
+        "example": "Gemini"
+      },
+      "element": {
+        "type": "String",
+        "example": "Air"
+      }
+    }
+  },
+  "pickerBirthTime": "Birth time, if you know it",
+  "@pickerBirthTime": {
+    "description": "Label above the optional birth-time control."
+  },
+  "pickerUsePerson": "Use this person",
+  "@pickerUsePerson": {
+    "description": "Confirms the manually entered person."
+  },
+  "pickerBackToCatalogue": "Back to the catalogue",
+  "@pickerBackToCatalogue": {
+    "description": "Returns from manual entry to the celebrity list."
+  },
+  "paywallNoPurchase": "No previous purchase found on this store account.",
+  "@paywallNoPurchase": {
+    "description": "Shown when Restore finds nothing."
+  },
+  "paywallUnavailable": "Plans are unavailable right now.",
+  "@paywallUnavailable": {
+    "description": "Shown when the store returns no purchasable products."
+  },
+  "paywallBrand": "SANCTUM PREMIUM",
+  "@paywallBrand": {
+    "description": "Overline at the top of the paywall. Small uppercase label style."
+  },
+  "paywallHeadlineStreak": "You kept it up.",
+  "@paywallHeadlineStreak": {
+    "description": "Paywall headline after the user earns a streak. Names what they just did."
+  },
+  "paywallHeadlineRitual": "That was the work.",
+  "@paywallHeadlineRitual": {
+    "description": "Paywall headline after completing a ritual."
+  },
+  "paywallHeadlineSessions": "There are seven more.",
+  "@paywallHeadlineSessions": {
+    "description": "Paywall headline after both free sound sessions are used."
+  },
+  "paywallHeadlineLocked": "Open the whole sanctum.",
+  "@paywallHeadlineLocked": {
+    "description": "Paywall headline when the user taps a locked item."
+  },
+  "paywallHeadlineReturning": "You keep coming back.",
+  "@paywallHeadlineReturning": {
+    "description": "Paywall headline for a returning user."
+  },
+  "paywallSubheadStreak": "Three days is where a practice starts to hold. Premium opens every session and every ritual, so it has somewhere to go.",
+  "@paywallSubheadStreak": {
+    "description": "Supporting copy for the streak moment."
+  },
+  "paywallSubheadRitual": "Every moon has a ritual, and every one of them is written to be done rather than read. Premium opens the rest.",
+  "@paywallSubheadRitual": {
+    "description": "Supporting copy for the ritual moment."
+  },
+  "paywallSubheadSessions": "You have heard both free tones. The full library runs from 174 through 963 Hz, plus a low one for the end of the day.",
+  "@paywallSubheadSessions": {
+    "description": "Supporting copy for the sessions moment. The frequencies are facts about the product — keep the numbers."
+  },
+  "paywallSubheadLocked": "Every sound session, every moon ritual, and the record of every card you have drawn.",
+  "@paywallSubheadLocked": {
+    "description": "Supporting copy when the user tapped a lock."
+  },
+  "paywallSubheadReturning": "The daily card stays free forever. Premium is for when you want more than a minute a day.",
+  "@paywallSubheadReturning": {
+    "description": "Supporting copy for a returning user. The first sentence is a promise the app keeps."
+  },
+  "paywallBenefitSessions": "All nine sound sessions",
+  "@paywallBenefitSessions": {
+    "description": "Benefit row. The number is a fact about the catalogue."
+  },
+  "paywallBenefitRituals": "Every moon ritual",
+  "@paywallBenefitRituals": {
+    "description": "Benefit row."
+  },
+  "paywallBenefitOracle": "Your full oracle history",
+  "@paywallBenefitOracle": {
+    "description": "Benefit row."
+  },
+  "paywallBenefitInsights": "Energy and streak insights",
+  "@paywallBenefitInsights": {
+    "description": "Benefit row."
+  },
+  "paywallYearly": "Yearly",
+  "@paywallYearly": {
+    "description": "Name of the annual plan."
+  },
+  "paywallMonthly": "Monthly",
+  "@paywallMonthly": {
+    "description": "Name of the monthly plan."
+  },
+  "paywallSaveBadge": "SAVE {percent}%",
+  "@paywallSaveBadge": {
+    "description": "Badge on the cheaper plan. Small uppercase label style.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallPriceYearlyPerMonth": "{perMonth} / month · billed {total} yearly",
+  "@paywallPriceYearlyPerMonth": {
+    "description": "Both figures for an annual plan. Prices arrive already formatted by the store — never reformat them.",
+    "placeholders": {
+      "perMonth": {
+        "type": "String",
+        "example": "£3.33"
+      },
+      "total": {
+        "type": "String",
+        "example": "£39.99"
+      }
+    }
+  },
+  "paywallPriceYearly": "{total} / year",
+  "@paywallPriceYearly": {
+    "description": "Annual price when the store gives no per-month figure.",
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "£39.99"
+      }
+    }
+  },
+  "paywallPricePerPeriod": "{total} / {period}",
+  "@paywallPricePerPeriod": {
+    "description": "Price with its billing period, e.g. \"£6.99 / month\".",
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "£6.99"
+      },
+      "period": {
+        "type": "String",
+        "example": "month"
+      }
+    }
+  },
+  "paywallStartTrial": "{count, plural, =1{Start 1 day free} other{Start {count} days free}}",
+  "@paywallStartTrial": {
+    "description": "Purchase button when a free trial is offered.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallSubscribe": "Subscribe",
+  "@paywallSubscribe": {
+    "description": "Purchase button when there is no trial."
+  },
+  "paywallTrialTerms": "{count, plural, =1{1 day free, then {price} per {period}. Cancel anytime.} other{{count} days free, then {price} per {period}. Cancel anytime.}}",
+  "@paywallTrialTerms": {
+    "description": "States exactly what is charged and when. A trial that does not say what it renews at is the classic refund — keep every part of this.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTerms": "{price} per {period}. Cancel anytime.",
+  "@paywallTerms": {
+    "description": "Billing terms when there is no trial.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "£6.99"
+      },
+      "period": {
+        "type": "String",
+        "example": "month"
+      }
+    }
+  },
+  "paywallRestore": "Restore purchases",
+  "@paywallRestore": {
+    "description": "Restores an existing subscription. Required by both stores."
+  },
+  "payoffShareText": "My reading from Sanctum",
+  "@payoffShareText": {
+    "description": "Text accompanying the shared payoff card."
+  },
+  "payoffShare": "Share this",
+  "@payoffShare": {
+    "description": "Shares the payoff card."
+  },
+  "payoffEnter": "Enter Sanctum",
+  "@payoffEnter": {
+    "description": "Finishes onboarding and opens the app."
+  },
+  "quizNameHint": "Your name",
+  "@quizNameHint": {
+    "description": "Placeholder in the name field of the onboarding quiz."
+  },
+  "quizElementSign": "{element} sign",
+  "@quizElementSign": {
+    "description": "Caption under the zodiac wheel, e.g. \"Air sign\".",
+    "placeholders": {
+      "element": {
+        "type": "String",
+        "example": "Air"
+      }
+    }
+  },
+  "quizBirthTimeUnknownHint": "Most people do not. It is not a problem.",
+  "@quizBirthTimeUnknownHint": {
+    "description": "Reassurance shown while the birth time is set to unknown. Lowers the stakes of the question."
+  },
+  "quizBirthTimeKnownHint": "Your Moon can be placed properly.",
+  "@quizBirthTimeKnownHint": {
+    "description": "Shown once a birth time is given. Says what it buys, accurately."
+  },
+  "@_LEXICON": {
+    "description": "Names of things the domain layer models as enums. They live here rather than on the enum because domain/ is pure Dart and cannot import a Flutter-generated class — the enum keeps a stable identifier, and this is how it is spoken to a user. Resolved through lib/src/l10n/sanctum_lexicon.dart."
+  },
+  "signAries": "Aries",
+  "@signAries": {
+    "description": "The zodiac sign Aries. Use the conventional name in the target language, not a transliteration."
+  },
+  "signTaurus": "Taurus",
+  "@signTaurus": {
+    "description": "The zodiac sign Taurus. Use the conventional name in the target language, not a transliteration."
+  },
+  "signGemini": "Gemini",
+  "@signGemini": {
+    "description": "The zodiac sign Gemini. Use the conventional name in the target language, not a transliteration."
+  },
+  "signCancer": "Cancer",
+  "@signCancer": {
+    "description": "The zodiac sign Cancer. Use the conventional name in the target language, not a transliteration."
+  },
+  "signLeo": "Leo",
+  "@signLeo": {
+    "description": "The zodiac sign Leo. Use the conventional name in the target language, not a transliteration."
+  },
+  "signVirgo": "Virgo",
+  "@signVirgo": {
+    "description": "The zodiac sign Virgo. Use the conventional name in the target language, not a transliteration."
+  },
+  "signLibra": "Libra",
+  "@signLibra": {
+    "description": "The zodiac sign Libra. Use the conventional name in the target language, not a transliteration."
+  },
+  "signScorpio": "Scorpio",
+  "@signScorpio": {
+    "description": "The zodiac sign Scorpio. Use the conventional name in the target language, not a transliteration."
+  },
+  "signSagittarius": "Sagittarius",
+  "@signSagittarius": {
+    "description": "The zodiac sign Sagittarius. Use the conventional name in the target language, not a transliteration."
+  },
+  "signCapricorn": "Capricorn",
+  "@signCapricorn": {
+    "description": "The zodiac sign Capricorn. Use the conventional name in the target language, not a transliteration."
+  },
+  "signAquarius": "Aquarius",
+  "@signAquarius": {
+    "description": "The zodiac sign Aquarius. Use the conventional name in the target language, not a transliteration."
+  },
+  "signPisces": "Pisces",
+  "@signPisces": {
+    "description": "The zodiac sign Pisces. Use the conventional name in the target language, not a transliteration."
+  },
+  "elementFire": "Fire",
+  "@elementFire": {
+    "description": "The classical element Fire. Shown next to a sign, e.g. \"Gemini · Air\"."
+  },
+  "elementEarth": "Earth",
+  "@elementEarth": {
+    "description": "The classical element Earth. Shown next to a sign, e.g. \"Gemini · Air\"."
+  },
+  "elementAir": "Air",
+  "@elementAir": {
+    "description": "The classical element Air. Shown next to a sign, e.g. \"Gemini · Air\"."
+  },
+  "elementWater": "Water",
+  "@elementWater": {
+    "description": "The classical element Water. Shown next to a sign, e.g. \"Gemini · Air\"."
+  },
+  "moonPhaseNewMoon": "New Moon",
+  "@moonPhaseNewMoon": {
+    "description": "Moon phase: New Moon. The conventional astronomical name."
+  },
+  "moonPhaseWaxingCrescent": "Waxing Crescent",
+  "@moonPhaseWaxingCrescent": {
+    "description": "Moon phase: Waxing Crescent. The conventional astronomical name."
+  },
+  "moonPhaseFirstQuarter": "First Quarter",
+  "@moonPhaseFirstQuarter": {
+    "description": "Moon phase: First Quarter. The conventional astronomical name."
+  },
+  "moonPhaseWaxingGibbous": "Waxing Gibbous",
+  "@moonPhaseWaxingGibbous": {
+    "description": "Moon phase: Waxing Gibbous. The conventional astronomical name."
+  },
+  "moonPhaseFullMoon": "Full Moon",
+  "@moonPhaseFullMoon": {
+    "description": "Moon phase: Full Moon. The conventional astronomical name."
+  },
+  "moonPhaseWaningGibbous": "Waning Gibbous",
+  "@moonPhaseWaningGibbous": {
+    "description": "Moon phase: Waning Gibbous. The conventional astronomical name."
+  },
+  "moonPhaseLastQuarter": "Last Quarter",
+  "@moonPhaseLastQuarter": {
+    "description": "Moon phase: Last Quarter. The conventional astronomical name."
+  },
+  "moonPhaseWaningCrescent": "Waning Crescent",
+  "@moonPhaseWaningCrescent": {
+    "description": "Moon phase: Waning Crescent. The conventional astronomical name."
+  },
+  "aspectConjunction": "Same sign",
+  "@aspectConjunction": {
+    "description": "Chip naming the dynamic between two signs (\"Same sign\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "aspectSemiSextile": "Neighbours",
+  "@aspectSemiSextile": {
+    "description": "Chip naming the dynamic between two signs (\"Neighbours\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "aspectSextile": "Easy",
+  "@aspectSextile": {
+    "description": "Chip naming the dynamic between two signs (\"Easy\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "aspectSquare": "Charged",
+  "@aspectSquare": {
+    "description": "Chip naming the dynamic between two signs (\"Charged\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "aspectTrine": "In flow",
+  "@aspectTrine": {
+    "description": "Chip naming the dynamic between two signs (\"In flow\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "aspectQuincunx": "Mismatched",
+  "@aspectQuincunx": {
+    "description": "Chip naming the dynamic between two signs (\"Mismatched\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "aspectOpposition": "Magnetic",
+  "@aspectOpposition": {
+    "description": "Chip naming the dynamic between two signs (\"Magnetic\"). One or two words — it sits in a small pill and on an exported card."
+  },
+  "facetSpark": "Spark",
+  "@facetSpark": {
+    "description": "Compatibility axis \"Spark\". MUST stay one short word: these are labels on a hexagon chart, and anything that wraps to two lines wrecks it. Prefer a shorter near-synonym over an accurate long word."
+  },
+  "facetVibe": "Vibe",
+  "@facetVibe": {
+    "description": "Compatibility axis \"Vibe\". MUST stay one short word: these are labels on a hexagon chart, and anything that wraps to two lines wrecks it. Prefer a shorter near-synonym over an accurate long word."
+  },
+  "facetTrust": "Trust",
+  "@facetTrust": {
+    "description": "Compatibility axis \"Trust\". MUST stay one short word: these are labels on a hexagon chart, and anything that wraps to two lines wrecks it. Prefer a shorter near-synonym over an accurate long word."
+  },
+  "facetDrama": "Drama",
+  "@facetDrama": {
+    "description": "Compatibility axis \"Drama\". MUST stay one short word: these are labels on a hexagon chart, and anything that wraps to two lines wrecks it. Prefer a shorter near-synonym over an accurate long word."
+  },
+  "facetDepth": "Depth",
+  "@facetDepth": {
+    "description": "Compatibility axis \"Depth\". MUST stay one short word: these are labels on a hexagon chart, and anything that wraps to two lines wrecks it. Prefer a shorter near-synonym over an accurate long word."
+  },
+  "facetFuture": "Future",
+  "@facetFuture": {
+    "description": "Compatibility axis \"Future\". MUST stay one short word: these are labels on a hexagon chart, and anything that wraps to two lines wrecks it. Prefer a shorter near-synonym over an accurate long word."
+  },
+  "directionPull": "Who wants it more",
+  "@directionPull": {
+    "description": "Heading over the split showing which person is more invested."
+  },
+  "directionPower": "Who holds the power",
+  "@directionPower": {
+    "description": "Heading over the split showing which person sets the terms."
+  },
+  "energyDepleted": "Depleted",
+  "@energyDepleted": {
+    "description": "Energy check-in level \"Depleted\". One word — five of these sit in a row."
+  },
+  "energyLow": "Low",
+  "@energyLow": {
+    "description": "Energy check-in level \"Low\". One word — five of these sit in a row."
+  },
+  "energySteady": "Steady",
+  "@energySteady": {
+    "description": "Energy check-in level \"Steady\". One word — five of these sit in a row."
+  },
+  "energyOpen": "Open",
+  "@energyOpen": {
+    "description": "Energy check-in level \"Open\". One word — five of these sit in a row."
+  },
+  "energyRadiant": "Radiant",
+  "@energyRadiant": {
+    "description": "Energy check-in level \"Radiant\". One word — five of these sit in a row."
+  },
+  "journalKindGratitude": "Gratitude",
+  "@journalKindGratitude": {
+    "description": "Journal entry kind \"Gratitude\"."
+  },
+  "journalKindManifestation": "Manifestation",
+  "@journalKindManifestation": {
+    "description": "Journal entry kind \"Manifestation\"."
+  },
+  "journalKindReflection": "Reflection",
+  "@journalKindReflection": {
+    "description": "Journal entry kind \"Reflection\"."
+  },
+  "journalKindRitual": "Ritual",
+  "@journalKindRitual": {
+    "description": "Journal entry kind \"Ritual\"."
+  },
+  "celebrityGroupMusic": "Music",
+  "@celebrityGroupMusic": {
+    "description": "Section heading in the celebrity picker (\"Music\")."
+  },
+  "celebrityGroupScreen": "Film & TV",
+  "@celebrityGroupScreen": {
+    "description": "Section heading in the celebrity picker (\"Film & TV\")."
+  },
+  "celebrityGroupInfluencer": "Creators",
+  "@celebrityGroupInfluencer": {
+    "description": "Section heading in the celebrity picker (\"Creators\")."
+  },
+  "celebrityGroupSport": "Sport",
+  "@celebrityGroupSport": {
+    "description": "Section heading in the celebrity picker (\"Sport\")."
+  },
+  "chakraRoot": "Root",
+  "@chakraRoot": {
+    "description": "Chakra \"Root\", shown under a sound session."
+  },
+  "chakraSacral": "Sacral",
+  "@chakraSacral": {
+    "description": "Chakra \"Sacral\", shown under a sound session."
+  },
+  "chakraSolarPlexus": "Solar Plexus",
+  "@chakraSolarPlexus": {
+    "description": "Chakra \"Solar Plexus\", shown under a sound session."
+  },
+  "chakraHeart": "Heart",
+  "@chakraHeart": {
+    "description": "Chakra \"Heart\", shown under a sound session."
+  },
+  "chakraThroat": "Throat",
+  "@chakraThroat": {
+    "description": "Chakra \"Throat\", shown under a sound session."
+  },
+  "chakraThirdEye": "Third Eye",
+  "@chakraThirdEye": {
+    "description": "Chakra \"Third Eye\", shown under a sound session."
+  },
+  "chakraCrown": "Crown",
+  "@chakraCrown": {
+    "description": "Chakra \"Crown\", shown under a sound session."
+  },
+  "planetSun": "Sun",
+  "@planetSun": {
+    "description": "The planet Sun. Use the conventional astrological name in the target language."
+  },
+  "planetMercury": "Mercury",
+  "@planetMercury": {
+    "description": "The planet Mercury. Use the conventional astrological name in the target language."
+  },
+  "planetVenus": "Venus",
+  "@planetVenus": {
+    "description": "The planet Venus. Use the conventional astrological name in the target language."
+  },
+  "planetMars": "Mars",
+  "@planetMars": {
+    "description": "The planet Mars. Use the conventional astrological name in the target language."
+  },
+  "planetJupiter": "Jupiter",
+  "@planetJupiter": {
+    "description": "The planet Jupiter. Use the conventional astrological name in the target language."
+  },
+  "planetSaturn": "Saturn",
+  "@planetSaturn": {
+    "description": "The planet Saturn. Use the conventional astrological name in the target language."
+  },
+  "billingPeriodMonth": "month",
+  "@billingPeriodMonth": {
+    "description": "Billing period, used as \"£6.99 / month\". Lowercase, and the form that follows a slash."
+  },
+  "billingPeriodYear": "year",
+  "@billingPeriodYear": {
+    "description": "Billing period, used as \"£6.99 / year\". Lowercase, and the form that follows a slash."
+  },
+  "billingPeriodOnce": "once",
+  "@billingPeriodOnce": {
+    "description": "Billing period, used as \"£6.99 / once\". Lowercase, and the form that follows a slash."
+  },
+  "matchLockedUsedTitle": "That's your free reading used",
+  "@matchLockedUsedTitle": {
+    "description": "Headline on the lock card once the one free reading is spent."
+  },
+  "carouselShapeHeading": "THE SHAPE OF IT",
+  "@carouselShapeHeading": {
+    "description": "Heading on the hexagon frame of the exported carousel. Small uppercase label."
+  },
+  "carouselHighest": "HIGHEST",
+  "@carouselHighest": {
+    "description": "Pill label over the strongest facet. One short word — it shares a row with its opposite."
+  },
+  "carouselLowest": "LOWEST",
+  "@carouselLowest": {
+    "description": "Pill label over the weakest facet. One short word."
+  },
+  "carouselFindYours": "Find yours in Sanctum",
+  "@carouselFindYours": {
+    "description": "Closing line on the last exported frame. This is the call to action a stranger reads."
+  },
+  "computingStep1": "Placing the planets",
+  "@computingStep1": {
+    "description": "Reveal sequence caption. Each caption names work the engine genuinely does — never invent a step here."
+  },
+  "computingStep2": "Reading Venus and Mars",
+  "@computingStep2": {
+    "description": "Reveal sequence caption."
+  },
+  "computingStep3": "Measuring the angles",
+  "@computingStep3": {
+    "description": "Reveal sequence caption."
+  },
+  "computingStep4": "Weighing six facets",
+  "@computingStep4": {
+    "description": "Reveal sequence caption."
+  },
+  "energyStripWindow": "YOUR LAST 30 DAYS",
+  "@energyStripWindow": {
+    "description": "Heading over the energy strip. Small uppercase label."
+  },
+  "energyCheckInCount": "{count, plural, =0{No check-ins} =1{1 check-in} other{{count} check-ins}}",
+  "@energyCheckInCount": {
+    "description": "How many energy check-ins the window holds.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "energyStripEmpty": "Keep checking in. Once there is enough, this is where the pattern shows up.",
+  "@energyStripEmpty": {
+    "description": "Shown while there is too little data to say anything. The product refuses to claim a pattern it cannot see — keep that."
+  },
+  "oracleCardLabel": "YOUR CARD FOR TODAY",
+  "@oracleCardLabel": {
+    "description": "Label on the face-down oracle card. Small uppercase label."
+  },
+  "oracleTapToTurn": "Tap to turn it over",
+  "@oracleTapToTurn": {
+    "description": "Instruction under the face-down oracle card."
+  },
+  "transitExact": "EXACT",
+  "@transitExact": {
+    "description": "Badge when a transit is within half a degree. Small uppercase label — keep it very short."
+  },
+  "transitTomorrow": "TOMORROW",
+  "@transitTomorrow": {
+    "description": "Label over the next-day tease. Small uppercase label."
+  }
+}

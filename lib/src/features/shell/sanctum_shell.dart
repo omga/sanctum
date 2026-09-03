@@ -16,6 +16,7 @@ import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/features/today/view_model/reminder_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// The persistent frame around the four main sections.
 ///
@@ -98,14 +99,12 @@ class _SanctumShellState extends ConsumerState<SanctumShell> {
     // the notification is its control surface.
     final playing = _audio?.currentSession != null;
 
+    final l10n = context.l10n;
     final leaving = await SanctumDialog.show(
       context,
-      title: 'Leave Sanctum?',
-      message: playing
-          ? 'Your session keeps playing. Use the notification to pause '
-                'or stop it.'
-          : 'Your streak and your journal are already saved.',
-      confirmLabel: 'Leave',
+      title: l10n.exitTitle,
+      message: playing ? l10n.exitMessagePlaying : l10n.exitMessageIdle,
+      confirmLabel: l10n.exitConfirm,
     );
 
     if (!leaving) return;
@@ -147,15 +146,27 @@ class _SanctumNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  static const List<({IconData icon, String label})> _items = [
-    (icon: Icons.wb_twilight, label: 'Today'),
-    (icon: Icons.favorite_outline, label: 'Match'),
-    (icon: Icons.graphic_eq, label: 'Sound'),
-    (icon: Icons.auto_stories_outlined, label: 'Journal'),
-  ];
+  /// The four destinations, in order.
+  ///
+  /// No longer `const`: the labels are localised, so the list is built
+  /// per frame against the context. Four records is nothing next to the
+  /// shader already running behind this bar.
+  static List<({IconData icon, String label})> _itemsFor(
+    BuildContext context,
+  ) {
+    final l10n = context.l10n;
+    return [
+      (icon: Icons.wb_twilight, label: l10n.navToday),
+      (icon: Icons.favorite_outline, label: l10n.navMatch),
+      (icon: Icons.graphic_eq, label: l10n.navSound),
+      (icon: Icons.auto_stories_outlined, label: l10n.navJournal),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final items = _itemsFor(context);
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -174,10 +185,10 @@ class _SanctumNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              for (var i = 0; i < _items.length; i++)
+              for (var i = 0; i < items.length; i++)
                 _NavItem(
-                  icon: _items[i].icon,
-                  label: _items[i].label,
+                  icon: items[i].icon,
+                  label: items[i].label,
                   selected: i == currentIndex,
                   onTap: () {
                     unawaited(HapticFeedback.selectionClick());

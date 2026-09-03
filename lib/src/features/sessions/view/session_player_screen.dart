@@ -13,6 +13,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/services/playback_intent.dart';
 import 'package:sanctum/src/features/sessions/view/widgets/breathing_halo.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// Plays one sound-bath session.
 class SessionPlayerScreen extends ConsumerStatefulWidget {
@@ -108,7 +110,9 @@ class _SessionPlayerScreenState extends ConsumerState<SessionPlayerScreen> {
               data: (data) {
                 final session = data.sessionById(widget.sessionId);
                 if (session == null) {
-                  return const Center(child: Text('Session not found'));
+                  return Center(
+                    child: Text(context.l10n.sessionNotFound),
+                  );
                 }
                 // The guard is set HERE, synchronously, not inside
                 // _start.
@@ -188,7 +192,8 @@ class _PlayerBody extends ConsumerWidget {
           Text(session.title, style: type.displayMedium),
           const SizedBox(height: SanctumSpacing.xs),
           Text(
-            '${session.frequencyLabel}  ·  ${session.chakra.displayName}',
+            '${session.frequencyLabel}  ·  '
+            '${session.chakra.label(context.l10n)}',
             style: type.caption.copyWith(color: colors.gold),
           ),
           const SizedBox(height: SanctumSpacing.lg),

@@ -1,3 +1,4 @@
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 
 /// The reading shown at the end of onboarding.
@@ -43,14 +44,17 @@ class Reading {
   String get shareLine => recognition ?? opening;
 
   /// Headline, addressed to them where possible.
-  String get headline {
+  ///
+  /// One whole sentence per sign rather than a template plus an article.
+  /// The article rule this used to apply — "an" before a vowel — is a
+  /// fact about English, and languages that inflect the sign itself, or
+  /// have no article at all, cannot be served by patching a word in
+  /// front of it. Twelve short sentences per language is the cheap,
+  /// correct version.
+  String headlineIn(CopyBook copy) {
     final who = name;
     return who == null
-        ? 'You are ${_article(sign.displayName)} ${sign.displayName}.'
-        : '$who, you are ${_article(sign.displayName)} '
-              '${sign.displayName}.';
+        ? copy.get('reading.headline.${sign.name}')
+        : copy.format('reading.headlineNamed.${sign.name}', {'name': who});
   }
-
-  static String _article(String word) =>
-      'AEIOU'.contains(word[0].toUpperCase()) ? 'an' : 'a';
 }

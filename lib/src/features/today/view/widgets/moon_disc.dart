@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// Draws the moon at its actual illumination.
 ///
@@ -25,7 +27,7 @@ class MoonDisc extends StatelessWidget {
     final colors = context.colors;
     return Semantics(
       label:
-          '${reading.phase.displayName}, '
+          '${reading.phase.label(context.l10n)}, '
           '${(reading.illumination * 100).round()} percent illuminated',
       child: SizedBox(
         width: size,

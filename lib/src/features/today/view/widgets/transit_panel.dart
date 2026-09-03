@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/transit.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// Today's transit, the retrograde note, and what lands tomorrow.
 ///
@@ -11,7 +15,7 @@ import 'package:sanctum/src/domain/models/transit.dart';
 /// card cannot promise anything about tomorrow, because it is a hash of
 /// the date — but the sky is on rails, so this one can, and a reason to
 /// come back is worth more than anything else on the screen.
-class TransitPanel extends StatelessWidget {
+class TransitPanel extends ConsumerWidget {
   /// Creates the panel.
   const TransitPanel({required this.reading, super.key});
 
@@ -19,7 +23,10 @@ class TransitPanel extends StatelessWidget {
   final DailyTransitReading reading;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The panel renders composed prose, so it needs the copy book
+    // the content was loaded with rather than any string of its own.
+    final copy = ref.watch(contentCopyProvider).value ?? CopyBook.empty;
     final colors = context.colors;
     final type = context.type;
     final transit = reading.transit;
@@ -45,7 +52,9 @@ class TransitPanel extends StatelessWidget {
                   const SizedBox(width: SanctumSpacing.sm),
                   Expanded(
                     child: Text(
-                      (transit?.headline ?? 'A quiet sky').toUpperCase(),
+                      (transit?.headlineIn(copy) ??
+                              copy.get('transit.quietSky'))
+                          .toUpperCase(),
                       style: type.caption.copyWith(
                         color: colors.gold,
                         letterSpacing: 1.6,
@@ -54,7 +63,7 @@ class TransitPanel extends StatelessWidget {
                   ),
                   if (transit?.isExact ?? false)
                     Text(
-                      'EXACT',
+                      context.l10n.transitExact,
                       style: type.caption.copyWith(
                         color: colors.accentSecondary,
                         letterSpacing: 1.6,
@@ -71,7 +80,7 @@ class TransitPanel extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'TOMORROW',
+                      context.l10n.transitTomorrow,
                       style: type.caption.copyWith(
                         color: colors.textTertiary,
                         letterSpacing: 1.6,

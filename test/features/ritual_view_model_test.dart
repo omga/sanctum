@@ -41,8 +41,9 @@ class _Journal implements JournalRepository {
 }
 
 void main() {
-  // Uses the REAL bundled rituals, so the test also proves the four
-  // authored rituals map onto the phases the app actually computes.
+  // Uses the REAL bundled rituals, so the test also proves the
+  // authored rituals map onto the phases the app actually computes,
+  // and that every one of them can be reached.
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late ContentCatalog catalog;
@@ -70,6 +71,11 @@ void main() {
   }
 
   group('ritualState', () {
+    // These assert the *phase* of whatever is served, not its title.
+    // Which ritual a given moon opens with is now a function of the
+    // cycle, so pinning a title here would pin the rotation's phase
+    // offset — a number nothing else depends on — and the test would
+    // fail every time a ritual was added to the catalogue.
     test('opens on a new moon', () async {
       // USNO: new moon 2026-08-12 17:37 UTC.
       final state = await containerAt(DateTime(2026, 8, 12, 20))
@@ -77,7 +83,7 @@ void main() {
 
       expect(state.phase, MoonPhase.newMoon);
       expect(state.isOpen, isTrue);
-      expect(state.ritual?.title, 'Intention Setting');
+      expect(state.ritual?.phase, MoonPhase.newMoon);
     });
 
     test('opens on a full moon', () async {
@@ -86,7 +92,7 @@ void main() {
           .read(ritualStateProvider.future);
 
       expect(state.phase, MoonPhase.fullMoon);
-      expect(state.ritual?.title, 'Release');
+      expect(state.ritual?.phase, MoonPhase.fullMoon);
     });
 
     test('opens on both quarters', () async {
@@ -95,8 +101,68 @@ void main() {
       final last = await containerAt(DateTime(2026, 8, 6, 6))
           .read(ritualStateProvider.future);
 
-      expect(first.ritual?.title, 'Meeting Resistance');
-      expect(last.ritual?.title, 'Honest Review');
+      expect(first.ritual?.phase, MoonPhase.firstQuarter);
+      expect(last.ritual?.phase, MoonPhase.lastQuarter);
+    });
+
+    test('one moon serves one ritual, every day of its window', () async {
+      // The failure this guards against is subtle and would look like a
+      // bug to a user rather than a wrong number: start a ritual on the
+      // first evening of a full moon, come back the next night to finish
+      // it, and find the app has swapped it for a different one.
+      final titles = <String>{};
+      var found = 0;
+
+      for (var day = 26; day <= 31; day++) {
+        final state = await containerAt(DateTime(2026, 8, day))
+            .read(ritualStateProvider.future);
+        if (state.phase != MoonPhase.fullMoon) continue;
+        found++;
+        titles.add(state.ritual!.title);
+      }
+
+      expect(found, greaterThan(1), reason: 'need a multi-day window');
+      expect(titles, hasLength(1));
+    });
+
+    test('successive new moons do not repeat the same ritual', () async {
+      // The whole point of the catalogue growing. A user six months in
+      // had been handed identical words six times.
+      final titles = <String>[];
+
+      // New moons through late 2026, one per lunation.
+      for (final date in [
+        DateTime(2026, 8, 12, 20),
+        DateTime(2026, 9, 11, 12),
+        DateTime(2026, 10, 10, 12),
+        DateTime(2026, 11, 9, 12),
+      ]) {
+        final state = await containerAt(date)
+            .read(ritualStateProvider.future);
+        expect(state.phase, MoonPhase.newMoon, reason: '$date');
+        titles.add(state.ritual!.title);
+      }
+
+      expect(titles.toSet().length, greaterThan(1));
+    });
+
+    test('every authored ritual is reachable within a year', () async {
+      // Content that cannot be served is content nobody will notice is
+      // broken. This is the check that would have caught the original
+      // shape of the catalogue, where a second entry for a phase sat
+      // unreachable behind the first.
+      final seen = <String>{};
+      var date = DateTime(2026, 1, 1);
+
+      for (var i = 0; i < 366; i++) {
+        final state = await containerAt(date)
+            .read(ritualStateProvider.future);
+        final ritual = state.ritual;
+        if (ritual != null) seen.add(ritual.id);
+        date = date.add(const Duration(days: 1));
+      }
+
+      expect(seen, hasLength(catalog.rituals.length));
     });
 
     test('is closed on a crescent, and says when the next one opens', () async {
@@ -150,7 +216,7 @@ void main() {
       expect(journal.added, hasLength(1));
       expect(journal.added.single.kind, JournalKind.ritual);
       expect(journal.added.single.body, 'I asked for steadiness.');
-      expect(journal.added.single.prompt, contains('Intention Setting'));
+      expect(journal.added.single.prompt, contains(state.ritual!.title));
       expect(container.read(ritualControllerProvider).hasError, isFalse);
     });
 

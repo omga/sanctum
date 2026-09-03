@@ -41,7 +41,31 @@ class _PaywallPresenterState extends ConsumerState<PaywallPresenter> {
   Future<void> _check() async {
     if (_shownThisLaunch) return;
 
-    final decision = await ref.read(paywallDecisionProvider().future);
+    // The subscription is the fix, not ceremony. `paywallDecision` is
+    // auto-dispose and awaits `streakProvider`, a Drift stream that has
+    // not emitted when this runs on launch. A bare
+    // `ref.read(...future)` registers no listener, so Riverpod collects
+    // the whole chain on the next scheduler pass — before the first row
+    // arrives — and the await completes with `Bad state: the provider
+    // streakProvider(...) was disposed during loading state`.
+    //
+    // The visible symptom was nothing at all: an error logged to the VM
+    // service, and an automatic paywall that never appeared. That is the
+    // fourth time an auto-dispose provider reached only through
+    // `ref.read` has failed silently in this codebase — see the handoff.
+    // Holding a listener across the await is what keeps it alive; the
+    // listener itself has nothing to do.
+    final subscription = ref.listenManual(
+      paywallDecisionProvider(),
+      (_, _) {},
+    );
+
+    final PaywallDecision decision;
+    try {
+      decision = await ref.read(paywallDecisionProvider().future);
+    } finally {
+      subscription.close();
+    }
     if (!mounted) return;
 
     if (decision case ShowPaywall(:final moment)) {

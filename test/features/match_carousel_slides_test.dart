@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/services/compatibility_composer.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/carousel/match_carousel_slides.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/carousel/story_slide.dart';
 
+import '../support/copy.dart';
+import '../support/harness.dart';
+
 /// Gemini and Sagittarius — an opposition, so the split is lopsided and
 /// the bar has two visibly different ends.
+final CopyBook _copy = loadEnglishCopy();
+
 CompatibilityMatch _match() => CompatibilityComposer.compose(
   you: MatchPerson(name: 'Andrew', birthDate: DateTime(1996, 6, 15)),
   them: MatchPerson(name: 'Taylor Swift', birthDate: DateTime(1989, 12, 13)),
   now: DateTime(2026, 8, 16),
+  copy: _copy,
 );
 
 Future<void> _pumpSlide(WidgetTester tester, int index) async {
@@ -20,9 +26,8 @@ Future<void> _pumpSlide(WidgetTester tester, int index) async {
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(
-    MaterialApp(
-      theme: SanctumTheme.nocturne(),
-      home: Scaffold(
+    testApp(
+      Scaffold(
         body: Center(child: MatchCarousel.slidesFor(_match())[index]),
       ),
     ),

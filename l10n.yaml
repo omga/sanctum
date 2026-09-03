@@ -1,0 +1,18 @@
+# Localisation codegen. Run by `flutter pub get` and every build.
+#
+# Output goes into lib/ rather than the synthetic package so the
+# generated file is a normal import, is visible in the tree, and can be
+# excluded from analysis by path like every other generated file here.
+arb-dir: lib/src/l10n
+template-arb-file: app_en.arb
+output-dir: lib/src/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+
+# Non-null `AppLocalizations.of(context)`. Every screen in this app sits
+# under MaterialApp, so the nullable getter would only ever add a `!`.
+nullable-getter: false
+
+# Names every string a locale has not translated yet. Wave 1 reads this
+# file rather than guessing.
+untranslated-messages-file: lib/src/l10n/untranslated.json

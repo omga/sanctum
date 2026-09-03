@@ -1,8 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/compatibility_calculator.dart';
 import 'package:sanctum/src/domain/services/compatibility_composer.dart';
+
+import '../support/copy.dart';
+
+final CopyBook _copy = loadEnglishCopy();
 
 final _now = DateTime(2026, 8, 16);
 
@@ -30,6 +35,7 @@ CompatibilityMatch _compose(DateTime a, DateTime b) =>
       you: _person('You', a),
       them: _person('Them', b),
       now: _now,
+      copy: _copy,
     );
 
 void main() {
@@ -47,6 +53,7 @@ void main() {
         you: _person('Someone Else', _dateIn(ZodiacSign.virgo)),
         them: _person('Them', _dateIn(ZodiacSign.leo)),
         now: _now,
+        copy: _copy,
       );
 
       expect(youAndB.id, isNot(aAndB.id));
@@ -61,9 +68,19 @@ void main() {
       final b = _person('B', _dateIn(ZodiacSign.libra));
 
       final forward =
-          CompatibilityComposer.compose(you: a, them: b, now: _now);
+          CompatibilityComposer.compose(
+            you: a,
+            them: b,
+            now: _now,
+            copy: _copy,
+          );
       final backward =
-          CompatibilityComposer.compose(you: b, them: a, now: _now);
+          CompatibilityComposer.compose(
+            you: b,
+            them: a,
+            now: _now,
+            copy: _copy,
+          );
 
       expect(forward.id, isNot(backward.id));
     });
@@ -73,24 +90,28 @@ void main() {
     test('every aspect has a dynamic line and a share line', () {
       for (final aspect in ZodiacAspect.values) {
         expect(
-          CompatibilityComposer.dynamics[aspect],
+          _copy.get('compatibility.dynamic.${aspect.name}'),
           isNotNull,
           reason: 'no copy for $aspect',
         );
-        expect(CompatibilityComposer.shareLines[aspect], isNotNull);
+        expect(_copy.has('compatibility.share.${aspect.name}'), isTrue);
       }
     });
 
     test('every facet has works, watch and punchline copy', () {
       for (final facet in CompatibilityFacet.values) {
-        expect(CompatibilityComposer.works[facet], isNotNull, reason: '$facet');
         expect(
-          CompatibilityComposer.watches[facet],
+          _copy.has('compatibility.works.${facet.name}'),
+          isTrue,
+          reason: '$facet',
+        );
+        expect(
+          _copy.has('compatibility.watch.${facet.name}'),
           isNotNull,
           reason: '$facet',
         );
         expect(
-          CompatibilityComposer.punchlines[facet],
+          _copy.has('compatibility.punchline.${facet.name}'),
           isNotNull,
           reason: '$facet',
         );
@@ -98,13 +119,11 @@ void main() {
     });
 
     test('both directional readings have copy for all three leans', () {
-      for (final lines in [
-        CompatibilityComposer.pullLines,
-        CompatibilityComposer.powerLines,
-      ]) {
-        expect(lines, hasLength(3));
-        for (final line in lines.values) {
-          expect(line, isNotEmpty);
+      for (final group in ['pull', 'power']) {
+        for (final lean in ['you', 'them', 'even']) {
+          final key = 'compatibility.$group.$lean';
+          expect(_copy.has(key), isTrue, reason: key);
+          expect(_copy.get(key), isNotEmpty, reason: key);
         }
       }
     });
@@ -121,6 +140,7 @@ void main() {
             you: _person('A', _dateIn(a)),
             them: _person('B', _dateIn(b)),
             now: _now,
+            copy: _copy,
           );
 
           expect(match.you.sign, a, reason: 'sample date drifted');
@@ -158,7 +178,12 @@ void main() {
         }
       }
       expect(keys, hasLength(10));
-      expect(CompatibilityComposer.elements.keys.toSet(), keys);
+      final written = {
+        for (final key in _copy.entries.keys)
+          if (key.startsWith('compatibility.element.'))
+            key.substring('compatibility.element.'.length),
+      };
+      expect(written, keys);
     });
   });
 
@@ -178,11 +203,11 @@ void main() {
 
       expect(
         match.worksLine,
-        CompatibilityComposer.works[match.strongest.facet],
+        _copy.get('compatibility.works.${match.strongest.facet.name}'),
       );
       expect(
         match.watchLine,
-        CompatibilityComposer.watches[match.weakest.facet],
+        _copy.get('compatibility.watch.${match.weakest.facet.name}'),
       );
     });
 
@@ -215,9 +240,11 @@ void main() {
       // Every share line must come from one of the three sources, never
       // be improvised, and never be blank.
       final permitted = {
-        CompatibilityComposer.lopsidedShareLine,
-        ...CompatibilityComposer.punchlines.values,
-        ...CompatibilityComposer.shareLines.values,
+        _copy.get('compatibility.lopsided'),
+        for (final facet in CompatibilityFacet.values)
+          _copy.get('compatibility.punchline.${facet.name}'),
+        for (final aspect in ZodiacAspect.values)
+          _copy.get('compatibility.share.${aspect.name}'),
       };
 
       for (final a in ZodiacSign.values) {
@@ -226,6 +253,7 @@ void main() {
             you: _person('A', _dateIn(a)),
             them: _person('B', _dateIn(b)),
             now: _now,
+            copy: _copy,
           );
           expect(permitted, contains(match.shareLine));
         }
@@ -241,7 +269,7 @@ void main() {
           DateTime(year, 4, 9),
         );
         if ((match.pull.yourShare - 50).abs() >= 18) {
-          expect(match.shareLine, CompatibilityComposer.lopsidedShareLine);
+          expect(match.shareLine, _copy.get('compatibility.lopsided'));
           seen = true;
         }
       }

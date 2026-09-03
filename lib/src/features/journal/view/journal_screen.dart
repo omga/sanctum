@@ -11,6 +11,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/journal_entry.dart';
 import 'package:sanctum/src/features/journal/view_model/journal_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The journal.
 class JournalScreen extends ConsumerWidget {
@@ -37,10 +39,13 @@ class JournalScreen extends ConsumerWidget {
                 SanctumSpacing.huge + SanctumSpacing.xxl,
               ),
               children: [
-                Text('Journal', style: context.type.displayMedium),
+                Text(
+                  context.l10n.journalTitle,
+                  style: context.type.displayMedium,
+                ),
                 const SizedBox(height: SanctumSpacing.xxs),
                 Text(
-                  '${data.length} ENTR${data.length == 1 ? 'Y' : 'IES'}',
+                  context.l10n.journalEntryCount(data.length),
                   style: context.type.caption.copyWith(
                     color: context.colors.gold,
                   ),
@@ -68,7 +73,7 @@ class JournalScreen extends ConsumerWidget {
                 SanctumSpacing.huge +
                 SanctumSpacing.xl,
             child: SanctumButton(
-              label: 'Write',
+              label: context.l10n.journalWrite,
               icon: Icons.edit_outlined,
               onPressed: () => _openComposer(context, ref),
             ),
@@ -99,11 +104,10 @@ class _EmptyJournal extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Nothing written yet', style: context.type.title),
+          Text(context.l10n.journalEmptyTitle, style: context.type.title),
           const SizedBox(height: SanctumSpacing.sm),
           Text(
-            'The first entry is the hardest. It does not have to be good, '
-            'or long, or true tomorrow.',
+            context.l10n.journalEmptyBody,
             style: context.type.bodyMedium,
           ),
         ],
@@ -124,7 +128,7 @@ class _EntryTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Journal entry, ${entry.kind.displayName}',
+      label: context.l10n.journalEntrySemantics(entry.kind.label(context.l10n)),
       child: GestureDetector(
         onTap: () {
           unawaited(HapticFeedback.selectionClick());
@@ -147,11 +151,14 @@ class _EntryTile extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    entry.kind.displayName.toUpperCase(),
+                    entry.kind.label(context.l10n).toUpperCase(),
                     style: type.caption.copyWith(color: colors.gold),
                   ),
                   const Spacer(),
-                  Text(_formatDate(entry.createdAt), style: type.caption),
+                  Text(
+                  _formatDate(context, entry.createdAt),
+                  style: type.caption,
+                ),
                   const SizedBox(width: SanctumSpacing.xs),
                   // The affordance. Without it there is nothing on the
                   // card to suggest the text continues past the ellipsis.
@@ -171,7 +178,12 @@ class _EntryTile extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
+  String _formatDate(BuildContext context, DateTime date) =>
+      context.l10n.dateShort(
+        '${date.day}',
+        '${date.month}',
+        '${date.year}',
+      );
 }
 
 /// One entry, in full.
@@ -193,10 +205,10 @@ class _ReaderSheet extends ConsumerWidget {
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final confirmed = await SanctumDialog.show(
       context,
-      title: 'Delete this entry?',
-      message: 'It is only on this phone, so this cannot be undone.',
-      confirmLabel: 'Delete',
-      cancelLabel: 'Keep',
+      title: context.l10n.journalDeleteTitle,
+      message: context.l10n.journalDeleteMessage,
+      confirmLabel: context.l10n.journalDelete,
+      cancelLabel: context.l10n.journalKeep,
     );
     if (!confirmed || !context.mounted) return;
 
@@ -242,14 +254,14 @@ class _ReaderSheet extends ConsumerWidget {
             Row(
               children: [
                 Text(
-                  entry.kind.displayName.toUpperCase(),
+                  entry.kind.label(context.l10n).toUpperCase(),
                   style: type.caption.copyWith(
                     color: colors.gold,
                     letterSpacing: 1.6,
                   ),
                 ),
                 const Spacer(),
-                Text(_longDate(entry.createdAt), style: type.caption),
+                Text(_longDate(context, entry.createdAt), style: type.caption),
               ],
             ),
             const SizedBox(height: SanctumSpacing.lg),
@@ -275,14 +287,14 @@ class _ReaderSheet extends ConsumerWidget {
             Row(
               children: [
                 SanctumButton(
-                  label: 'Delete',
+                  label: context.l10n.journalDelete,
                   icon: Icons.delete_outline,
                   variant: SanctumButtonVariant.quiet,
                   onPressed: () => unawaited(_delete(context, ref)),
                 ),
                 const Spacer(),
                 SanctumButton(
-                  label: 'Done',
+                  label: context.l10n.journalDone,
                   variant: SanctumButtonVariant.ghost,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -294,22 +306,27 @@ class _ReaderSheet extends ConsumerWidget {
     );
   }
 
-  String _longDate(DateTime date) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+  String _longDate(BuildContext context, DateTime date) {
+    final l10n = context.l10n;
+    final months = [
+      l10n.month01,
+      l10n.month02,
+      l10n.month03,
+      l10n.month04,
+      l10n.month05,
+      l10n.month06,
+      l10n.month07,
+      l10n.month08,
+      l10n.month09,
+      l10n.month10,
+      l10n.month11,
+      l10n.month12,
     ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    return l10n.dateLong(
+      '${date.day}',
+      months[date.month - 1],
+      '${date.year}',
+    );
   }
 }
 
@@ -367,7 +384,7 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
             children: [
               for (final kind in JournalKind.values)
                 ChoiceChip(
-                  label: Text(kind.displayName),
+                  label: Text(kind.label(context.l10n)),
                   selected: _kind == kind,
                   onSelected: (_) => setState(() => _kind = kind),
                   showCheckmark: false,
@@ -387,7 +404,7 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
             maxLines: 6,
             style: context.type.bodyLarge,
             decoration: InputDecoration(
-              hintText: 'Write freely.',
+              hintText: context.l10n.journalWriteHint,
               hintStyle: context.type.bodyLarge.copyWith(
                 color: colors.textTertiary,
               ),
@@ -402,7 +419,10 @@ class _ComposerSheetState extends ConsumerState<_ComposerSheet> {
           const SizedBox(height: SanctumSpacing.lg),
           Align(
             alignment: Alignment.centerRight,
-            child: SanctumButton(label: 'Save', onPressed: _save),
+            child: SanctumButton(
+              label: context.l10n.journalSave,
+              onPressed: _save,
+            ),
           ),
         ],
       ),

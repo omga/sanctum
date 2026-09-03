@@ -163,6 +163,157 @@ void main() {
     });
   });
 
+  group('time of day', () {
+    test('is ignored unless asked for', () {
+      // Load-bearing, and the reason time is an argument rather than
+      // being read off the DateTime. Transits are computed from a date,
+      // but nothing stops a caller passing a full `DateTime.now()` — and
+      // if that silently moved the sky, the daily reading would drift
+      // through the afternoon and a user who opened the app twice would
+      // see two different readings for one day.
+      expect(
+        Ephemeris.julianDay(DateTime(2026, 1, 1, 23, 59)),
+        Ephemeris.julianDay(DateTime(2026, 1, 1)),
+      );
+      expect(
+        Ephemeris.sunLongitude(DateTime(2026, 1, 1, 23, 59)),
+        Ephemeris.sunLongitude(DateTime(2026, 1, 1)),
+      );
+    });
+
+    test('offsets the instant from noon when supplied', () {
+      final noon = Ephemeris.julianDay(DateTime(2026, 1, 1));
+
+      expect(
+        Ephemeris.julianDay(DateTime(2026, 1, 1), timeOfDay: Duration.zero),
+        closeTo(noon - 0.5, 1e-9),
+      );
+      expect(
+        Ephemeris.julianDay(
+          DateTime(2026, 1, 1),
+          timeOfDay: const Duration(hours: 18),
+        ),
+        closeTo(noon + 0.25, 1e-9),
+      );
+      expect(
+        Ephemeris.julianDay(
+          DateTime(2026, 1, 1),
+          timeOfDay: const Duration(hours: 12),
+        ),
+        closeTo(noon, 1e-9),
+      );
+    });
+
+    test('barely moves the slow bodies, which is the honest claim', () {
+      // Worth pinning because it is the opposite of what a user expects
+      // when they supply a birth time. Saturn does not care what hour
+      // you were born, and the app should not imply that it does — the
+      // Moon is the whole reason the question is asked.
+      final date = DateTime(1994, 7, 3);
+      final midnight = Ephemeris.saturnLongitude(
+        date,
+        timeOfDay: Duration.zero,
+      );
+      final evening = Ephemeris.saturnLongitude(
+        date,
+        timeOfDay: const Duration(hours: 23),
+      );
+
+      expect((evening - midnight).abs(), lessThan(0.15));
+    });
+  });
+
+  group('moon', () {
+    // The Moon is validated differently from every other body here, and
+    // more strongly. Its longitude comes from Meeus' truncated series,
+    // while the Sun's comes from Keplerian elements plus a precession
+    // correction — two entirely separate code paths. At a real new moon
+    // the two must agree, and at a real full moon they must be 180°
+    // apart. That is a cross-check of both, and it is what proves the
+    // lunar series is already referred to the equinox of date and must
+    // not be run through the precession correction a second time.
+    double elongationAt(DateTime date, Duration time) {
+      final moon = Ephemeris.moonLongitude(date, timeOfDay: time);
+      final sun = Ephemeris.sunLongitude(date, timeOfDay: time);
+      var separation = (moon - sun) % 360;
+      if (separation > 180) separation -= 360;
+      return separation;
+    }
+
+    test('meets the sun at documented new moons', () {
+      // USNO new moon instants, UTC.
+      expect(
+        elongationAt(
+          DateTime(1990, 1, 26),
+          const Duration(hours: 19, minutes: 20),
+        ),
+        closeTo(0, 0.1),
+      );
+      expect(
+        elongationAt(
+          DateTime(2000, 1, 6),
+          const Duration(hours: 18, minutes: 14),
+        ),
+        closeTo(0, 0.1),
+      );
+      expect(
+        elongationAt(
+          DateTime(2024, 1, 11),
+          const Duration(hours: 11, minutes: 57),
+        ),
+        closeTo(0, 0.1),
+      );
+      expect(
+        elongationAt(
+          DateTime(2026, 8, 12),
+          const Duration(hours: 17, minutes: 37),
+        ),
+        closeTo(0, 0.1),
+      );
+    });
+
+    test('opposes the sun at documented full moons', () {
+      expect(
+        elongationAt(
+          DateTime(2024, 1, 25),
+          const Duration(hours: 17, minutes: 54),
+        ),
+        closeTo(180, 0.1),
+      );
+      expect(
+        elongationAt(
+          DateTime(2026, 8, 28),
+          const Duration(hours: 4, minutes: 18),
+        ),
+        closeTo(180, 0.1),
+      );
+    });
+
+    test('moves far enough in a day that a birth time matters', () {
+      // The entire justification for asking the question. Half a day of
+      // uncertainty is a quarter of a sign, so a noon guess would be a
+      // fabricated Moon sign a good fraction of the time.
+      final date = DateTime(2026, 3, 10);
+      final midnight = Ephemeris.moonLongitude(date, timeOfDay: Duration.zero);
+      final noon = Ephemeris.moonLongitude(
+        date,
+        timeOfDay: const Duration(hours: 12),
+      );
+
+      expect((noon - midnight).abs(), greaterThan(5));
+    });
+
+    test('stays inside the circle', () {
+      var date = DateTime(2020, 1, 1);
+      for (var i = 0; i < 400; i++) {
+        final longitude = Ephemeris.moonLongitude(date);
+        expect(longitude, greaterThanOrEqualTo(0), reason: '$date');
+        expect(longitude, lessThan(360), reason: '$date');
+        date = date.add(const Duration(days: 1));
+      }
+    });
+  });
+
   group('signAt', () {
     test('divides the tropical circle from Aries', () {
       expect(Ephemeris.signAt(0), ZodiacSign.aries);

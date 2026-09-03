@@ -1,4 +1,5 @@
 import 'package:sanctum/src/domain/models/celebrity.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
@@ -15,6 +16,7 @@ class ContentCatalog {
     required this.rituals,
     required this.quizQuestions,
     required this.celebrities,
+    this.copy = CopyBook.empty,
   });
 
   /// The oracle deck.
@@ -35,6 +37,13 @@ class ContentCatalog {
   /// Public figures the user can match themselves against.
   final List<Celebrity> celebrities;
 
+  /// The reading copy, in the loaded locale.
+  ///
+  /// Defaulted so a test can build a catalogue without one; anything
+  /// that actually composes a reading must pass it, and will throw on
+  /// the first missing key if it does not.
+  final CopyBook copy;
+
   /// The celebrities in [group], in catalogue order.
   List<Celebrity> celebritiesIn(CelebrityGroup group) =>
       [for (final one in celebrities) if (one.group == group) one];
@@ -47,16 +56,26 @@ class ContentCatalog {
     return null;
   }
 
-  /// The ritual for [phase], or `null` if that phase has none.
+  /// Every ritual written for [phase], in catalogue order.
   ///
   /// Only the four quarter phases carry rituals; the crescents and
   /// gibbous months deliberately do not, so the prompt stays an event
-  /// rather than a daily chore.
-  Ritual? ritualFor(MoonPhase phase) {
+  /// rather than a daily chore. Each of those four carries several, and
+  /// `RitualSelector` decides which one a given moon opens with — see
+  /// there for why the choice is per cycle rather than per day.
+  List<Ritual> ritualsFor(MoonPhase phase) =>
+      [for (final ritual in rituals) if (ritual.phase == phase) ritual];
+
+  /// Whether [phase] has any ritual at all.
+  ///
+  /// For "is there something to do tonight?" questions. Which ritual it
+  /// is depends on the date, so anything showing one to a user must go
+  /// through `RitualSelector` rather than reaching for the first match.
+  bool hasRitualFor(MoonPhase phase) {
     for (final ritual in rituals) {
-      if (ritual.phase == phase) return ritual;
+      if (ritual.phase == phase) return true;
     }
-    return null;
+    return false;
   }
 
   /// The card with [id], or `null`.

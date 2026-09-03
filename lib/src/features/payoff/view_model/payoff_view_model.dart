@@ -10,6 +10,10 @@ part 'payoff_view_model.g.dart';
 /// The reading built from the quiz answers.
 @riverpod
 Future<Reading> reading(Ref ref) async {
+  final catalog = await ref.watch(contentCatalogProvider.future);
   final loaded = await ref.watch(quizRepositoryProvider).load();
-  return ReadingComposer.compose(loaded.getOrElse(const QuizAnswers()));
+  return ReadingComposer.compose(
+    loaded.getOrElse(const QuizAnswers()),
+    catalog.copy,
+  );
 }

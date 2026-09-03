@@ -8,6 +8,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_locales.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 part 'app.g.dart';
@@ -114,14 +116,21 @@ class _SanctumAppState extends ConsumerState<SanctumApp> {
       return MaterialApp(
         theme: SanctumTheme.nocturne(),
         debugShowCheckedModeBanner: false,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: SanctumLocales.supported,
         home: const ColoredBox(color: Color(0xFF0B0616)),
       );
     }
 
     return MaterialApp.router(
+      // Not localised: the app is called Sanctum everywhere.
       title: 'Sanctum',
       debugShowCheckedModeBanner: false,
       theme: SanctumTheme.nocturne(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      // The same list the content catalogue resolves against, so the
+      // JSON and the ARB strings cannot end up in different languages.
+      supportedLocales: SanctumLocales.supported,
       routerConfig: ref.watch(appRouterProvider),
     );
   }

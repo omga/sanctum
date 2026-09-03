@@ -9,7 +9,6 @@ import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
-import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
@@ -18,6 +17,7 @@ import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/models/streak_summary.dart';
 import 'package:sanctum/src/features/today/view/today_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../support/harness.dart';
 
 class _Oracle implements OracleRepository {
   OracleDrawState? current;
@@ -126,10 +126,7 @@ void main() {
           practiceRepositoryProvider.overrideWithValue(_Practice()),
           energyRepositoryProvider.overrideWithValue(energy),
         ],
-        child: MaterialApp(
-          theme: SanctumTheme.nocturne(),
-          home: const Scaffold(body: TodayScreen()),
-        ),
+        child: testApp(const Scaffold(body: TodayScreen())),
       ),
     );
     await tester.pumpAndSettle();

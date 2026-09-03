@@ -15,6 +15,8 @@ import 'package:sanctum/src/domain/models/ritual.dart';
 import 'package:sanctum/src/domain/services/moon_phase_calculator.dart';
 import 'package:sanctum/src/features/rituals/view_model/ritual_view_model.dart';
 import 'package:sanctum/src/features/today/view/widgets/moon_disc.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The moon ritual for the current phase.
 class RitualScreen extends ConsumerWidget {
@@ -71,13 +73,15 @@ class _ClosedRitual extends StatelessWidget {
             size: 76,
           ),
           const SizedBox(height: SanctumSpacing.xl),
-          Text(state.phase.displayName, style: type.displayMedium),
+          Text(
+            state.phase.label(context.l10n),
+            style: type.displayMedium,
+          ),
           const SizedBox(height: SanctumSpacing.md),
           Text(
             // Framing the wait as intentional, not as a locked feature.
             // "Come back in 4 days" reads like a paywall; this does not.
-            'The moon is between rituals. This part of the cycle asks '
-            'for nothing except that you keep going.',
+            context.l10n.ritualBetween,
             style: type.bodyLarge,
           ),
           if (days != null && state.nextRitual != null) ...[
@@ -90,9 +94,13 @@ class _ClosedRitual extends StatelessWidget {
                   Expanded(
                     child: Text(
                       days == 0
-                          ? '${state.nextRitual!.title} opens today'
-                          : '${state.nextRitual!.title} in '
-                                '$days day${days == 1 ? '' : 's'}',
+                          ? context.l10n.ritualOpensToday(
+                              state.nextRitual!.title,
+                            )
+                          : context.l10n.ritualOpensIn(
+                              state.nextRitual!.title,
+                              days,
+                            ),
                       style: type.bodyMedium,
                     ),
                   ),
@@ -140,7 +148,9 @@ class _OpenRitualState extends ConsumerState<_OpenRitual> {
         .read(ritualControllerProvider.notifier)
         .complete(
           ritual: widget.ritual,
-          reflection: text.isEmpty ? 'Completed ${widget.ritual.title}.' : text,
+          reflection: text.isEmpty
+              ? context.l10n.ritualCompletedEntry(widget.ritual.title)
+              : text,
         );
 
     if (!mounted) return;
@@ -224,7 +234,7 @@ class _OpenRitualState extends ConsumerState<_OpenRitual> {
                 const SizedBox(width: SanctumSpacing.md),
                 Expanded(
                   child: Text(
-                    'Kept in your journal.',
+                    context.l10n.ritualKeptInJournal,
                     style: type.bodyMedium,
                   ),
                 ),
@@ -232,14 +242,14 @@ class _OpenRitualState extends ConsumerState<_OpenRitual> {
             ),
           )
         else ...[
-          Text('What came up?', style: type.title),
+          Text(context.l10n.ritualReflectionPrompt, style: type.title),
           const SizedBox(height: SanctumSpacing.sm),
           TextField(
             controller: _reflection,
             maxLines: 4,
             style: type.bodyMedium,
             decoration: InputDecoration(
-              hintText: 'Optional. A line is enough.',
+              hintText: context.l10n.ritualReflectionHint,
               hintStyle: type.bodyMedium.copyWith(color: colors.textTertiary),
               filled: true,
               fillColor: colors.glassFill,
@@ -251,7 +261,7 @@ class _OpenRitualState extends ConsumerState<_OpenRitual> {
           ),
           const SizedBox(height: SanctumSpacing.lg),
           SanctumButton(
-            label: 'Complete ritual',
+            label: context.l10n.ritualComplete,
             icon: Icons.auto_awesome,
             expand: true,
             // Enabled only once every step is ticked: the steps are the
@@ -262,7 +272,7 @@ class _OpenRitualState extends ConsumerState<_OpenRitual> {
           if (!_allStepsDone) ...[
             const SizedBox(height: SanctumSpacing.sm),
             Text(
-              'Work through each step first.',
+              context.l10n.ritualStepsFirst,
               textAlign: TextAlign.center,
               style: type.caption,
             ),

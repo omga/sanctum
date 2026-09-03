@@ -1,4 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/planet.dart';
 
 part 'transit.mapper.dart';
@@ -85,10 +86,16 @@ class Transit with TransitMappable {
   /// Whether this is within half a degree of exact.
   bool get isExact => orb <= 0.5;
 
-  /// "Mars presses on your Venus".
-  String get headline =>
-      '${transiting.displayName} ${aspect.verb} your '
-      '${natal.displayName}';
+  /// "Mars presses on your Venus", in the language of [copy].
+  ///
+  /// A method taking the copy book rather than a getter, because the
+  /// sentence is three translated words in a translated order and none
+  /// of them can be reached from a pure-domain model any other way.
+  String headlineIn(CopyBook copy) => copy.format('transit.headline', {
+    'transiting': copy.get('planet.${transiting.name}'),
+    'verb': copy.get('transit.verb.${aspect.name}'),
+    'natal': copy.get('planet.${natal.name}'),
+  });
 }
 
 /// Everything the home screen says about today.

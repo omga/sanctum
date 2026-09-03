@@ -7,6 +7,7 @@ import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 /// First-run welcome.
@@ -17,6 +18,7 @@ class OnboardingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final type = context.type;
+    final l10n = context.l10n;
 
     return Scaffold(
       body: AuroraBackground(
@@ -28,18 +30,12 @@ class OnboardingScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Spacer(),
-                  Text('Sanctum', style: type.displayLarge),
+                  Text(l10n.appTitle, style: type.displayLarge),
                   const SizedBox(height: SanctumSpacing.md),
-                  Text(
-                    'A quiet room that is only yours.\n\n'
-                    'One card, one tone, one honest sentence a day. '
-                    'No account, ever. Your name, your birth date and '
-                    'your journal stay on this phone.',
-                    style: type.bodyLarge,
-                  ),
+                  Text(l10n.onboardingBody, style: type.bodyLarge),
                   const Spacer(),
                   SanctumButton(
-                    label: 'Enter',
+                    label: l10n.onboardingEnter,
                     icon: Icons.auto_awesome,
                     expand: true,
                     // Straight into the quiz. Onboarding is marked done

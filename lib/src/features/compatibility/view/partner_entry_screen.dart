@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sanctum/src/design_system/atoms/date_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/atoms/time_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/zodiac_wheel.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
@@ -11,13 +12,18 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/zodiac.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
-/// Collects the other person's name and birth date.
+/// Collects the other person's name, birth date and — if it is known —
+/// birth time.
 ///
 /// The same wheel, the same live sign reveal and the same rhythm as the
 /// onboarding question, because someone who has already done this once
-/// should recognise the screen immediately.
+/// should recognise the screen immediately. The time is asked the same
+/// way here as it is there, and it is optional in both: it buys the
+/// Moon and nothing else, and most people do not know it.
 class PartnerEntryScreen extends StatefulWidget {
   /// Creates the screen.
   const PartnerEntryScreen({super.key});
@@ -29,6 +35,7 @@ class PartnerEntryScreen extends StatefulWidget {
 class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
   final _name = TextEditingController();
   DateTime _date = DateTime(1996, 6, 15);
+  int? _minuteOfDay;
 
   ZodiacSign get _sign => Zodiac.signFor(_date);
 
@@ -49,6 +56,7 @@ class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
             '${_date.year.toString().padLeft(4, '0')}-'
             '${_date.month.toString().padLeft(2, '0')}-'
             '${_date.day.toString().padLeft(2, '0')}',
+        minuteOfBirth: _minuteOfDay,
       ).push<void>(context),
     );
   }
@@ -76,11 +84,10 @@ class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
             SanctumSpacing.huge + SanctumSpacing.xxl,
           ),
           children: [
-            Text('Who are we reading?', style: type.displaySmall),
+            Text(context.l10n.partnerTitle, style: type.displaySmall),
             const SizedBox(height: SanctumSpacing.sm),
             Text(
-              'Their birth date is the only thing the reading uses, '
-              'and it stays on this phone.',
+              context.l10n.partnerBody,
               style: type.bodyMedium,
             ),
             const SizedBox(height: SanctumSpacing.xl),
@@ -92,7 +99,7 @@ class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _continue(),
               decoration: InputDecoration(
-                hintText: 'Their name',
+                hintText: context.l10n.partnerNameHint,
                 hintStyle: type.title.copyWith(color: colors.textTertiary),
                 filled: true,
                 fillColor: colors.glassFill,
@@ -124,7 +131,7 @@ class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
                         style: SanctumTypography.symbol(26, colors.gold),
                       ),
                       const SizedBox(width: SanctumSpacing.md),
-                      Text(_sign.displayName, style: type.title),
+                      Text(_sign.label(context.l10n), style: type.title),
                     ],
                   ),
                 ],
@@ -138,9 +145,19 @@ class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
                 onChanged: (date) => setState(() => _date = date),
               ),
             ),
+            const SizedBox(height: SanctumSpacing.xl),
+            Text(
+              context.l10n.partnerAskTime,
+              style: type.bodyMedium.copyWith(color: colors.textSecondary),
+            ),
+            const SizedBox(height: SanctumSpacing.md),
+            BirthTimeField(
+              minuteOfDay: _minuteOfDay,
+              onChanged: (value) => setState(() => _minuteOfDay = value),
+            ),
             const SizedBox(height: SanctumSpacing.lg),
             SanctumButton(
-              label: 'Read us',
+              label: context.l10n.partnerRead,
               expand: true,
               onPressed: _ready ? _continue : null,
             ),

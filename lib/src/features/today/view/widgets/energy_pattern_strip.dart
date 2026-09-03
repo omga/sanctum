@@ -5,6 +5,7 @@ import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/services/energy_pattern.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// The last thirty check-ins, and what they add up to.
 ///
@@ -32,16 +33,14 @@ class EnergyPatternStrip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'YOUR LAST 30 DAYS',
+                context.l10n.energyStripWindow,
                 style: type.caption.copyWith(
                   color: colors.textSecondary,
                   letterSpacing: 1.6,
                 ),
               ),
               Text(
-                pattern.total == 1
-                    ? '1 check-in'
-                    : '${pattern.total} check-ins',
+                context.l10n.energyCheckInCount(pattern.total),
                 style: type.caption.copyWith(color: colors.textTertiary),
               ),
             ],
@@ -67,8 +66,7 @@ class EnergyPatternStrip extends StatelessWidget {
           ] else ...[
             const SizedBox(height: SanctumSpacing.md),
             Text(
-              'Keep checking in. Once there is enough, this is where '
-              'the pattern shows up.',
+              context.l10n.energyStripEmpty,
               style: type.caption,
             ),
           ],

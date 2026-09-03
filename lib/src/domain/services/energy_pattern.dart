@@ -1,3 +1,4 @@
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/services/moon_phase_calculator.dart';
@@ -70,6 +71,7 @@ abstract final class EnergyPatternCalculator {
   static EnergyPattern analyse({
     required List<EnergyCheckIn> checkIns,
     required DateTime today,
+    required CopyBook copy,
   }) {
     final byDay = <DateTime, EnergyLevel>{};
     for (final entry in checkIns) {
@@ -100,13 +102,14 @@ abstract final class EnergyPatternCalculator {
       days: days,
       averageByPhase: averages,
       total: checkIns.length,
-      finding: _findingFrom(buckets, averages),
+      finding: _findingFrom(buckets, averages, copy),
     );
   }
 
   static String? _findingFrom(
     Map<MoonPhase, List<int>> buckets,
     Map<MoonPhase, double> averages,
+    CopyBook copy,
   ) {
     final eligible = [
       for (final entry in averages.entries)
@@ -120,10 +123,11 @@ abstract final class EnergyPatternCalculator {
     if (highest.value - lowest.value < minimumGap) return null;
 
     final count = buckets[lowest.key]!.length;
-    return 'Your energy runs lowest around the '
-        '${lowest.key.displayName.toLowerCase()} — $count check-ins say '
-        'so — and highest around the '
-        '${highest.key.displayName.toLowerCase()}.';
+    return copy.format('energy.finding', {
+      'lowest': copy.get('moonPhase.lower.${lowest.key.name}'),
+      'count': count,
+      'highest': copy.get('moonPhase.lower.${highest.key.name}'),
+    });
   }
 
   static DateTime _dayOf(DateTime value) =>

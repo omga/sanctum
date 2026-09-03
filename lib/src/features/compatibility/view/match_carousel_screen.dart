@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
@@ -12,6 +13,7 @@ import 'package:sanctum/src/domain/services/carousel_caption.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/carousel/match_carousel_slides.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/carousel/story_slide.dart';
 import 'package:sanctum/src/features/sharing/view_model/share_controller.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// The four frames the user is about to post, before they post them.
 ///
@@ -69,7 +71,15 @@ class _CarouselState extends ConsumerState<MatchCarouselScreen> {
     super.dispose();
   }
 
-  String get _caption => CarouselCaption.forMatch(widget.match);
+  /// The caption, in the language the content was loaded in.
+  ///
+  /// Read rather than watched: it is used inside share and clipboard
+  /// actions, and the catalogue is keepAlive, so there is nothing to
+  /// rebuild for.
+  String get _caption => CarouselCaption.forMatch(
+    widget.match,
+    ref.read(contentCatalogProvider).requireValue.copy,
+  );
 
   Future<void> _share() async {
     await ref
@@ -97,7 +107,7 @@ class _CarouselState extends ConsumerState<MatchCarouselScreen> {
     await Clipboard.setData(ClipboardData(text: _caption));
     if (!mounted) return;
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(content: Text('Caption copied.')),
+      SnackBar(content: Text(context.l10n.carouselCaptionCopied)),
     );
   }
 
@@ -122,7 +132,7 @@ class _CarouselState extends ConsumerState<MatchCarouselScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text('Your post', style: type.title),
+        title: Text(context.l10n.carouselTitle, style: type.title),
         iconTheme: IconThemeData(color: colors.textSecondary),
       ),
       body: Stack(
@@ -167,14 +177,14 @@ class _CarouselState extends ConsumerState<MatchCarouselScreen> {
                 child: Column(
                   children: [
                     SanctumButton(
-                      label: 'Share all four',
+                      label: context.l10n.carouselShareAll,
                       icon: Icons.ios_share,
                       expand: true,
                       onPressed: sharing ? null : () => unawaited(_share()),
                     ),
                     const SizedBox(height: SanctumSpacing.sm),
                     SanctumButton(
-                      label: 'Copy caption',
+                      label: context.l10n.carouselCopyCaption,
                       icon: Icons.content_copy,
                       variant: SanctumButtonVariant.ghost,
                       expand: true,
@@ -182,8 +192,7 @@ class _CarouselState extends ConsumerState<MatchCarouselScreen> {
                     ),
                     const SizedBox(height: SanctumSpacing.sm),
                     Text(
-                      'Pick TikTok or Instagram. All four go up as one '
-                      'carousel — paste the caption when it asks.',
+                      context.l10n.carouselHint,
                       textAlign: TextAlign.center,
                       style: type.caption,
                     ),
@@ -205,7 +214,10 @@ class _CarouselState extends ConsumerState<MatchCarouselScreen> {
                     children: [
                       const CircularProgressIndicator(),
                       const SizedBox(height: SanctumSpacing.lg),
-                      Text('Building your post', style: type.bodyMedium),
+                      Text(
+                        context.l10n.carouselBuilding,
+                        style: type.bodyMedium,
+                      ),
                     ],
                   ),
                 ),

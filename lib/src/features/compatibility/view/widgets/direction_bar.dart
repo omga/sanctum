@@ -3,6 +3,8 @@ import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// A split neither person controls, drawn as one bar with two ends.
 ///
@@ -41,7 +43,7 @@ class DirectionBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          reading.kind.displayName.toUpperCase(),
+          reading.kind.label(context.l10n).toUpperCase(),
           style: type.caption.copyWith(
             color: colors.textSecondary,
             letterSpacing: 2,

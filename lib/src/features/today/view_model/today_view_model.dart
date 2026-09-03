@@ -164,10 +164,15 @@ Future<TodayUiState> todayState(Ref ref) async {
     energy: energy,
     transit: birthDate == null
         ? null
-        : TransitComposer.compose(birthDate: birthDate, day: today),
+        : TransitComposer.compose(
+            birthDate: birthDate,
+            day: today,
+            copy: catalog.copy,
+          ),
     pattern: EnergyPatternCalculator.analyse(
       checkIns: history,
       today: today,
+      copy: catalog.copy,
     ),
     cardDrawCount: drawn.where((id) => id == storedCard.id).length,
   );

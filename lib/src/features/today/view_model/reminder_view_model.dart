@@ -4,6 +4,7 @@ import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/services/reminders/reminder_service.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/services/reminder_schedule.dart';
 import 'package:sanctum/src/domain/services/transit_composer.dart';
@@ -71,6 +72,12 @@ class ReminderController extends _$ReminderController {
   /// who has declined notifications must not be shown an error every
   /// time they open the app for a feature they turned off.
   Future<void> refresh() async {
+    // The notification text is composed here, days ahead of when it is
+    // shown, because nothing of ours runs when one fires. That means the
+    // copy book has to be resolved now — a notification cannot ask for a
+    // string later.
+    final catalog = await ref.read(contentCatalogProvider.future);
+    final copy = catalog.copy;
     final answers = (await ref.read(quizRepositoryProvider).load())
         .getOrElse(const QuizAnswers());
 
@@ -95,10 +102,11 @@ class ReminderController extends _$ReminderController {
           // Saturn" — because on a lock screen the title is all most
           // people read, and a title that says "Sanctum" tells them
           // nothing they did not already know.
-          title: _titleFor(birthDate, slot, name),
+          title: _titleFor(birthDate, slot, name, copy),
           body: TransitComposer.compose(
             birthDate: birthDate,
             day: slot,
+            copy: copy,
           ).line,
         ),
     ]);
@@ -109,13 +117,21 @@ class ReminderController extends _$ReminderController {
     await ref.read(reminderServiceProvider).cancelAll();
   }
 
-  String _titleFor(DateTime birthDate, DateTime day, String? name) {
+  String _titleFor(
+    DateTime birthDate,
+    DateTime day,
+    String? name,
+    CopyBook copy,
+  ) {
     final reading = TransitComposer.compose(
       birthDate: birthDate,
       day: day,
+      copy: copy,
     );
     final transit = reading.transit;
-    if (transit != null) return transit.headline;
-    return name == null ? 'A quiet sky today' : '$name, a quiet sky today';
+    if (transit != null) return transit.headlineIn(copy);
+    return name == null
+        ? copy.get('transit.quietSkyTitle')
+        : copy.format('transit.quietSkyTitleNamed', {'name': name});
   }
 }

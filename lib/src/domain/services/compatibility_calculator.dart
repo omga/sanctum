@@ -26,6 +26,28 @@ import 'package:sanctum/src/domain/services/aspects.dart';
 /// - **Depth** — Saturn against Venus. The weight you cannot shake.
 /// - **Future** — Saturn against Sun, flowing. Commitment that holds.
 ///
+/// ## The Moon joins only when both people know their birth time
+///
+/// The Moon is the body synastry actually cares about — emotional
+/// register, what someone needs rather than what they want — and it is
+/// the one body a birth date cannot place. It moves 13° a day, so
+/// without a time its sign is close to a coin toss.
+///
+/// So it is included when, and only when, *both* charts have a known
+/// birth time. Every term below is otherwise exactly what it was, which
+/// means a reading composed before this existed still computes to the
+/// same numbers, and a match against a celebrity — whose catalogue entry
+/// is a date from Wikidata with no time — is unaffected.
+///
+/// Half-knowing is the case worth being careful about. If one person
+/// supplied a time and the other did not, the Moon is left out
+/// altogether rather than guessed at noon for the missing side. A
+/// lopsided model would put a real Moon against an invented one and
+/// report the difference as a finding about the couple, which is the
+/// same failure as inventing a score. It is the principle `_share`
+/// already follows: the model should not be loudest where it knows
+/// least.
+///
 /// ## Why the floor is 45
 ///
 /// A 9% match is funny exactly once. The modal user is checking
@@ -39,6 +61,14 @@ abstract final class CompatibilityCalculator {
 
   /// Highest score the model will return.
   static const int ceiling = 98;
+
+  /// Whether a reading between [you] and [them] can use the Moon.
+  ///
+  /// Surfaced so the UI can say what the reading is working from, and
+  /// offer the missing birth time as something to add rather than
+  /// quietly producing a thinner result.
+  static bool usesMoon(MatchPerson you, MatchPerson them) =>
+      you.moon != null && them.moon != null;
 
   /// The six facet scores for [you] and [them], in display order.
   static List<FacetScore> facets(MatchPerson you, MatchPerson them) => [
@@ -122,7 +152,53 @@ abstract final class CompatibilityCalculator {
       ZodiacAspect.values[stepsBetween(a, b)];
 
   /// The unscaled `0–1` strength of a facet.
+  ///
+  /// Two parallel sets of weights rather than one set with zeroed terms,
+  /// because every facet must still sum to 1.0 whichever branch runs —
+  /// otherwise adding a birth time would not sharpen a score, it would
+  /// simply inflate it, and every reading with a time would out-score
+  /// every reading without one for no reason anybody could defend.
   static double _raw(
+    CompatibilityFacet facet,
+    MatchPerson a,
+    MatchPerson b,
+  ) {
+    final aMoon = a.moon;
+    final bMoon = b.moon;
+    if (aMoon == null || bMoon == null) {
+      return _rawWithoutMoon(facet, a, b);
+    }
+
+    return switch (facet) {
+      // Desire is Venus and Mars. The Moon is not about wanting, so it
+      // is left out here on purpose rather than for want of a weight.
+      CompatibilityFacet.spark => _rawWithoutMoon(facet, a, b),
+      CompatibilityFacet.vibe =>
+        0.40 * Aspects.ease(a.sun, b.sun) +
+            0.30 * Aspects.ease(a.venus, b.venus) +
+            0.30 * Aspects.ease(aMoon, bMoon),
+      CompatibilityFacet.trust =>
+        0.35 * Aspects.ease(a.sun, b.venus) +
+            0.35 * Aspects.ease(b.sun, a.venus) +
+            0.15 * Aspects.ease(aMoon, b.venus) +
+            0.15 * Aspects.ease(bMoon, a.venus),
+      CompatibilityFacet.drama =>
+        0.40 * Aspects.heat(a.sun, b.sun) +
+            0.30 * Aspects.heat(a.mars, b.mars) +
+            0.15 * Aspects.heat(aMoon, b.mars) +
+            0.15 * Aspects.heat(bMoon, a.mars),
+      CompatibilityFacet.depth =>
+        0.35 * Aspects.heat(a.saturn, b.venus) +
+            0.35 * Aspects.heat(b.saturn, a.venus) +
+            0.15 * Aspects.heat(a.saturn, bMoon) +
+            0.15 * Aspects.heat(b.saturn, aMoon),
+      // Saturn to Sun is the commitment contact and stands alone.
+      CompatibilityFacet.future => _rawWithoutMoon(facet, a, b),
+    };
+  }
+
+  /// The original four-body model, unchanged.
+  static double _rawWithoutMoon(
     CompatibilityFacet facet,
     MatchPerson a,
     MatchPerson b,

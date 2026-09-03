@@ -4,6 +4,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
 import 'package:sanctum/src/domain/models/reading.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The card a user posts.
 ///
@@ -56,7 +58,7 @@ class ShareableCard extends StatelessWidget {
                 ),
                 const SizedBox(width: SanctumSpacing.md),
                 Text(
-                  reading.sign.displayName.toUpperCase(),
+                  reading.sign.label(context.l10n).toUpperCase(),
                   style: type.caption.copyWith(color: colors.gold),
                 ),
               ],
@@ -74,7 +76,9 @@ class ShareableCard extends StatelessWidget {
                   style: type.caption.copyWith(color: colors.textSecondary),
                 ),
                 Text(
-                  '${reading.sign.element.displayName} sign',
+                  context.l10n.quizElementSign(
+                    reading.sign.element.label(context.l10n),
+                  ),
                   style: type.caption,
                 ),
               ],

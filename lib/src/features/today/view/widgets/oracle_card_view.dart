@@ -9,6 +9,7 @@ import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/oracle_card.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// The daily oracle card, face-down until tapped.
 ///
@@ -122,12 +123,12 @@ class _CardBack extends StatelessWidget {
             Icon(Icons.auto_awesome, color: colors.gold, size: 30),
             const SizedBox(height: SanctumSpacing.md),
             Text(
-              'YOUR CARD FOR TODAY',
+              context.l10n.oracleCardLabel,
               style: context.type.caption.copyWith(color: colors.gold),
             ),
             const SizedBox(height: SanctumSpacing.sm),
             Text(
-              'Tap to turn it over',
+              context.l10n.oracleTapToTurn,
               style: context.type.bodySmall,
             ),
           ],

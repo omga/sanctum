@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/design_system/atoms/date_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/atoms/time_wheel.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_colors.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
+import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/services/zodiac.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/celebrity_tile.dart';
 import 'package:sanctum/src/features/compatibility/view_model/compatibility_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// Picks one person — from the catalogue, or typed in.
 ///
@@ -44,6 +48,7 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
   final _name = TextEditingController();
   String _query = '';
   DateTime _date = DateTime(1996, 6, 15);
+  int? _minuteOfDay;
   bool _manual = false;
 
   @override
@@ -102,14 +107,14 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
       children: [
         TextField(
           onChanged: (value) => setState(() => _query = value),
-          decoration: const InputDecoration(
-            hintText: 'Search by name',
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            hintText: context.l10n.matchSearchByName,
+            prefixIcon: const Icon(Icons.search),
           ),
         ),
         const SizedBox(height: SanctumSpacing.lg),
         SanctumButton(
-          label: 'Enter a name and birth date',
+          label: context.l10n.pickerManualEntry,
           icon: Icons.edit_outlined,
           variant: SanctumButtonVariant.ghost,
           expand: true,
@@ -119,6 +124,9 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
         for (final one in matching) ...[
           CelebrityTile(
             celebrity: one,
+            // No birth time: the catalogue is Wikidata `P569`, which is
+            // a date. Inventing one would put a made-up Moon sign
+            // beside a real person's name on a card built to be posted.
             onTap: () => _pick(
               MatchPerson(
                 name: one.name,
@@ -133,7 +141,7 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
           Padding(
             padding: const EdgeInsets.only(top: SanctumSpacing.xxl),
             child: Text(
-              'Nobody by that name. Enter their birth date instead.',
+              context.l10n.pickerNoResults,
               textAlign: TextAlign.center,
               style: type.bodyMedium,
             ),
@@ -153,12 +161,17 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
           controller: _name,
           textCapitalization: TextCapitalization.words,
           onChanged: (_) => setState(() {}),
-          decoration: const InputDecoration(hintText: 'Their name'),
+          decoration: InputDecoration(
+            hintText: context.l10n.partnerNameHint,
+          ),
         ),
         const SizedBox(height: SanctumSpacing.lg),
         Center(
           child: Text(
-            '${sign.displayName} · ${sign.element.displayName}',
+            context.l10n.pickerSignAndElement(
+              sign.label(context.l10n),
+              sign.element.label(context.l10n),
+            ),
             style: type.caption.copyWith(color: colors.gold, letterSpacing: 2),
           ),
         ),
@@ -171,18 +184,32 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
           ),
         ),
         const SizedBox(height: SanctumSpacing.lg),
+        Text(
+          context.l10n.pickerBirthTime,
+          style: type.bodyMedium.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: SanctumSpacing.sm),
+        BirthTimeField(
+          minuteOfDay: _minuteOfDay,
+          onChanged: (value) => setState(() => _minuteOfDay = value),
+        ),
+        const SizedBox(height: SanctumSpacing.lg),
         SanctumButton(
-          label: 'Use this person',
+          label: context.l10n.pickerUsePerson,
           expand: true,
           onPressed: ready
               ? () => _pick(
-                  MatchPerson(name: _name.text.trim(), birthDate: _date),
+                  MatchPerson(
+                    name: _name.text.trim(),
+                    birthDate: _date,
+                    birthTime: BirthTime(minuteOfDay: _minuteOfDay),
+                  ),
                 )
               : null,
         ),
         const SizedBox(height: SanctumSpacing.sm),
         SanctumButton(
-          label: 'Back to the catalogue',
+          label: context.l10n.pickerBackToCatalogue,
           variant: SanctumButtonVariant.quiet,
           expand: true,
           onPressed: () => setState(() => _manual = false),

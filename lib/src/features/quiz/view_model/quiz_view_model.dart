@@ -5,6 +5,7 @@ import 'package:sanctum/src/core/analytics/analytics_event.dart';
 import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/services/quiz_flow.dart';
 
@@ -201,6 +202,19 @@ class QuizController extends _$QuizController {
     if (current == null) return;
     _reportAnswered(questionId);
     await _apply(current.answers.withDate(questionId, date));
+  }
+
+  /// Records a birth time for [questionId] and advances.
+  ///
+  /// [BirthTime.unknown] is a real answer and is stored as one, so the
+  /// flow moves on and never asks again. Only the fact that the question
+  /// was answered is reported — the time itself is as personal as the
+  /// birth date and stays on the device.
+  Future<void> chooseTime(String questionId, BirthTime time) async {
+    final current = state.value;
+    if (current == null) return;
+    _reportAnswered(questionId);
+    await _apply(current.answers.withTime(questionId, time));
   }
 
   /// Records free text for [questionId] and advances.

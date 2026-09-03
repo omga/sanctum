@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/atoms/date_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/atoms/time_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/zodiac_wheel.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
@@ -14,11 +15,14 @@ import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
+import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/zodiac.dart';
 import 'package:sanctum/src/features/quiz/view/widgets/quiz_option_card.dart';
 import 'package:sanctum/src/features/quiz/view_model/quiz_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The onboarding quiz.
 ///
@@ -233,6 +237,15 @@ class _Body extends StatelessWidget {
         );
       case QuizQuestionKind.date:
         return _BirthDate(question: question, controller: controller);
+      case QuizQuestionKind.time:
+        return _BirthTimeStep(
+          question: question,
+          // Seeded from the stored answer so stepping back shows what
+          // the user actually said, rather than silently resetting them
+          // to "I do not know" and making them answer twice.
+          initial: answers.times[question.id],
+          controller: controller,
+        );
       case QuizQuestionKind.text:
         return _TextEntry(question: question, controller: controller);
       case QuizQuestionKind.interstitial:
@@ -287,7 +300,7 @@ class _Choices extends StatelessWidget {
         if (multi) ...[
           const SizedBox(height: SanctumSpacing.md),
           SanctumButton(
-            label: 'Continue',
+            label: context.l10n.commonContinue,
             expand: true,
             // Nothing chosen is a real answer to "what are you here
             // for?" — but it personalises nothing, so require one.
@@ -359,7 +372,7 @@ class _Interstitial extends StatelessWidget {
               .slideX(begin: 0.08, end: 0),
         SizedBox(height: SanctumSpacing.lg + echoed.length * 4),
         SanctumButton(
-              label: 'Continue',
+              label: context.l10n.commonContinue,
               expand: true,
               onPressed: () => unawaited(controller.acknowledge(question.id)),
             )
@@ -404,7 +417,7 @@ class _TextEntryState extends State<_TextEntry> {
           onChanged: (_) => setState(() {}),
           onSubmitted: _submit,
           decoration: InputDecoration(
-            hintText: 'Your name',
+            hintText: context.l10n.quizNameHint,
             hintStyle: context.type.displaySmall.copyWith(
               color: colors.textTertiary,
             ),
@@ -418,7 +431,7 @@ class _TextEntryState extends State<_TextEntry> {
         ),
         const SizedBox(height: SanctumSpacing.xl),
         SanctumButton(
-          label: 'Continue',
+          label: context.l10n.commonContinue,
           expand: true,
           onPressed: _field.text.trim().isEmpty
               ? null
@@ -477,11 +490,14 @@ class _BirthDateState extends State<_BirthDate> {
                     style: SanctumTypography.symbol(30, colors.gold),
                   ),
                   const SizedBox(width: SanctumSpacing.md),
-                  Text(_sign.displayName, style: type.displaySmall),
+                  Text(
+                    _sign.label(context.l10n),
+                    style: type.displaySmall,
+                  ),
                 ],
               ),
               Text(
-                '${_sign.element.displayName} sign',
+                context.l10n.quizElementSign(_sign.element.label(context.l10n)),
                 style: type.caption.copyWith(color: colors.gold),
               ),
             ],
@@ -497,10 +513,80 @@ class _BirthDateState extends State<_BirthDate> {
         ),
         const SizedBox(height: SanctumSpacing.lg),
         SanctumButton(
-          label: 'Continue',
+          label: context.l10n.commonContinue,
           expand: true,
           onPressed: () => unawaited(
             widget.controller.chooseDate(widget.question.id, _date),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The birth time question.
+///
+/// Sits immediately after the birth date, while the user is still in the
+/// frame of mind of answering factual questions about themselves, and
+/// before the flow turns back to preferences.
+///
+/// It opens on "I do not know" rather than on a set of wheels. That is
+/// the honest default — most people genuinely do not know — and it means
+/// the fast path through this screen is one tap for the majority, with
+/// the wheels appearing only for the minority who can actually answer.
+class _BirthTimeStep extends StatefulWidget {
+  const _BirthTimeStep({
+    required this.question,
+    required this.controller,
+    this.initial,
+  });
+
+  final QuizQuestion question;
+  final QuizController controller;
+
+  /// What the user said last time, if they have been here before.
+  final BirthTime? initial;
+
+  @override
+  State<_BirthTimeStep> createState() => _BirthTimeStepState();
+}
+
+class _BirthTimeStepState extends State<_BirthTimeStep> {
+  late int? _minuteOfDay = widget.initial?.minuteOfDay;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final type = context.type;
+    final minutes = _minuteOfDay;
+
+    return Column(
+      children: [
+        Icon(Icons.nightlight_round, color: colors.gold, size: 40),
+        const SizedBox(height: SanctumSpacing.md),
+        Text(
+          minutes == null
+              ? context.l10n.quizBirthTimeUnknownHint
+              : context.l10n.quizBirthTimeKnownHint,
+          textAlign: TextAlign.center,
+          style: type.bodyMedium,
+        ),
+        const SizedBox(height: SanctumSpacing.lg),
+        BirthTimeField(
+          minuteOfDay: minutes,
+          onChanged: (value) => setState(() => _minuteOfDay = value),
+        ),
+        const SizedBox(height: SanctumSpacing.xl),
+        SanctumButton(
+          label: context.l10n.commonContinue,
+          expand: true,
+          onPressed: () => unawaited(
+            widget.controller.chooseTime(
+              widget.question.id,
+              minutes == null
+                  ? BirthTime.unknown
+                  : BirthTime(minuteOfDay: minutes),
+            ),
           ),
         ),
       ],

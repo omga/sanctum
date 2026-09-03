@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// Month / day / year picker wheels.
 ///
@@ -32,23 +33,28 @@ class BirthDateWheels extends StatelessWidget {
   /// How many years the year wheel offers.
   final int span;
 
-  static const _months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
+  /// Month names for the current locale, January first.
+  static List<String> _monthsOf(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      l10n.month01,
+      l10n.month02,
+      l10n.month03,
+      l10n.month04,
+      l10n.month05,
+      l10n.month06,
+      l10n.month07,
+      l10n.month08,
+      l10n.month09,
+      l10n.month10,
+      l10n.month11,
+      l10n.month12,
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final months = _monthsOf(context);
     final now = DateTime.now();
     final years = List.generate(span, (i) => now.year - minimumAge - i);
     final daysInMonth = DateTime(date.year, date.month + 1, 0).day;
@@ -60,7 +66,7 @@ class BirthDateWheels extends StatelessWidget {
           child: _Wheel(
             count: 12,
             initial: date.month - 1,
-            label: (i) => _months[i],
+            label: (i) => months[i],
             onSelected: (i) => onChanged(
               // Clamp the day, or scrolling from 31 January to February
               // silently rolls the date into March.

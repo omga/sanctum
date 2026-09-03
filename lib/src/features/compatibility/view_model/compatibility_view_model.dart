@@ -3,8 +3,10 @@ import 'package:sanctum/src/core/analytics/analytics_event.dart';
 import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/quiz.dart';
 import 'package:sanctum/src/domain/services/compatibility_composer.dart';
 import 'package:sanctum/src/domain/services/compatibility_gate.dart';
@@ -22,6 +24,7 @@ class CompatibilityUiState {
     required this.hasSharedInvite,
     required this.isPremium,
     required this.now,
+    required this.copy,
   });
 
   /// The user, or `null` if we do not have their birth date yet.
@@ -44,6 +47,9 @@ class CompatibilityUiState {
 
   /// Now, injected so composed matches are testable.
   final DateTime now;
+
+  /// The reading copy, in the loaded locale.
+  final CopyBook copy;
 
   /// Whether we know enough to compute anything.
   bool get isReady => you != null;
@@ -92,6 +98,7 @@ class CompatibilityUiState {
       you: first,
       them: second,
       now: now,
+      copy: copy,
     );
   }
 }
@@ -115,6 +122,7 @@ class CompatibilityController extends _$CompatibilityController {
       hasSharedInvite: stored.hasSharedInvite,
       isPremium: ref.watch(isPremiumProvider),
       now: ref.watch(clockProvider).now(),
+      copy: catalog.copy,
     );
   }
 
@@ -126,16 +134,26 @@ class CompatibilityController extends _$CompatibilityController {
   MatchPerson? _personFrom(QuizAnswers answers) {
     final birth = answers.dates['birth_date'];
     if (birth == null) return null;
-    return MatchPerson(name: answers.name ?? 'You', birthDate: birth);
+    return MatchPerson(
+      name: answers.name ?? 'You',
+      birthDate: birth,
+      // Onboarding already asked. Asking a second time would be the same
+      // failure as re-asking for the birth date.
+      birthTime: answers.birthTime,
+    );
   }
 
   /// Records the user's own birth date, for anyone who reached this tab
   /// without it. Written back to the quiz answers so there stays exactly
   /// one place the app remembers when the user was born.
-  Future<void> setYourBirthDate(DateTime date) async {
+  Future<void> setYourBirthDate(DateTime date, {int? minuteOfDay}) async {
     final repository = ref.read(quizRepositoryProvider);
     final answers = (await repository.load()).getOrElse(const QuizAnswers());
-    await repository.save(answers.withDate('birth_date', date));
+    await repository.save(
+      answers
+          .withDate('birth_date', date)
+          .withTime('birth_time', BirthTime(minuteOfDay: minuteOfDay)),
+    );
     ref.invalidateSelf();
   }
 

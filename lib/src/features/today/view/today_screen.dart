@@ -15,6 +15,8 @@ import 'package:sanctum/src/features/today/view/widgets/moon_disc.dart';
 import 'package:sanctum/src/features/today/view/widgets/oracle_card_view.dart';
 import 'package:sanctum/src/features/today/view/widgets/transit_panel.dart';
 import 'package:sanctum/src/features/today/view_model/today_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 /// The home screen: today's attunement.
@@ -108,12 +110,12 @@ class _TodayContent extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _greeting(state.date),
+                    _greeting(context),
                     style: type.displayMedium,
                   ),
                   const SizedBox(height: SanctumSpacing.xxs),
                   Text(
-                    state.moon.phase.displayName.toUpperCase(),
+                    state.moon.phase.label(context.l10n).toUpperCase(),
                     style: type.caption.copyWith(color: colors.gold),
                   ),
                 ],
@@ -146,8 +148,7 @@ class _TodayContent extends ConsumerWidget {
         if (state.cardIsRepeat) ...[
           const SizedBox(height: SanctumSpacing.sm),
           Text(
-            'You have drawn this one '
-            '${state.cardDrawCount} times before.',
+            context.l10n.todayCardRepeat(state.cardDrawCount),
             textAlign: TextAlign.center,
             style: type.caption.copyWith(color: colors.gold),
           ),
@@ -181,14 +182,15 @@ class _TodayContent extends ConsumerWidget {
     );
   }
 
-  String _greeting(DateTime date) {
+  String _greeting(BuildContext context) {
     // Based on the *date's* hour would always be midnight, so use the
     // real hour of day here — this is presentation, not domain logic.
+    final l10n = context.l10n;
     final hour = DateTime.now().hour;
-    if (hour < 5) return 'Still awake';
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 5) return l10n.greetingLateNight;
+    if (hour < 12) return l10n.greetingMorning;
+    if (hour < 18) return l10n.greetingAfternoon;
+    return l10n.greetingEvening;
   }
 }
 
@@ -228,7 +230,7 @@ class _RitualPrompt extends ConsumerWidget {
                 children: [
                   Text(ritual.title, style: type.title),
                   Text(
-                    '${ritual.moon} ritual is open',
+                    context.l10n.todayRitualOpen(ritual.moon),
                     style: type.bodySmall,
                   ),
                 ],
@@ -258,7 +260,7 @@ class _EnergyPrompt extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('How is your energy?', style: context.type.title),
+          Text(context.l10n.todayEnergyQuestion, style: context.type.title),
           const SizedBox(height: SanctumSpacing.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -267,7 +269,7 @@ class _EnergyPrompt extends StatelessWidget {
                 Expanded(
                   child: Semantics(
                     button: true,
-                    label: level.displayName,
+                    label: level.label(context.l10n),
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () => onSelect(level),
@@ -296,7 +298,7 @@ class _EnergyPrompt extends StatelessWidget {
                           ),
                           const SizedBox(height: SanctumSpacing.xs),
                           Text(
-                            level.displayName,
+                            level.label(context.l10n),
                             textAlign: TextAlign.center,
                             style: context.type.caption,
                           ),
@@ -328,7 +330,9 @@ class _EnergyRecorded extends StatelessWidget {
           const SizedBox(width: SanctumSpacing.md),
           Expanded(
             child: Text(
-              'Today you felt ${level.displayName.toLowerCase()}.',
+              context.l10n.todayEnergyRecorded(
+                level.label(context.l10n).toLowerCase(),
+              ),
               style: context.type.bodyMedium,
             ),
           ),
@@ -368,15 +372,15 @@ class _StreakRow extends StatelessWidget {
               children: [
                 Text(
                   current == 0
-                      ? 'No streak yet'
-                      : '$current day${current == 1 ? '' : 's'} in a row',
+                      ? context.l10n.streakNone
+                      : context.l10n.streakDays(current),
                   style: type.title,
                 ),
                 Text(
                   switch ((current, atRisk)) {
-                    (0, _) => 'Begin one today.',
-                    (_, true) => 'Practise today to keep it.',
-                    _ => 'Longest: $longest days',
+                    (0, _) => context.l10n.streakBeginToday,
+                    (_, true) => context.l10n.streakAtRisk,
+                    _ => context.l10n.streakLongest(longest),
                   },
                   style: type.bodySmall,
                 ),

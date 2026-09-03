@@ -18,6 +18,14 @@ part 'paywall_view_model.g.dart';
 /// database, preferences, the clock. [PaywallTrigger] stays a pure
 /// function of the resulting value object, which is why its rules can be
 /// tested across a simulated two-year journey in milliseconds.
+///
+/// **This waits on a stream that has not emitted yet.**
+/// `streakProvider` is a Drift stream, so this future only completes
+/// once the first row arrives. Anything reading it must therefore keep
+/// it alive across the await — an auto-dispose provider with no
+/// listener is collected before the row lands, and Riverpod completes
+/// the future with `Bad state: ... was disposed during loading state`
+/// instead. `paywall_presenter.dart` is where that is handled, and why.
 @riverpod
 Future<PaywallSignals> paywallSignals(
   Ref ref, {

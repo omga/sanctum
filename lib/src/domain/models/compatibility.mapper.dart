@@ -465,6 +465,7 @@ class MatchPersonMapper extends ClassMapperBase<MatchPerson> {
   static MatchPersonMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MatchPersonMapper._());
+      BirthTimeMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -478,6 +479,14 @@ class MatchPersonMapper extends ClassMapperBase<MatchPerson> {
   static const Field<MatchPerson, DateTime> _f$birthDate = Field(
     'birthDate',
     _$birthDate,
+    hook: CalendarDateHook(),
+  );
+  static BirthTime _$birthTime(MatchPerson v) => v.birthTime;
+  static const Field<MatchPerson, BirthTime> _f$birthTime = Field(
+    'birthTime',
+    _$birthTime,
+    opt: true,
+    def: BirthTime.unknown,
   );
   static String? _$celebrityId(MatchPerson v) => v.celebrityId;
   static const Field<MatchPerson, String> _f$celebrityId = Field(
@@ -490,6 +499,7 @@ class MatchPersonMapper extends ClassMapperBase<MatchPerson> {
   final MappableFields<MatchPerson> fields = const {
     #name: _f$name,
     #birthDate: _f$birthDate,
+    #birthTime: _f$birthTime,
     #celebrityId: _f$celebrityId,
   };
 
@@ -497,6 +507,7 @@ class MatchPersonMapper extends ClassMapperBase<MatchPerson> {
     return MatchPerson(
       name: data.dec(_f$name),
       birthDate: data.dec(_f$birthDate),
+      birthTime: data.dec(_f$birthTime),
       celebrityId: data.dec(_f$celebrityId),
     );
   }
@@ -561,7 +572,13 @@ extension MatchPersonValueCopy<$R, $Out>
 
 abstract class MatchPersonCopyWith<$R, $In extends MatchPerson, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? name, DateTime? birthDate, String? celebrityId});
+  BirthTimeCopyWith<$R, BirthTime, BirthTime> get birthTime;
+  $R call({
+    String? name,
+    DateTime? birthDate,
+    BirthTime? birthTime,
+    String? celebrityId,
+  });
   MatchPersonCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -574,18 +591,27 @@ class _MatchPersonCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MatchPerson> $mapper =
       MatchPersonMapper.ensureInitialized();
   @override
-  $R call({String? name, DateTime? birthDate, Object? celebrityId = $none}) =>
-      $apply(
-        FieldCopyWithData({
-          if (name != null) #name: name,
-          if (birthDate != null) #birthDate: birthDate,
-          if (celebrityId != $none) #celebrityId: celebrityId,
-        }),
-      );
+  BirthTimeCopyWith<$R, BirthTime, BirthTime> get birthTime =>
+      $value.birthTime.copyWith.$chain((v) => call(birthTime: v));
+  @override
+  $R call({
+    String? name,
+    DateTime? birthDate,
+    BirthTime? birthTime,
+    Object? celebrityId = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (name != null) #name: name,
+      if (birthDate != null) #birthDate: birthDate,
+      if (birthTime != null) #birthTime: birthTime,
+      if (celebrityId != $none) #celebrityId: celebrityId,
+    }),
+  );
   @override
   MatchPerson $make(CopyWithData data) => MatchPerson(
     name: data.get(#name, or: $value.name),
     birthDate: data.get(#birthDate, or: $value.birthDate),
+    birthTime: data.get(#birthTime, or: $value.birthTime),
     celebrityId: data.get(#celebrityId, or: $value.celebrityId),
   );
 

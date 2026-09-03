@@ -1,7 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/services/carousel_caption.dart';
 import 'package:sanctum/src/domain/services/compatibility_composer.dart';
+
+import '../support/copy.dart';
+
+final CopyBook _copy = loadEnglishCopy();
 
 final _now = DateTime(2026, 8, 16);
 
@@ -14,6 +19,7 @@ CompatibilityMatch _composed() => CompatibilityComposer.compose(
   you: _person('Andrew', DateTime(1996, 7, 5)),
   them: _person('Selena Gomez', DateTime(1992, 7, 22)),
   now: _now,
+  copy: _copy,
 );
 
 /// A match built by hand, so [DirectionalReading] can be pinned exactly.
@@ -46,20 +52,23 @@ void main() {
     test('names the heavier side when the pull leans to them', () {
       final match = _withPull(_pull(30));
 
-      expect(CarouselCaption.hook(match), 'Selena Gomez is 70% of this one.');
+      expect(
+        CarouselCaption.hook(match, _copy),
+        'Selena Gomez is 70% of this one.',
+      );
     });
 
     test('names the user when the pull leans to the user', () {
       final match = _withPull(_pull(78));
 
-      expect(CarouselCaption.hook(match), 'Andrew is 78% of this one.');
+      expect(CarouselCaption.hook(match, _copy), 'Andrew is 78% of this one.');
     });
 
     test('falls back to the share line when the split is even', () {
       final match = _withPull(_pull(52));
 
       expect(match.pull.isBalanced, isTrue);
-      expect(CarouselCaption.hook(match), match.shareLine);
+      expect(CarouselCaption.hook(match, _copy), match.shareLine);
     });
 
     test('never posts a split it called too close to matter', () {
@@ -72,7 +81,7 @@ void main() {
         final match = _withPull(_pull(share));
 
         expect(
-          CarouselCaption.hook(match),
+          CarouselCaption.hook(match, _copy),
           match.shareLine,
           reason: 'a $share/${100 - share} split should stay quiet',
         );
@@ -86,8 +95,9 @@ void main() {
         you: _person('Andrew', DateTime(1996, 7, 5)),
         them: _person('Rae', DateTime(1990, 11, 2)),
         now: _now,
+        copy: _copy,
       );
-      final tags = CarouselCaption.tagsFor(match);
+      final tags = CarouselCaption.tagsFor(match, _copy);
 
       expect(tags, containsAll(CarouselCaption.baseTags));
       expect(tags, contains('cancer'));
@@ -97,7 +107,7 @@ void main() {
     });
 
     test('a same-sign pair does not repeat its sign', () {
-      final tags = CarouselCaption.tagsFor(_composed());
+      final tags = CarouselCaption.tagsFor(_composed(), _copy);
 
       expect(tags.where((tag) => tag == 'cancer'), hasLength(1));
       expect(tags.toSet(), hasLength(tags.length));
@@ -107,22 +117,22 @@ void main() {
   group('caption', () {
     test('is headline, hook and tags in that order', () {
       final match = _withPull(_pull(30));
-      final caption = CarouselCaption.forMatch(match);
+      final caption = CarouselCaption.forMatch(match, _copy);
 
       expect(
         caption.indexOf(CarouselCaption.headline(match)),
-        lessThan(caption.indexOf(CarouselCaption.hook(match))),
+        lessThan(caption.indexOf(CarouselCaption.hook(match, _copy))),
       );
       expect(
-        caption.indexOf(CarouselCaption.hook(match)),
+        caption.indexOf(CarouselCaption.hook(match, _copy)),
         lessThan(caption.indexOf('#astrology')),
       );
     });
 
     test('is deterministic for the same match', () {
       expect(
-        CarouselCaption.forMatch(_composed()),
-        CarouselCaption.forMatch(_composed()),
+        CarouselCaption.forMatch(_composed(), _copy),
+        CarouselCaption.forMatch(_composed(), _copy),
       );
     });
   });

@@ -4,6 +4,7 @@ import 'package:sanctum/src/data/catalog/content_catalog.dart';
 import 'package:sanctum/src/data/catalog/content_catalog_source.dart';
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
+import 'package:sanctum/src/domain/models/quiz.dart';
 
 void main() {
   // Loads the *real* bundled JSON, so a typo in a content file fails CI
@@ -118,8 +119,46 @@ void main() {
     });
 
     test('both ritual moons have a ritual', () {
-      expect(catalog.ritualFor(MoonPhase.newMoon), isNotNull);
-      expect(catalog.ritualFor(MoonPhase.fullMoon), isNotNull);
+      expect(catalog.hasRitualFor(MoonPhase.newMoon), isTrue);
+      expect(catalog.hasRitualFor(MoonPhase.fullMoon), isTrue);
+    });
+
+    test('every ritual phase carries more than one, so they rotate', () {
+      // A phase with a single ritual serves the same words every cycle,
+      // which is what this catalogue was before. Guarding it here is
+      // cheaper than noticing six months later that nothing changed.
+      for (final phase in MoonPhase.values) {
+        if (!catalog.hasRitualFor(phase)) continue;
+        expect(
+          catalog.ritualsFor(phase).length,
+          greaterThan(1),
+          reason: phase.name,
+        );
+      }
+    });
+
+    test('the quiz asks for a birth time, and it parses as one', () {
+      // The kind is a string in JSON, so a typo would decode to a
+      // different question type and the screen would silently render
+      // the wrong control.
+      final question = catalog.quizQuestions
+          .where((q) => q.id == 'birth_time')
+          .single;
+
+      expect(question.kind, QuizQuestionKind.time);
+      expect(question.options, isEmpty);
+    });
+
+    test('the birth time is asked after the birth date', () {
+      // Order matters for the flow, not just for taste: the time is a
+      // follow-up to the date and reads as a non-sequitur before it.
+      final ids = catalog.quizQuestions.map((q) => q.id).toList();
+      expect(ids.indexOf('birth_time'), ids.indexOf('birth_date') + 1);
+    });
+
+    test('ritual ids are unique', () {
+      final ids = catalog.rituals.map((r) => r.id).toList();
+      expect(ids.toSet().length, ids.length);
     });
 
     test('every ritual has ordered steps', () {

@@ -1,4 +1,5 @@
 import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 
 /// The caption that travels with a shared carousel.
 ///
@@ -25,9 +26,9 @@ abstract final class CarouselCaption {
   ];
 
   /// The caption for [match], ready to paste.
-  static String forMatch(CompatibilityMatch match) {
-    final tags = tagsFor(match).map((tag) => '#$tag').join(' ');
-    return '${headline(match)}\n${hook(match)}\n\n$tags';
+  static String forMatch(CompatibilityMatch match, CopyBook copy) {
+    final tags = tagsFor(match, copy).map((tag) => '#$tag').join(' ');
+    return '${headline(match)}\n${hook(match, copy)}\n\n$tags';
   }
 
   /// The first line: who, and the number.
@@ -40,22 +41,28 @@ abstract final class CarouselCaption {
   /// even to be interesting. A "51% / 49%" hook is worse than no hook:
   /// it reads as a model with nothing to say, which is exactly the
   /// impression [DirectionalReading.isBalanced] exists to avoid giving.
-  static String hook(CompatibilityMatch match) {
+  static String hook(CompatibilityMatch match, CopyBook copy) {
     final pull = match.pull;
     if (pull.isBalanced) return match.shareLine;
     final leader = pull.leansYou ? match.you : match.them;
     final share = pull.leansYou ? pull.yourShare : pull.theirShare;
-    return '${leader.name} is $share% of this one.';
+    return copy.format('carousel.leaderShare', {
+      'name': leader.name,
+      'share': share,
+    });
   }
 
   /// Hashtags, without their leading `#`, in posting order.
   ///
   /// Both sun signs are appended because sign tags are how this content
   /// gets found by people who were not looking for an app.
-  static List<String> tagsFor(CompatibilityMatch match) {
+  static List<String> tagsFor(CompatibilityMatch match, CopyBook copy) {
+    // Tags come from the copy book so a locale can post the tags its
+    // audience actually searches. An English tag on a Ukrainian video
+    // reaches nobody.
     final signs = <String>{
-      match.you.sign.displayName.toLowerCase(),
-      match.them.sign.displayName.toLowerCase(),
+      copy.get('tag.${match.you.sign.name}'),
+      copy.get('tag.${match.them.sign.name}'),
     };
     return [...baseTags, ...signs];
   }

@@ -1,7 +1,7 @@
 name: sanctum
 description: "Sanctum — your personal sacred space."
 publish_to: 'none'
-version: 0.1.1+2
+version: 0.1.2+3
 
 environment:
   sdk: ^3.13.0
@@ -9,6 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # ── Localisation ──────────────────────────────────────────────
+  # UI strings live in ARB (lib/src/l10n); the reading copy — which is
+  # most of the words and the part that needs a human translator — lives
+  # in per-locale content JSON instead, because domain/ is pure Dart and
+  # cannot import a Flutter-generated class. See handoff.md.
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
   # ── State & DI ────────────────────────────────────────────────
   flutter_riverpod: ^3.4.2
@@ -85,8 +94,17 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # Generates AppLocalizations from lib/src/l10n/*.arb. Configured in
+  # l10n.yaml at the repo root.
+  generate: true
+
   assets:
-    - assets/content/
+    # One directory per locale, resolved at load time with an English
+    # fallback so a partially translated locale degrades to English per
+    # *file* rather than failing to start.
+    - assets/content/en/
+    - assets/content/uk/
+    - assets/content/ru/
     - assets/brand/
 
   # Variable fonts: one file per family covers every weight, selected at

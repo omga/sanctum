@@ -173,6 +173,7 @@ class MatchResultRoute extends GoRouteData with $MatchResultRoute {
   const MatchResultRoute({
     required this.name,
     required this.birth,
+    this.minuteOfBirth,
     this.celebrityId,
   });
 
@@ -182,6 +183,13 @@ class MatchResultRoute extends GoRouteData with $MatchResultRoute {
   /// Their birth date, `yyyy-MM-dd`.
   final String birth;
 
+  /// Their birth time as minutes since midnight, when they know it.
+  ///
+  /// Absent means unknown, which is also what every link written before
+  /// this parameter existed means — so old deep links keep working and
+  /// resolve to the same reading they always did.
+  final int? minuteOfBirth;
+
   /// Set when they came from the celebrity catalogue.
   final String? celebrityId;
 
@@ -190,6 +198,7 @@ class MatchResultRoute extends GoRouteData with $MatchResultRoute {
       MatchResultScreen(
         name: name,
         birth: birth,
+        minuteOfBirth: minuteOfBirth,
         celebrityId: celebrityId,
       );
 }

@@ -1,4 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:sanctum/src/domain/models/birth_time.dart';
+import 'package:sanctum/src/domain/models/calendar_date.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 import 'package:sanctum/src/domain/services/ephemeris.dart';
 import 'package:sanctum/src/domain/services/zodiac.dart';
@@ -161,16 +163,34 @@ class MatchPerson with MatchPersonMappable {
   const MatchPerson({
     required this.name,
     required this.birthDate,
+    this.birthTime = BirthTime.unknown,
     this.celebrityId,
   });
 
   /// What to call them.
   final String name;
 
-  /// Their birth date. The only input the reading uses.
+  /// Their birth date. The reading works from this alone.
+  ///
+  /// Hooked because it is a calendar date, not an instant — see
+  /// [CalendarDateHook] for the day it used to lose in storage.
+  @MappableField(hook: CalendarDateHook())
   final DateTime birthDate;
 
+  /// Their birth time, when they know it.
+  ///
+  /// Defaults to unknown, which is what every person stored before this
+  /// existed decodes to — so no migration, and no reading changes under
+  /// anyone who has not answered the new question.
+  final BirthTime birthTime;
+
   /// Set when this side came from the celebrity catalogue.
+  ///
+  /// Catalogue entries are birth *dates* from Wikidata's `P569`, which
+  /// records no time. They are therefore always [BirthTime.unknown], and
+  /// the picker does not ask — inventing 12:00 for a public figure would
+  /// put a fabricated Moon sign next to a real name on a card designed
+  /// to be posted.
   final String? celebrityId;
 
   /// Their sun sign, computed rather than stored — one source of truth,
@@ -196,6 +216,26 @@ class MatchPerson with MatchPersonMappable {
   /// The sign Venus was in.
   ZodiacSign get venusSign => Ephemeris.signAt(venus);
 
+  /// Ecliptic longitude of the Moon at birth, or null without a time.
+  ///
+  /// Null rather than a noon guess, deliberately. The Moon crosses a
+  /// sign every 2.3 days, so a noon value carries a ±6.5° error that
+  /// would be indistinguishable from a real one by the time it reached a
+  /// score. Nullable makes the absence visible to every caller, and
+  /// `CompatibilityCalculator` is written to leave the Moon out of the
+  /// model entirely rather than fill it in.
+  double? get moon {
+    final offset = birthTime.sinceMidnight;
+    if (offset == null) return null;
+    return Ephemeris.moonLongitude(birthDate, timeOfDay: offset);
+  }
+
+  /// The sign the Moon was in, or null without a birth time.
+  ZodiacSign? get moonSign {
+    final longitude = moon;
+    return longitude == null ? null : Ephemeris.signAt(longitude);
+  }
+
   /// The sign Mars was in.
   ZodiacSign get marsSign => Ephemeris.signAt(mars);
 
@@ -212,7 +252,14 @@ class MatchPerson with MatchPersonMappable {
     final id = celebrityId;
     if (id != null) return 'celeb:$id';
     final ymd = '${birthDate.year}-${birthDate.month}-${birthDate.day}';
-    return 'person:${name.trim().toLowerCase()}:$ymd';
+    // The time joins the key only when it is known, so every person
+    // stored before the question existed keeps the id they already have
+    // and stays unlocked. Two different times are two different charts
+    // and therefore two different readings, which is why they must not
+    // collide on one id.
+    final minutes = birthTime.minuteOfDay;
+    final suffix = minutes == null ? '' : ':$minutes';
+    return 'person:${name.trim().toLowerCase()}:$ymd$suffix';
   }
 }
 
@@ -292,6 +339,13 @@ class CompatibilityMatch with CompatibilityMatchMappable {
   /// The weakest facet.
   FacetScore get weakest =>
       facets.reduce((a, b) => b.score < a.score ? b : a);
+
+  /// Whether the Moon was part of this reading.
+  ///
+  /// Read from the two stored birth times rather than saved as its own
+  /// field, so an old persisted match answers correctly without a
+  /// migration.
+  bool get usesMoon => you.birthTime.isKnown && them.birthTime.isKnown;
 
   /// "Gemini and Leo", for headings.
   String get pairing => '${you.sign.displayName} and ${them.sign.displayName}';

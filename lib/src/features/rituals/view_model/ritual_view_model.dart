@@ -9,6 +9,7 @@ import 'package:sanctum/src/domain/models/journal_entry.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/models/ritual.dart';
 import 'package:sanctum/src/domain/services/moon_phase_calculator.dart';
+import 'package:sanctum/src/domain/services/ritual_selector.dart';
 
 part 'ritual_view_model.g.dart';
 
@@ -49,7 +50,11 @@ Future<RitualUiState> ritualState(Ref ref) async {
   final catalog = await ref.watch(contentCatalogProvider.future);
   final phase = MoonPhaseCalculator.phaseFor(today);
 
-  final available = catalog.ritualFor(phase);
+  final available = RitualSelector.select(
+    catalog.ritualsFor(phase),
+    phase,
+    today,
+  );
   if (available != null) {
     return RitualUiState(phase: phase, today: today, ritual: available);
   }
@@ -57,15 +62,24 @@ Future<RitualUiState> ritualState(Ref ref) async {
   // Nothing today: find whichever ritual phase arrives first. Searching
   // the catalogue rather than hard-coding the four quarters means adding
   // a ritual for a new phase needs no code change here.
+  //
+  // The teaser names the ritual that phase will *actually* open with, so
+  // it goes through the selector on the future date rather than showing
+  // whichever entry happens to sit first in the JSON.
   Ritual? soonest;
   var soonestDays = 1 << 30;
 
-  for (final candidate in catalog.rituals) {
-    final date = MoonPhaseCalculator.nextOccurrence(candidate.phase, today);
+  for (final candidate in MoonPhase.values) {
+    if (!catalog.hasRitualFor(candidate)) continue;
+    final date = MoonPhaseCalculator.nextOccurrence(candidate, today);
     final days = today.calendarDaysUntil(date);
     if (days >= 0 && days < soonestDays) {
       soonestDays = days;
-      soonest = candidate;
+      soonest = RitualSelector.select(
+        catalog.ritualsFor(candidate),
+        candidate,
+        date,
+      );
     }
   }
 

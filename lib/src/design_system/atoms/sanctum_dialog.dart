@@ -7,6 +7,7 @@ import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 
 /// Sanctum's confirmation dialog.
 ///
@@ -20,7 +21,7 @@ class SanctumDialog extends StatelessWidget {
     required this.title,
     required this.message,
     required this.confirmLabel,
-    this.cancelLabel = 'Stay',
+    this.cancelLabel,
     super.key,
   });
 
@@ -34,7 +35,11 @@ class SanctumDialog extends StatelessWidget {
   final String confirmLabel;
 
   /// Label for the dismissive action.
-  final String cancelLabel;
+  ///
+  /// Nullable rather than defaulted, because the default is localised
+  /// and a default parameter value has to be a compile-time constant.
+  /// Resolved against the context in [build].
+  final String? cancelLabel;
 
   /// Shows the dialog, resolving to `true` if confirmed.
   static Future<bool> show(
@@ -42,7 +47,7 @@ class SanctumDialog extends StatelessWidget {
     required String title,
     required String message,
     required String confirmLabel,
-    String cancelLabel = 'Stay',
+    String? cancelLabel,
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -90,7 +95,7 @@ class SanctumDialog extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       SanctumButton(
-                        label: cancelLabel,
+                        label: cancelLabel ?? context.l10n.commonStay,
                         variant: SanctumButtonVariant.quiet,
                         onPressed: () => Navigator.of(context).pop(false),
                       ),

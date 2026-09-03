@@ -9,6 +9,8 @@ import 'package:sanctum/src/features/compatibility/view/widgets/element_palette.
 import 'package:sanctum/src/features/compatibility/view/widgets/hexagon_chart.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/score_dial.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The four frames of a shared match, in posting order.
 ///
@@ -68,7 +70,7 @@ class _CoverSlide extends StatelessWidget {
             ],
           ),
           const SizedBox(height: SanctumSpacing.md),
-          _Chip(label: match.aspect.displayName),
+          _Chip(label: match.aspect.label(context.l10n)),
           const SizedBox(height: SanctumSpacing.xl),
           ScoreDial(
             score: match.overall,
@@ -100,7 +102,7 @@ class _ShapeSlide extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _Heading('THE SHAPE OF IT'),
+          _Heading(context.l10n.carouselShapeHeading),
           const SizedBox(height: SanctumSpacing.lg),
           HexagonChart(
             facets: match.facets,
@@ -114,14 +116,14 @@ class _ShapeSlide extends StatelessWidget {
               Expanded(
                 child: _FacetPill(
                   score: match.strongest,
-                  label: 'HIGHEST',
+                  label: context.l10n.carouselHighest,
                   color: colors.gold,
                 ),
               ),
               Expanded(
                 child: _FacetPill(
                   score: match.weakest,
-                  label: 'LOWEST',
+                  label: context.l10n.carouselLowest,
                   color: colors.textSecondary,
                 ),
               ),
@@ -150,7 +152,7 @@ class _SplitSlide extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _Heading(pull.kind.displayName.toUpperCase()),
+          _Heading(pull.kind.label(context.l10n).toUpperCase()),
           const SizedBox(height: SanctumSpacing.xxl),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -226,11 +228,14 @@ class _VerdictSlide extends StatelessWidget {
           ),
           const SizedBox(height: SanctumSpacing.xl),
           Text(
-            'Find yours in Sanctum',
+            context.l10n.carouselFindYours,
             style: type.bodyLarge.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: SanctumSpacing.sm),
-          Text('For entertainment purposes only.', style: type.caption),
+          Text(
+            context.l10n.commonEntertainmentOnly,
+            style: type.caption,
+          ),
         ],
       ),
     );
@@ -265,7 +270,7 @@ class _Side extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        Text(person.sign.displayName, style: type.caption),
+        Text(person.sign.label(context.l10n), style: type.caption),
       ],
     );
   }
@@ -364,12 +369,21 @@ class _Heading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      textAlign: TextAlign.center,
-      style: context.type.caption.copyWith(
-        color: context.colors.gold,
-        letterSpacing: 3,
+    // Scaled rather than wrapped. "WHO WANTS IT MORE" is already the
+    // widest thing on this slide in English, and letter-spaced uppercase
+    // grows fastest of anything when translated — German and Ukrainian
+    // both run half again as long. Wrapping it to two lines pushes the
+    // bar below it off the safe area; shrinking it is invisible.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        label,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        style: context.type.caption.copyWith(
+          color: context.colors.gold,
+          letterSpacing: 3,
+        ),
       ),
     );
   }
@@ -396,11 +410,18 @@ class _Chip extends StatelessWidget {
           horizontal: SanctumSpacing.lg,
           vertical: SanctumSpacing.xs + 2,
         ),
-        child: Text(
-          label.toUpperCase(),
-          style: context.type.caption.copyWith(
-            color: colors.gold,
-            letterSpacing: 2,
+        // A pill that wraps stops being a pill. The aspect names are one
+        // word in English ("Magnetic") and are not everywhere, so the
+        // text scales inside a fixed shape instead.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            style: context.type.caption.copyWith(
+              color: colors.gold,
+              letterSpacing: 2,
+            ),
           ),
         ),
       ),
@@ -434,7 +455,7 @@ class _FacetPill extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            '${score.facet.displayName} ${score.score}',
+            '${score.facet.label(context.l10n)} ${score.score}',
             style: type.bodyLarge.copyWith(color: color),
           ),
         ),

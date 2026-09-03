@@ -33,6 +33,8 @@ class QuizQuestionKindMapper extends EnumMapper<QuizQuestionKind> {
         return QuizQuestionKind.multi;
       case r'date':
         return QuizQuestionKind.date;
+      case r'time':
+        return QuizQuestionKind.time;
       case r'text':
         return QuizQuestionKind.text;
       case r'interstitial':
@@ -51,6 +53,8 @@ class QuizQuestionKindMapper extends EnumMapper<QuizQuestionKind> {
         return r'multi';
       case QuizQuestionKind.date:
         return r'date';
+      case QuizQuestionKind.time:
+        return r'time';
       case QuizQuestionKind.text:
         return r'text';
       case QuizQuestionKind.interstitial:
@@ -540,6 +544,7 @@ class QuizAnswersMapper extends ClassMapperBase<QuizAnswers> {
   static QuizAnswersMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = QuizAnswersMapper._());
+      BirthTimeMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -556,11 +561,19 @@ class QuizAnswersMapper extends ClassMapperBase<QuizAnswers> {
     _$dates,
     opt: true,
     def: const {},
+    hook: CalendarDateHook(),
   );
   static Map<String, String> _$texts(QuizAnswers v) => v.texts;
   static const Field<QuizAnswers, Map<String, String>> _f$texts = Field(
     'texts',
     _$texts,
+    opt: true,
+    def: const {},
+  );
+  static Map<String, BirthTime> _$times(QuizAnswers v) => v.times;
+  static const Field<QuizAnswers, Map<String, BirthTime>> _f$times = Field(
+    'times',
+    _$times,
     opt: true,
     def: const {},
   );
@@ -570,6 +583,7 @@ class QuizAnswersMapper extends ClassMapperBase<QuizAnswers> {
     #selections: _f$selections,
     #dates: _f$dates,
     #texts: _f$texts,
+    #times: _f$times,
   };
 
   static QuizAnswers _instantiate(DecodingData data) {
@@ -577,6 +591,7 @@ class QuizAnswersMapper extends ClassMapperBase<QuizAnswers> {
       selections: data.dec(_f$selections),
       dates: data.dec(_f$dates),
       texts: data.dec(_f$texts),
+      times: data.dec(_f$times),
     );
   }
 
@@ -650,10 +665,18 @@ abstract class QuizAnswersCopyWith<$R, $In extends QuizAnswers, $Out>
   MapCopyWith<$R, String, DateTime, ObjectCopyWith<$R, DateTime, DateTime>>
   get dates;
   MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>> get texts;
+  MapCopyWith<
+    $R,
+    String,
+    BirthTime,
+    BirthTimeCopyWith<$R, BirthTime, BirthTime>
+  >
+  get times;
   $R call({
     Map<String, List<String>>? selections,
     Map<String, DateTime>? dates,
     Map<String, String>? texts,
+    Map<String, BirthTime>? times,
   });
   QuizAnswersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -693,15 +716,29 @@ class _QuizAnswersCopyWithImpl<$R, $Out>
     (v) => call(texts: v),
   );
   @override
+  MapCopyWith<
+    $R,
+    String,
+    BirthTime,
+    BirthTimeCopyWith<$R, BirthTime, BirthTime>
+  >
+  get times => MapCopyWith(
+    $value.times,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(times: v),
+  );
+  @override
   $R call({
     Map<String, List<String>>? selections,
     Map<String, DateTime>? dates,
     Map<String, String>? texts,
+    Map<String, BirthTime>? times,
   }) => $apply(
     FieldCopyWithData({
       if (selections != null) #selections: selections,
       if (dates != null) #dates: dates,
       if (texts != null) #texts: texts,
+      if (times != null) #times: times,
     }),
   );
   @override
@@ -709,6 +746,7 @@ class _QuizAnswersCopyWithImpl<$R, $Out>
     selections: data.get(#selections, or: $value.selections),
     dates: data.get(#dates, or: $value.dates),
     texts: data.get(#texts, or: $value.texts),
+    times: data.get(#times, or: $value.times),
   );
 
   @override

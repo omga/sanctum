@@ -1,0 +1,992 @@
+{
+  "version": 1,
+  "celebrities": [
+    {
+      "id": "taylor-swift",
+      "name": "Taylor Swift",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1989-12-13",
+      "group": "music"
+    },
+    {
+      "id": "beyonce",
+      "name": "Beyoncé",
+      "knownFor": "Певец/певица",
+      "birthDate": "1981-09-04",
+      "group": "music"
+    },
+    {
+      "id": "rihanna",
+      "name": "Rihanna",
+      "knownFor": "Певица, основательница",
+      "birthDate": "1988-02-20",
+      "group": "music"
+    },
+    {
+      "id": "harry-styles",
+      "name": "Harry Styles",
+      "knownFor": "Певец/певица",
+      "birthDate": "1994-02-01",
+      "group": "music"
+    },
+    {
+      "id": "ariana-grande",
+      "name": "Ariana Grande",
+      "knownFor": "Певец/певица",
+      "birthDate": "1993-06-26",
+      "group": "music"
+    },
+    {
+      "id": "billie-eilish",
+      "name": "Billie Eilish",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "2001-12-18",
+      "group": "music"
+    },
+    {
+      "id": "dua-lipa",
+      "name": "Dua Lipa",
+      "knownFor": "Певец/певица",
+      "birthDate": "1995-08-22",
+      "group": "music"
+    },
+    {
+      "id": "bad-bunny",
+      "name": "Bad Bunny",
+      "knownFor": "Рэпер, певец/певица",
+      "birthDate": "1994-03-10",
+      "group": "music"
+    },
+    {
+      "id": "drake",
+      "name": "Drake",
+      "knownFor": "Рэпер",
+      "birthDate": "1986-10-24",
+      "group": "music"
+    },
+    {
+      "id": "the-weeknd",
+      "name": "The Weeknd",
+      "knownFor": "Певец/певица",
+      "birthDate": "1990-02-16",
+      "group": "music"
+    },
+    {
+      "id": "justin-bieber",
+      "name": "Justin Bieber",
+      "knownFor": "Певец/певица",
+      "birthDate": "1994-03-01",
+      "group": "music"
+    },
+    {
+      "id": "selena-gomez",
+      "name": "Selena Gomez",
+      "knownFor": "Певец/певица, актёр",
+      "birthDate": "1992-07-22",
+      "group": "music"
+    },
+    {
+      "id": "lady-gaga",
+      "name": "Lady Gaga",
+      "knownFor": "Певец/певица, актёр",
+      "birthDate": "1986-03-28",
+      "group": "music"
+    },
+    {
+      "id": "olivia-rodrigo",
+      "name": "Olivia Rodrigo",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "2003-02-20",
+      "group": "music"
+    },
+    {
+      "id": "sabrina-carpenter",
+      "name": "Sabrina Carpenter",
+      "knownFor": "Певец/певица",
+      "birthDate": "1999-05-11",
+      "group": "music"
+    },
+    {
+      "id": "doja-cat",
+      "name": "Doja Cat",
+      "knownFor": "Рэпер, певец/певица",
+      "birthDate": "1995-10-21",
+      "group": "music"
+    },
+    {
+      "id": "shawn-mendes",
+      "name": "Shawn Mendes",
+      "knownFor": "Певец/певица",
+      "birthDate": "1998-08-08",
+      "group": "music"
+    },
+    {
+      "id": "jungkook",
+      "name": "Jungkook",
+      "knownFor": "BTS",
+      "birthDate": "1997-09-01",
+      "group": "music"
+    },
+    {
+      "id": "jimin",
+      "name": "Jimin",
+      "knownFor": "BTS",
+      "birthDate": "1995-10-13",
+      "group": "music"
+    },
+    {
+      "id": "lisa",
+      "name": "Lisa",
+      "knownFor": "BLACKPINK",
+      "birthDate": "1997-03-27",
+      "group": "music"
+    },
+    {
+      "id": "jennie",
+      "name": "Jennie",
+      "knownFor": "BLACKPINK",
+      "birthDate": "1996-01-16",
+      "group": "music"
+    },
+    {
+      "id": "zayn-malik",
+      "name": "Zayn Malik",
+      "knownFor": "Певец/певица",
+      "birthDate": "1993-01-12",
+      "group": "music"
+    },
+    {
+      "id": "post-malone",
+      "name": "Post Malone",
+      "knownFor": "Рэпер, певец/певица",
+      "birthDate": "1995-07-04",
+      "group": "music"
+    },
+    {
+      "id": "travis-scott",
+      "name": "Travis Scott",
+      "knownFor": "Рэпер",
+      "birthDate": "1991-04-30",
+      "group": "music"
+    },
+    {
+      "id": "kendrick-lamar",
+      "name": "Kendrick Lamar",
+      "knownFor": "Рэпер",
+      "birthDate": "1987-06-17",
+      "group": "music"
+    },
+    {
+      "id": "jack-harlow",
+      "name": "Jack Harlow",
+      "knownFor": "Рэпер",
+      "birthDate": "1998-03-13",
+      "group": "music"
+    },
+    {
+      "id": "benson-boone",
+      "name": "Benson Boone",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "2002-06-25",
+      "group": "music"
+    },
+    {
+      "id": "noah-kahan",
+      "name": "Noah Kahan",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1997-01-01",
+      "group": "music"
+    },
+    {
+      "id": "central-cee",
+      "name": "Central Cee",
+      "knownFor": "Рэпер",
+      "birthDate": "1998-06-04",
+      "group": "music"
+    },
+    {
+      "id": "peso-pluma",
+      "name": "Peso Pluma",
+      "knownFor": "Певец/певица",
+      "birthDate": "1999-06-15",
+      "group": "music"
+    },
+    {
+      "id": "ed-sheeran",
+      "name": "Ed Sheeran",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1991-02-17",
+      "group": "music"
+    },
+    {
+      "id": "bruno-mars",
+      "name": "Bruno Mars",
+      "knownFor": "Певец/певица",
+      "birthDate": "1985-10-08",
+      "group": "music"
+    },
+    {
+      "id": "v-bts",
+      "name": "V",
+      "knownFor": "BTS",
+      "birthDate": "1995-12-30",
+      "group": "music"
+    },
+    {
+      "id": "rm-bts",
+      "name": "RM",
+      "knownFor": "BTS",
+      "birthDate": "1994-09-12",
+      "group": "music"
+    },
+    {
+      "id": "jin-bts",
+      "name": "Jin",
+      "knownFor": "BTS",
+      "birthDate": "1992-12-04",
+      "group": "music"
+    },
+    {
+      "id": "suga-bts",
+      "name": "Suga",
+      "knownFor": "BTS",
+      "birthDate": "1993-03-09",
+      "group": "music"
+    },
+    {
+      "id": "j-hope",
+      "name": "J-Hope",
+      "knownFor": "BTS",
+      "birthDate": "1994-02-18",
+      "group": "music"
+    },
+    {
+      "id": "cha-eun-woo",
+      "name": "Cha Eun-woo",
+      "knownFor": "Певец/певица, актёр",
+      "birthDate": "1997-03-30",
+      "group": "music"
+    },
+    {
+      "id": "chappell-roan",
+      "name": "Chappell Roan",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1998-02-19",
+      "group": "music"
+    },
+    {
+      "id": "tyla",
+      "name": "Tyla",
+      "knownFor": "Певец/певица",
+      "birthDate": "2002-01-30",
+      "group": "music"
+    },
+    {
+      "id": "gracie-abrams",
+      "name": "Gracie Abrams",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1999-09-07",
+      "group": "music"
+    },
+    {
+      "id": "karol-g",
+      "name": "Karol G",
+      "knownFor": "Певец/певица",
+      "birthDate": "1991-02-14",
+      "group": "music"
+    },
+    {
+      "id": "rose-blackpink",
+      "name": "Rosé",
+      "knownFor": "BLACKPINK",
+      "birthDate": "1997-02-11",
+      "group": "music"
+    },
+    {
+      "id": "jisoo",
+      "name": "Jisoo",
+      "knownFor": "BLACKPINK",
+      "birthDate": "1995-01-03",
+      "group": "music"
+    },
+    {
+      "id": "ice-spice",
+      "name": "Ice Spice",
+      "knownFor": "Рэпер",
+      "birthDate": "2000-01-01",
+      "group": "music"
+    },
+    {
+      "id": "charli-xcx",
+      "name": "Charli XCX",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1992-08-02",
+      "group": "music"
+    },
+    {
+      "id": "tate-mcrae",
+      "name": "Tate McRae",
+      "knownFor": "Певец/певица",
+      "birthDate": "2003-07-01",
+      "group": "music"
+    },
+    {
+      "id": "miley-cyrus",
+      "name": "Miley Cyrus",
+      "knownFor": "Певец/певица, актёр",
+      "birthDate": "1992-11-23",
+      "group": "music"
+    },
+    {
+      "id": "nicki-minaj",
+      "name": "Nicki Minaj",
+      "knownFor": "Рэпер",
+      "birthDate": "1982-12-08",
+      "group": "music"
+    },
+    {
+      "id": "sza",
+      "name": "SZA",
+      "knownFor": "Певец/певица",
+      "birthDate": "1989-11-08",
+      "group": "music"
+    },
+    {
+      "id": "adele",
+      "name": "Adele",
+      "knownFor": "Певец/певица и автор песен",
+      "birthDate": "1988-05-05",
+      "group": "music"
+    },
+    {
+      "id": "timothee-chalamet",
+      "name": "Timothée Chalamet",
+      "knownFor": "Актёр",
+      "birthDate": "1995-12-27",
+      "group": "screen"
+    },
+    {
+      "id": "zendaya",
+      "name": "Zendaya",
+      "knownFor": "Актёр",
+      "birthDate": "1996-09-01",
+      "group": "screen"
+    },
+    {
+      "id": "tom-holland",
+      "name": "Tom Holland",
+      "knownFor": "Актёр",
+      "birthDate": "1996-06-01",
+      "group": "screen"
+    },
+    {
+      "id": "jacob-elordi",
+      "name": "Jacob Elordi",
+      "knownFor": "Актёр",
+      "birthDate": "1997-06-26",
+      "group": "screen"
+    },
+    {
+      "id": "sydney-sweeney",
+      "name": "Sydney Sweeney",
+      "knownFor": "Актёр",
+      "birthDate": "1997-09-12",
+      "group": "screen"
+    },
+    {
+      "id": "florence-pugh",
+      "name": "Florence Pugh",
+      "knownFor": "Актёр",
+      "birthDate": "1996-01-03",
+      "group": "screen"
+    },
+    {
+      "id": "margot-robbie",
+      "name": "Margot Robbie",
+      "knownFor": "Актёр",
+      "birthDate": "1990-07-02",
+      "group": "screen"
+    },
+    {
+      "id": "ryan-gosling",
+      "name": "Ryan Gosling",
+      "knownFor": "Актёр",
+      "birthDate": "1980-11-12",
+      "group": "screen"
+    },
+    {
+      "id": "pedro-pascal",
+      "name": "Pedro Pascal",
+      "knownFor": "Актёр",
+      "birthDate": "1975-04-02",
+      "group": "screen"
+    },
+    {
+      "id": "keanu-reeves",
+      "name": "Keanu Reeves",
+      "knownFor": "Актёр",
+      "birthDate": "1964-09-02",
+      "group": "screen"
+    },
+    {
+      "id": "leonardo-dicaprio",
+      "name": "Leonardo DiCaprio",
+      "knownFor": "Актёр",
+      "birthDate": "1974-11-11",
+      "group": "screen"
+    },
+    {
+      "id": "emma-watson",
+      "name": "Emma Watson",
+      "knownFor": "Актёр",
+      "birthDate": "1990-04-15",
+      "group": "screen"
+    },
+    {
+      "id": "chris-hemsworth",
+      "name": "Chris Hemsworth",
+      "knownFor": "Актёр",
+      "birthDate": "1983-08-11",
+      "group": "screen"
+    },
+    {
+      "id": "zac-efron",
+      "name": "Zac Efron",
+      "knownFor": "Актёр",
+      "birthDate": "1987-10-18",
+      "group": "screen"
+    },
+    {
+      "id": "anya-taylor-joy",
+      "name": "Anya Taylor-Joy",
+      "knownFor": "Актёр",
+      "birthDate": "1996-04-16",
+      "group": "screen"
+    },
+    {
+      "id": "paul-mescal",
+      "name": "Paul Mescal",
+      "knownFor": "Актёр",
+      "birthDate": "1996-02-02",
+      "group": "screen"
+    },
+    {
+      "id": "barry-keoghan",
+      "name": "Barry Keoghan",
+      "knownFor": "Актёр",
+      "birthDate": "1992-10-18",
+      "group": "screen"
+    },
+    {
+      "id": "michael-b-jordan",
+      "name": "Michael B. Jordan",
+      "knownFor": "Актёр",
+      "birthDate": "1987-02-09",
+      "group": "screen"
+    },
+    {
+      "id": "kim-kardashian",
+      "name": "Kim Kardashian",
+      "knownFor": "Основатель(-ница), ТВ",
+      "birthDate": "1980-10-21",
+      "group": "screen"
+    },
+    {
+      "id": "kylie-jenner",
+      "name": "Kylie Jenner",
+      "knownFor": "Основатель(-ница), ТВ",
+      "birthDate": "1997-08-10",
+      "group": "screen"
+    },
+    {
+      "id": "robert-pattinson",
+      "name": "Robert Pattinson",
+      "knownFor": "Актёр",
+      "birthDate": "1986-05-13",
+      "group": "screen"
+    },
+    {
+      "id": "johnny-depp",
+      "name": "Johnny Depp",
+      "knownFor": "Актёр",
+      "birthDate": "1963-06-09",
+      "group": "screen"
+    },
+    {
+      "id": "cillian-murphy",
+      "name": "Cillian Murphy",
+      "knownFor": "Актёр",
+      "birthDate": "1976-05-25",
+      "group": "screen"
+    },
+    {
+      "id": "austin-butler",
+      "name": "Austin Butler",
+      "knownFor": "Актёр",
+      "birthDate": "1991-08-17",
+      "group": "screen"
+    },
+    {
+      "id": "glen-powell",
+      "name": "Glen Powell",
+      "knownFor": "Актёр",
+      "birthDate": "1988-10-21",
+      "group": "screen"
+    },
+    {
+      "id": "jeremy-allen-white",
+      "name": "Jeremy Allen White",
+      "knownFor": "Актёр",
+      "birthDate": "1991-02-28",
+      "group": "screen"
+    },
+    {
+      "id": "chris-evans",
+      "name": "Chris Evans",
+      "knownFor": "Актёр",
+      "birthDate": "1981-06-13",
+      "group": "screen"
+    },
+    {
+      "id": "henry-cavill",
+      "name": "Henry Cavill",
+      "knownFor": "Актёр",
+      "birthDate": "1983-05-05",
+      "group": "screen"
+    },
+    {
+      "id": "andrew-garfield",
+      "name": "Andrew Garfield",
+      "knownFor": "Актёр",
+      "birthDate": "1983-08-20",
+      "group": "screen"
+    },
+    {
+      "id": "oscar-isaac",
+      "name": "Oscar Isaac",
+      "knownFor": "Актёр",
+      "birthDate": "1979-03-09",
+      "group": "screen"
+    },
+    {
+      "id": "idris-elba",
+      "name": "Idris Elba",
+      "knownFor": "Актёр",
+      "birthDate": "1972-09-06",
+      "group": "screen"
+    },
+    {
+      "id": "brad-pitt",
+      "name": "Brad Pitt",
+      "knownFor": "Актёр",
+      "birthDate": "1963-12-18",
+      "group": "screen"
+    },
+    {
+      "id": "ryan-reynolds",
+      "name": "Ryan Reynolds",
+      "knownFor": "Актёр",
+      "birthDate": "1976-10-23",
+      "group": "screen"
+    },
+    {
+      "id": "dev-patel",
+      "name": "Dev Patel",
+      "knownFor": "Актёр",
+      "birthDate": "1990-04-23",
+      "group": "screen"
+    },
+    {
+      "id": "nicholas-galitzine",
+      "name": "Nicholas Galitzine",
+      "knownFor": "Актёр",
+      "birthDate": "1994-09-29",
+      "group": "screen"
+    },
+    {
+      "id": "charles-melton",
+      "name": "Charles Melton",
+      "knownFor": "Актёр",
+      "birthDate": "1991-01-04",
+      "group": "screen"
+    },
+    {
+      "id": "damson-idris",
+      "name": "Damson Idris",
+      "knownFor": "Актёр",
+      "birthDate": "1991-09-02",
+      "group": "screen"
+    },
+    {
+      "id": "jonathan-bailey",
+      "name": "Jonathan Bailey",
+      "knownFor": "Актёр",
+      "birthDate": "1988-04-25",
+      "group": "screen"
+    },
+    {
+      "id": "rege-jean-page",
+      "name": "Regé-Jean Page",
+      "knownFor": "Актёр",
+      "birthDate": "1988-01-24",
+      "group": "screen"
+    },
+    {
+      "id": "daniel-radcliffe",
+      "name": "Daniel Radcliffe",
+      "knownFor": "Актёр",
+      "birthDate": "1989-07-23",
+      "group": "screen"
+    },
+    {
+      "id": "tom-hardy",
+      "name": "Tom Hardy",
+      "knownFor": "Актёр",
+      "birthDate": "1977-09-15",
+      "group": "screen"
+    },
+    {
+      "id": "jason-momoa",
+      "name": "Jason Momoa",
+      "knownFor": "Актёр",
+      "birthDate": "1979-08-01",
+      "group": "screen"
+    },
+    {
+      "id": "jenna-ortega",
+      "name": "Jenna Ortega",
+      "knownFor": "Актёр",
+      "birthDate": "2002-09-27",
+      "group": "screen"
+    },
+    {
+      "id": "millie-bobby-brown",
+      "name": "Millie Bobby Brown",
+      "knownFor": "Актёр",
+      "birthDate": "2004-02-19",
+      "group": "screen"
+    },
+    {
+      "id": "hailee-steinfeld",
+      "name": "Hailee Steinfeld",
+      "knownFor": "Актёр, певец",
+      "birthDate": "1996-12-11",
+      "group": "screen"
+    },
+    {
+      "id": "ana-de-armas",
+      "name": "Ana de Armas",
+      "knownFor": "Актёр",
+      "birthDate": "1988-04-30",
+      "group": "screen"
+    },
+    {
+      "id": "emma-stone",
+      "name": "Emma Stone",
+      "knownFor": "Актёр",
+      "birthDate": "1988-11-06",
+      "group": "screen"
+    },
+    {
+      "id": "saoirse-ronan",
+      "name": "Saoirse Ronan",
+      "knownFor": "Актёр",
+      "birthDate": "1994-04-12",
+      "group": "screen"
+    },
+    {
+      "id": "jodie-comer",
+      "name": "Jodie Comer",
+      "knownFor": "Актёр",
+      "birthDate": "1993-03-11",
+      "group": "screen"
+    },
+    {
+      "id": "lily-collins",
+      "name": "Lily Collins",
+      "knownFor": "Актёр",
+      "birthDate": "1989-03-18",
+      "group": "screen"
+    },
+    {
+      "id": "rachel-zegler",
+      "name": "Rachel Zegler",
+      "knownFor": "Актёр",
+      "birthDate": "2001-05-03",
+      "group": "screen"
+    },
+    {
+      "id": "mrbeast",
+      "name": "MrBeast",
+      "knownFor": "Ютубер(-ша)",
+      "birthDate": "1998-05-07",
+      "group": "influencer"
+    },
+    {
+      "id": "khaby-lame",
+      "name": "Khaby Lame",
+      "knownFor": "Блогер(-ка) TikTok",
+      "birthDate": "2000-03-09",
+      "group": "influencer"
+    },
+    {
+      "id": "charli-damelio",
+      "name": "Charli D'Amelio",
+      "knownFor": "Блогер(-ка) TikTok",
+      "birthDate": "2004-05-01",
+      "group": "influencer"
+    },
+    {
+      "id": "addison-rae",
+      "name": "Addison Rae",
+      "knownFor": "Блогер, певец/певица",
+      "birthDate": "2000-10-06",
+      "group": "influencer"
+    },
+    {
+      "id": "bella-poarch",
+      "name": "Bella Poarch",
+      "knownFor": "Блогер, певец/певица",
+      "birthDate": "1997-02-09",
+      "group": "influencer"
+    },
+    {
+      "id": "emma-chamberlain",
+      "name": "Emma Chamberlain",
+      "knownFor": "Ютубер(-ша)",
+      "birthDate": "2001-05-22",
+      "group": "influencer"
+    },
+    {
+      "id": "alex-cooper",
+      "name": "Alex Cooper",
+      "knownFor": "Ведущий(-ая) подкаста",
+      "birthDate": "1994-08-21",
+      "group": "influencer"
+    },
+    {
+      "id": "logan-paul",
+      "name": "Logan Paul",
+      "knownFor": "Ютубер(-ша)",
+      "birthDate": "1995-04-01",
+      "group": "influencer"
+    },
+    {
+      "id": "jake-paul",
+      "name": "Jake Paul",
+      "knownFor": "Ютубер, боксёр",
+      "birthDate": "1997-01-17",
+      "group": "influencer"
+    },
+    {
+      "id": "ksi",
+      "name": "KSI",
+      "knownFor": "Ютубер, рэпер",
+      "birthDate": "1993-06-19",
+      "group": "influencer"
+    },
+    {
+      "id": "ishowspeed",
+      "name": "IShowSpeed",
+      "knownFor": "Стример",
+      "birthDate": "2005-01-21",
+      "group": "influencer"
+    },
+    {
+      "id": "kai-cenat",
+      "name": "Kai Cenat",
+      "knownFor": "Стример",
+      "birthDate": "2001-12-16",
+      "group": "influencer"
+    },
+    {
+      "id": "james-charles",
+      "name": "James Charles",
+      "knownFor": "Бьюти-блогер",
+      "birthDate": "1999-05-23",
+      "group": "influencer"
+    },
+    {
+      "id": "nikkietutorials",
+      "name": "NikkieTutorials",
+      "knownFor": "Бьюти-блогер",
+      "birthDate": "1994-03-02",
+      "group": "influencer"
+    },
+    {
+      "id": "zach-king",
+      "name": "Zach King",
+      "knownFor": "Блогер",
+      "birthDate": "1990-02-04",
+      "group": "influencer"
+    },
+    {
+      "id": "dixie-damelio",
+      "name": "Dixie D'Amelio",
+      "knownFor": "Блогер, певец/певица",
+      "birthDate": "2001-08-12",
+      "group": "influencer"
+    },
+    {
+      "id": "noah-beck",
+      "name": "Noah Beck",
+      "knownFor": "Блогер",
+      "birthDate": "2001-05-04",
+      "group": "influencer"
+    },
+    {
+      "id": "bretman-rock",
+      "name": "Bretman Rock",
+      "knownFor": "Блогер",
+      "birthDate": "1998-07-31",
+      "group": "influencer"
+    },
+    {
+      "id": "hailey-bieber",
+      "name": "Hailey Bieber",
+      "knownFor": "Модель, основатель(-ница)",
+      "birthDate": "1996-11-22",
+      "group": "influencer"
+    },
+    {
+      "id": "kendall-jenner",
+      "name": "Kendall Jenner",
+      "knownFor": "Модель",
+      "birthDate": "1995-11-03",
+      "group": "influencer"
+    },
+    {
+      "id": "bella-hadid",
+      "name": "Bella Hadid",
+      "knownFor": "Модель",
+      "birthDate": "1996-10-09",
+      "group": "influencer"
+    },
+    {
+      "id": "gigi-hadid",
+      "name": "Gigi Hadid",
+      "knownFor": "Модель",
+      "birthDate": "1995-04-23",
+      "group": "influencer"
+    },
+    {
+      "id": "pokimane",
+      "name": "Pokimane",
+      "knownFor": "Стример",
+      "birthDate": "1996-05-14",
+      "group": "influencer"
+    },
+    {
+      "id": "cristiano-ronaldo",
+      "name": "Cristiano Ronaldo",
+      "knownFor": "Футболист",
+      "birthDate": "1985-02-05",
+      "group": "sport"
+    },
+    {
+      "id": "lionel-messi",
+      "name": "Lionel Messi",
+      "knownFor": "Футболист",
+      "birthDate": "1987-06-24",
+      "group": "sport"
+    },
+    {
+      "id": "travis-kelce",
+      "name": "Travis Kelce",
+      "knownFor": "НФЛ",
+      "birthDate": "1989-10-05",
+      "group": "sport"
+    },
+    {
+      "id": "serena-williams",
+      "name": "Serena Williams",
+      "knownFor": "Теннис",
+      "birthDate": "1981-09-26",
+      "group": "sport"
+    },
+    {
+      "id": "lebron-james",
+      "name": "LeBron James",
+      "knownFor": "НБА",
+      "birthDate": "1984-12-30",
+      "group": "sport"
+    },
+    {
+      "id": "jude-bellingham",
+      "name": "Jude Bellingham",
+      "knownFor": "Футболист",
+      "birthDate": "2003-06-29",
+      "group": "sport"
+    },
+    {
+      "id": "lamine-yamal",
+      "name": "Lamine Yamal",
+      "knownFor": "Футболист",
+      "birthDate": "2007-07-13",
+      "group": "sport"
+    },
+    {
+      "id": "kylian-mbappe",
+      "name": "Kylian Mbappé",
+      "knownFor": "Футболист",
+      "birthDate": "1998-12-20",
+      "group": "sport"
+    },
+    {
+      "id": "carlos-alcaraz",
+      "name": "Carlos Alcaraz",
+      "knownFor": "Теннисист(-ка)",
+      "birthDate": "2003-05-05",
+      "group": "sport"
+    },
+    {
+      "id": "neymar",
+      "name": "Neymar",
+      "knownFor": "Футболист",
+      "birthDate": "1992-02-05",
+      "group": "sport"
+    },
+    {
+      "id": "erling-haaland",
+      "name": "Erling Haaland",
+      "knownFor": "Футболист",
+      "birthDate": "2000-07-21",
+      "group": "sport"
+    },
+    {
+      "id": "jannik-sinner",
+      "name": "Jannik Sinner",
+      "knownFor": "Теннисист(-ка)",
+      "birthDate": "2001-08-16",
+      "group": "sport"
+    },
+    {
+      "id": "patrick-mahomes",
+      "name": "Patrick Mahomes",
+      "knownFor": "Американский футбол",
+      "birthDate": "1995-09-17",
+      "group": "sport"
+    },
+    {
+      "id": "stephen-curry",
+      "name": "Stephen Curry",
+      "knownFor": "Баскетболист",
+      "birthDate": "1988-03-14",
+      "group": "sport"
+    },
+    {
+      "id": "simone-biles",
+      "name": "Simone Biles",
+      "knownFor": "Гимнастка",
+      "birthDate": "1997-03-14",
+      "group": "sport"
+    },
+    {
+      "id": "coco-gauff",
+      "name": "Coco Gauff",
+      "knownFor": "Теннисист(-ка)",
+      "birthDate": "2004-03-13",
+      "group": "sport"
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/services/energy_pattern.dart';
 import 'package:sanctum/src/domain/services/moon_phase_calculator.dart';
+import '../support/copy.dart';
 
 EnergyCheckIn checkIn(DateTime day, EnergyLevel level) => EnergyCheckIn(
   id: day.millisecondsSinceEpoch,
@@ -22,12 +24,15 @@ List<DateTime> daysIn(MoonPhase phase, {required int count}) {
   return found;
 }
 
+final CopyBook _copy = loadEnglishCopy();
+
 void main() {
   final today = DateTime(2026, 12, 31);
 
   group('the strip', () {
     test('is a fixed window, oldest first', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: const [],
         today: today,
       );
@@ -42,6 +47,7 @@ void main() {
       // Missing days must read as missing. Closing the gap would imply
       // the user checked in when they did not.
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [checkIn(today, EnergyLevel.radiant)],
         today: today,
       );
@@ -51,6 +57,7 @@ void main() {
 
     test('ignores anything older than the window', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           checkIn(today.subtract(const Duration(days: 400)), EnergyLevel.low),
         ],
@@ -68,6 +75,7 @@ void main() {
   group('findings', () {
     test('say nothing with no history', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: const [],
         today: today,
       );
@@ -78,6 +86,7 @@ void main() {
       // Two data points is not a pattern, and claiming otherwise is how
       // an app that says it knows you gets caught not knowing you.
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           for (final day in daysIn(MoonPhase.fullMoon, count: 2))
             checkIn(day, EnergyLevel.depleted),
@@ -91,6 +100,7 @@ void main() {
 
     test('say nothing when the difference is small', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           for (final day in daysIn(MoonPhase.fullMoon, count: 4))
             checkIn(day, EnergyLevel.steady),
@@ -104,6 +114,7 @@ void main() {
 
     test('name the phases once the pattern is real', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           for (final day in daysIn(MoonPhase.fullMoon, count: 5))
             checkIn(day, EnergyLevel.depleted),
@@ -120,6 +131,7 @@ void main() {
 
     test('report the lower phase first', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           for (final day in daysIn(MoonPhase.newMoon, count: 5))
             checkIn(day, EnergyLevel.depleted),
@@ -140,6 +152,7 @@ void main() {
     test('are means of the levels logged in each phase', () {
       final full = daysIn(MoonPhase.fullMoon, count: 2);
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           checkIn(full[0], EnergyLevel.depleted),
           checkIn(full[1], EnergyLevel.radiant),
@@ -151,6 +164,7 @@ void main() {
 
     test('only include phases that were actually logged', () {
       final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
         checkIns: [
           for (final day in daysIn(MoonPhase.fullMoon, count: 3))
             checkIn(day, EnergyLevel.low),
@@ -163,6 +177,7 @@ void main() {
 
   test('one check-in per day wins, not the first of the day', () {
     final pattern = EnergyPatternCalculator.analyse(
+    copy: _copy,
       checkIns: [
         checkIn(DateTime(2026, 12, 31, 9), EnergyLevel.low),
         checkIn(DateTime(2026, 12, 31, 21), EnergyLevel.radiant),

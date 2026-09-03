@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/services/compatibility_gate.dart';
@@ -22,6 +24,8 @@ import 'package:sanctum/src/features/compatibility/view/widgets/score_dial.dart'
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
 import 'package:sanctum/src/features/compatibility/view_model/compatibility_view_model.dart';
 import 'package:sanctum/src/features/sharing/view_model/share_controller.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 /// The reveal.
@@ -34,6 +38,7 @@ class MatchResultScreen extends ConsumerStatefulWidget {
   const MatchResultScreen({
     required this.name,
     required this.birth,
+    this.minuteOfBirth,
     this.celebrityId,
     this.first,
     super.key,
@@ -60,6 +65,7 @@ class MatchResultScreen extends ConsumerStatefulWidget {
               '${birth.year.toString().padLeft(4, '0')}-'
               '${birth.month.toString().padLeft(2, '0')}-'
               '${birth.day.toString().padLeft(2, '0')}',
+          minuteOfBirth: second.birthTime.minuteOfDay,
           celebrityId: second.celebrityId,
           first: first,
         ),
@@ -72,6 +78,9 @@ class MatchResultScreen extends ConsumerStatefulWidget {
 
   /// Their birth date, `yyyy-MM-dd`.
   final String birth;
+
+  /// Their birth time in minutes since midnight, or null if unknown.
+  final int? minuteOfBirth;
 
   /// Set when they came from the celebrity catalogue.
   final String? celebrityId;
@@ -98,6 +107,7 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
   MatchPerson get _them => MatchPerson(
     name: widget.name,
     birthDate: DateTime.parse(widget.birth),
+    birthTime: BirthTime(minuteOfDay: widget.minuteOfBirth),
     celebrityId: widget.celebrityId,
   );
 
@@ -120,8 +130,7 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
     final sent = await ref
         .read(shareControllerProvider.notifier)
         .shareInvite(
-          "What's your birth date? I'm running us through Sanctum and "
-          'I want to see what it says.',
+          context.l10n.matchInviteMessage,
         );
     if (!sent) return;
     await ref.read(compatibilityControllerProvider.notifier)
@@ -160,8 +169,8 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
             null => data.matchWith(_them),
           };
           if (match == null) {
-            return const Center(
-              child: Text('Add your own birth date first.'),
+            return Center(
+              child: Text(context.l10n.matchNeedBirthDate),
             );
           }
 
@@ -202,7 +211,7 @@ class _MatchResultState extends ConsumerState<MatchResultScreen> {
             onShare: () => unawaited(
               ref
                   .read(shareControllerProvider.notifier)
-                  .share(_cardKey, text: 'Our match, from Sanctum'),
+                  .share(_cardKey, text: context.l10n.matchShareText),
             ),
           );
         },
@@ -296,12 +305,15 @@ class _Result extends StatelessWidget {
                     const SizedBox(height: SanctumSpacing.xxl),
                   ],
                   _Note(
-                    label: 'WHAT WORKS',
+                    label: context.l10n.matchWhatWorks,
                     body: match.worksLine,
                     accent: true,
                   ),
                   const SizedBox(height: SanctumSpacing.md),
-                  _Note(label: 'WHAT TO WATCH', body: match.watchLine),
+                  _Note(
+                    label: context.l10n.matchWhatToWatch,
+                    body: match.watchLine,
+                  ),
                   const SizedBox(height: SanctumSpacing.xxl),
                   RepaintBoundary(
                     key: cardKey,
@@ -314,14 +326,14 @@ class _Result extends StatelessWidget {
                   // a screenshot; four frames is a post, and posts are
                   // the only acquisition channel this product has.
                   SanctumButton(
-                    label: 'Share to TikTok',
+                    label: context.l10n.matchShareTikTok,
                     icon: Icons.auto_awesome_motion,
                     expand: true,
                     onPressed: _locked ? null : onPost,
                   ),
                   const SizedBox(height: SanctumSpacing.sm),
                   SanctumButton(
-                    label: 'Share just this card',
+                    label: context.l10n.matchShareCard,
                     icon: Icons.ios_share,
                     variant: SanctumButtonVariant.ghost,
                     expand: true,
@@ -329,7 +341,14 @@ class _Result extends StatelessWidget {
                   ),
                   const SizedBox(height: SanctumSpacing.lg),
                   Text(
-                    'For entertainment purposes only.',
+                    // Says what the reading was actually computed from.
+                    // A user who gave a birth time should be able to see
+                    // that it was used, and one who did not should learn
+                    // what it would add — stated as a limit rather than
+                    // as an upsell, because it is one.
+                    match.usesMoon
+                        ? context.l10n.matchReadWithMoon
+                        : context.l10n.matchReadWithoutMoon,
                     textAlign: TextAlign.center,
                     style: type.caption,
                   ),
@@ -390,7 +409,7 @@ class _Pair extends StatelessWidget {
           children: [
             _Side(
               name: match.you.name,
-              label: match.you.sign.displayName,
+              label: match.you.sign.label(context.l10n),
               child: SignAvatar(sign: match.you.sign, size: 76),
             ),
             Padding(
@@ -404,7 +423,7 @@ class _Pair extends StatelessWidget {
             ),
             _Side(
               name: match.them.name,
-              label: match.them.sign.displayName,
+              label: match.them.sign.label(context.l10n),
               child: SignAvatar(
                 sign: match.them.sign,
                 size: 76,
@@ -426,7 +445,7 @@ class _Pair extends StatelessWidget {
               vertical: SanctumSpacing.xs + 2,
             ),
             child: Text(
-              match.aspect.displayName.toUpperCase(),
+              match.aspect.label(context.l10n).toUpperCase(),
               style: type.caption.copyWith(
                 color: colors.gold,
                 letterSpacing: 2,
@@ -530,24 +549,24 @@ class _LockCard extends StatelessWidget {
           const SizedBox(height: SanctumSpacing.md),
           Text(
             needsInvite
-                ? 'Your reading is ready'
-                : "That's your free reading used",
+                ? context.l10n.matchLockedTitle
+                : context.l10n.matchLockedUsedTitle,
             style: type.title,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: SanctumSpacing.sm),
           Text(
             needsInvite
-                ? 'Invite one person and it opens. They do not have to '
-                      'reply — asking is the point.'
-                : 'Sanctum Premium reads you against anyone, as often as '
-                      'you like.',
+                ? context.l10n.matchLockedInvite
+                : context.l10n.matchLockedPremium,
             style: type.bodyMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: SanctumSpacing.lg),
           SanctumButton(
-            label: needsInvite ? 'Send an invite' : 'See Premium',
+            label: needsInvite
+                ? context.l10n.matchSendInvite
+                : context.l10n.matchSeePremium,
             icon: needsInvite ? Icons.ios_share : Icons.auto_awesome,
             expand: true,
             onPressed: needsInvite

@@ -8,6 +8,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// One person in the celebrity picker.
 class CelebrityTile extends StatelessWidget {
@@ -67,7 +69,7 @@ class CelebrityTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${celebrity.sign.displayName} · '
+                      '${celebrity.sign.label(context.l10n)} · '
                       '${celebrity.knownFor}',
                       style: type.caption,
                       maxLines: 1,

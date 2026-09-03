@@ -12,6 +12,8 @@ import 'package:sanctum/src/domain/services/zodiac.dart';
 import 'package:sanctum/src/features/compatibility/view/match_result_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/person_picker_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// Reads two other people against each other.
 ///
@@ -47,7 +49,9 @@ class _PairEntryScreenState extends State<PairEntryScreen> {
   Future<void> _choose({required bool isFirst}) async {
     final person = await PersonPickerScreen.open(
       context,
-      isFirst ? 'First person' : 'Second person',
+      isFirst
+          ? context.l10n.pairFirstPerson
+          : context.l10n.pairSecondPerson,
     );
     if (person == null || !mounted) return;
     setState(() => isFirst ? _first = person : _second = person);
@@ -70,7 +74,7 @@ class _PairEntryScreenState extends State<PairEntryScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Two people', style: type.title),
+        title: Text(context.l10n.pairTitle, style: type.title),
         iconTheme: IconThemeData(color: colors.textSecondary),
       ),
       body: AuroraBackground(
@@ -85,14 +89,12 @@ class _PairEntryScreenState extends State<PairEntryScreen> {
               ),
               children: [
                 Text(
-                  'Read anyone against anyone. Two friends, two '
-                  'celebrities, or one of each — you do not have to be '
-                  'in it.',
+                  context.l10n.pairBody,
                   style: type.bodyMedium,
                 ),
                 const SizedBox(height: SanctumSpacing.xl),
                 _Slot(
-                  label: 'FIRST PERSON',
+                  label: context.l10n.pairSlotFirst,
                   person: _first,
                   onTap: () => unawaited(_choose(isFirst: true)),
                 ),
@@ -105,13 +107,13 @@ class _PairEntryScreenState extends State<PairEntryScreen> {
                 ),
                 const SizedBox(height: SanctumSpacing.md),
                 _Slot(
-                  label: 'SECOND PERSON',
+                  label: context.l10n.pairSlotSecond,
                   person: _second,
                   onTap: () => unawaited(_choose(isFirst: false)),
                 ),
                 const SizedBox(height: SanctumSpacing.xxl),
                 SanctumButton(
-                  label: 'Read them',
+                  label: context.l10n.pairRead,
                   icon: Icons.auto_awesome,
                   expand: true,
                   onPressed: _ready ? () => unawaited(_compare()) : null,
@@ -165,14 +167,14 @@ class _Slot extends StatelessWidget {
                 ),
                 const SizedBox(height: SanctumSpacing.xxs),
                 Text(
-                  chosen?.name ?? 'Choose someone',
+                  chosen?.name ?? context.l10n.pairChooseSomeone,
                   style: type.bodyLarge,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (chosen != null)
                   Text(
-                    Zodiac.signFor(chosen.birthDate).displayName,
+                    Zodiac.signFor(chosen.birthDate).label(context.l10n),
                     style: type.caption,
                   ),
               ],

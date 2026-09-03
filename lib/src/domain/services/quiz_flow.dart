@@ -97,6 +97,7 @@ abstract final class QuizFlow {
       selections: {...answers.selections}..remove(questionId),
       dates: {...answers.dates}..remove(questionId),
       texts: {...answers.texts}..remove(questionId),
+      times: {...answers.times}..remove(questionId),
     ),
   );
 
@@ -122,6 +123,7 @@ abstract final class QuizFlow {
         ...result.selections.keys,
         ...result.dates.keys,
         ...result.texts.keys,
+        ...result.times.keys,
       };
       for (final id in answered) {
         if (live.contains(id)) continue;
@@ -129,6 +131,7 @@ abstract final class QuizFlow {
           selections: {...result.selections}..remove(id),
           dates: {...result.dates}..remove(id),
           texts: {...result.texts}..remove(id),
+          times: {...result.times}..remove(id),
         );
         changed = true;
       }

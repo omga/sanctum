@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "sessions": [
+    {
+      "id": "grounding-174",
+      "title": "Заземление",
+      "frequencyHz": 174.0,
+      "frequencyLabel": "174 Гц",
+      "intention": "Погружение в тело и пол под ним.",
+      "durationSeconds": 600,
+      "chakra": "root"
+    },
+    {
+      "id": "release-396",
+      "title": "Отпускание",
+      "frequencyHz": 396.0,
+      "frequencyLabel": "396 Гц",
+      "intention": "Отпустить то, от чего вы всё время напрягались.",
+      "durationSeconds": 900,
+      "chakra": "root"
+    },
+    {
+      "id": "change-417",
+      "title": "Перемена",
+      "frequencyHz": 417.0,
+      "frequencyLabel": "417 Гц",
+      "intention": "Встретить переход, не цепляясь за старую форму.",
+      "durationSeconds": 900,
+      "chakra": "sacral"
+    },
+    {
+      "id": "heart-528",
+      "title": "Тон сердца",
+      "frequencyHz": 528.0,
+      "frequencyLabel": "528 Гц",
+      "intention": "Смягчение к себе. Тот, к которому возвращается большинство людей.",
+      "durationSeconds": 1200,
+      "chakra": "heart"
+    },
+    {
+      "id": "connection-639",
+      "title": "Связь",
+      "frequencyHz": 639.0,
+      "frequencyLabel": "639 Гц",
+      "intention": "Восстановление, тепло и люди, которых вы хотите видеть ближе.",
+      "durationSeconds": 900,
+      "chakra": "heart"
+    },
+    {
+      "id": "intuition-741",
+      "title": "Интуиция",
+      "frequencyHz": 741.0,
+      "frequencyLabel": "741 Гц",
+      "intention": "Убрать шум, чтобы снова услышать собственный голос.",
+      "durationSeconds": 900,
+      "chakra": "throat"
+    },
+    {
+      "id": "clarity-852",
+      "title": "Ясность",
+      "frequencyHz": 852.0,
+      "frequencyLabel": "852 Гц",
+      "intention": "Видеть ситуацию такой, какая она есть, а не какой была.",
+      "durationSeconds": 900,
+      "chakra": "thirdEye"
+    },
+    {
+      "id": "expanse-963",
+      "title": "Простор",
+      "frequencyHz": 963.0,
+      "frequencyLabel": "963 Гц",
+      "intention": "Просторность. Лучше всего использовать в конце практики.",
+      "durationSeconds": 1200,
+      "chakra": "crown"
+    },
+    {
+      "id": "night-tone-136",
+      "title": "Ночной тон",
+      "frequencyHz": 136.1,
+      "frequencyLabel": "136.1 Гц",
+      "intention": "Низкий, медленный тон для завершения дня.",
+      "durationSeconds": 1800,
+      "chakra": "crown"
+    }
+  ]
+}

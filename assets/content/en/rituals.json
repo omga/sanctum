@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "rituals": [
+    {
+      "id": "new-moon-intention",
+      "moon": "New Moon",
+      "title": "Intention Setting",
+      "phase": "newMoon",
+      "opening": "The dark moon is the empty page. Nothing is required of you yet.",
+      "steps": [
+        "Sit somewhere you will not be interrupted for ten minutes.",
+        "Write down one thing you want, in the present tense, as though it is already true.",
+        "Underneath it, write the smallest action that would make it slightly more true.",
+        "Do that action within 48 hours. That is the whole ritual."
+      ]
+    },
+    {
+      "id": "full-moon-release",
+      "moon": "Full Moon",
+      "title": "Release",
+      "phase": "fullMoon",
+      "opening": "Everything is lit, including what you would rather not look at.",
+      "steps": [
+        "Name one thing you are ready to stop carrying.",
+        "Write it down in full. Do not abbreviate it to be polite.",
+        "Read it aloud once, to yourself.",
+        "Tear the page. Keeping it is also allowed — the point is the naming."
+      ]
+    },
+    {
+      "id": "first-quarter-tension",
+      "moon": "First Quarter",
+      "title": "Meeting Resistance",
+      "phase": "firstQuarter",
+      "opening": "The half-lit moon is where the friction shows up.",
+      "steps": [
+        "Name what has become harder than you expected.",
+        "Ask whether it is difficult or simply unfamiliar.",
+        "Choose one thing to make 10% easier, and change it today."
+      ]
+    },
+    {
+      "id": "last-quarter-review",
+      "moon": "Last Quarter",
+      "title": "Honest Review",
+      "phase": "lastQuarter",
+      "opening": "Before the dark, an accounting. No punishment involved.",
+      "steps": [
+        "List three things that happened this cycle. Any three.",
+        "Mark which you would repeat.",
+        "Forgive yourself one specific thing, by name."
+      ]
+    },
+    {
+      "id": "new-moon-beginning-again",
+      "moon": "New Moon",
+      "title": "Beginning Again",
+      "phase": "newMoon",
+      "opening": "Nothing has started yet. That is the advantage.",
+      "steps": [
+        "Think of something you began once and abandoned.",
+        "Write down what stopped it — the real reason, not the tidy one.",
+        "Decide whether that reason is still true.",
+        "If it is not, begin again this week. If it is, put it down on purpose rather than by default."
+      ]
+    },
+    {
+      "id": "new-moon-small-yes",
+      "moon": "New Moon",
+      "title": "The Small Yes",
+      "phase": "newMoon",
+      "opening": "The dark moon asks for a direction, not a plan.",
+      "steps": [
+        "Name one thing you have been saying no to out of habit.",
+        "Say yes to a small version of it — an hour, a message, one attempt.",
+        "Choose the day now, before this moon is visible again."
+      ]
+    },
+    {
+      "id": "full-moon-full-light",
+      "moon": "Full Moon",
+      "title": "Full Light",
+      "phase": "fullMoon",
+      "opening": "The moon is holding nothing back tonight. Match it.",
+      "steps": [
+        "Name one thing that is going well. Say it without qualifying it.",
+        "Write down who helped, if anyone did.",
+        "Tell them. One sentence is enough."
+      ]
+    },
+    {
+      "id": "full-moon-unsaid",
+      "moon": "Full Moon",
+      "title": "The Unsaid Thing",
+      "phase": "fullMoon",
+      "opening": "Everything is lit. What you are avoiding is lit too.",
+      "steps": [
+        "Name the sentence you keep rehearsing and not saying.",
+        "Write it exactly as you would say it out loud.",
+        "Choose one: you will say it this cycle, or you are choosing not to.",
+        "Both are decisions. Only one of them is yours so far."
+      ]
+    },
+    {
+      "id": "first-quarter-halfway",
+      "moon": "First Quarter",
+      "title": "Halfway",
+      "phase": "firstQuarter",
+      "opening": "Half lit, half not. This is where things get abandoned.",
+      "steps": [
+        "Name what you started at the new moon.",
+        "Say honestly how far it actually got.",
+        "Do the smallest next piece of it today, even badly."
+      ]
+    },
+    {
+      "id": "first-quarter-cost",
+      "moon": "First Quarter",
+      "title": "The Cost",
+      "phase": "firstQuarter",
+      "opening": "Something is asking more of you than you expected.",
+      "steps": [
+        "Name what it is costing — time, money, attention, sleep.",
+        "Decide whether you are still willing to pay it.",
+        "If you are, say so plainly. If you are not, stop paying rather than resenting it."
+      ]
+    },
+    {
+      "id": "last-quarter-winding-down",
+      "moon": "Last Quarter",
+      "title": "Winding Down",
+      "phase": "lastQuarter",
+      "opening": "The light is going. Nothing needs finishing tonight.",
+      "steps": [
+        "List what you are still carrying from this cycle.",
+        "Cross off anything that was never yours.",
+        "Choose one thing to finish before the dark. Let the rest wait."
+      ]
+    },
+    {
+      "id": "last-quarter-what-it-taught",
+      "moon": "Last Quarter",
+      "title": "What It Taught You",
+      "phase": "lastQuarter",
+      "opening": "Before the dark, one honest sentence.",
+      "steps": [
+        "Finish this: “This cycle showed me…”",
+        "Do not soften it.",
+        "Keep it. Read it again at the next last quarter."
+      ]
+    }
+  ]
+}

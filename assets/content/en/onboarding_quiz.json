@@ -114,6 +114,12 @@
       "subtitle": "Your sign shapes how your readings are written."
     },
     {
+      "id": "birth_time",
+      "kind": "time",
+      "title": "Do you know what time?",
+      "subtitle": "Only the Moon needs it, and most people do not know. It stays on this phone like everything else."
+    },
+    {
       "id": "rhythm",
       "kind": "single",
       "title": "When do you want your reading?",

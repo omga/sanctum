@@ -5,6 +5,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/score_dial.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// The card a user posts after a match.
 ///
@@ -88,7 +90,10 @@ class MatchShareCard extends StatelessWidget {
                   'SANCTUM',
                   style: type.caption.copyWith(color: colors.textSecondary),
                 ),
-                Text(match.aspect.displayName, style: type.caption),
+                Text(
+                  match.aspect.label(context.l10n),
+                  style: type.caption,
+                ),
               ],
             ),
           ],

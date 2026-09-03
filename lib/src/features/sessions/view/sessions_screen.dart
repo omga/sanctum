@@ -9,6 +9,7 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/services/premium_gate.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 /// The sound-bath library.
@@ -34,10 +35,10 @@ class SessionsScreen extends ConsumerWidget {
             SanctumSpacing.huge + SanctumSpacing.xxl,
           ),
           children: [
-            Text('Sound', style: context.type.displayMedium),
+            Text(context.l10n.soundTitle, style: context.type.displayMedium),
             const SizedBox(height: SanctumSpacing.xxs),
             Text(
-              'PURE TONE SESSIONS',
+              context.l10n.soundSubtitle,
               style: context.type.caption.copyWith(color: context.colors.gold),
             ),
             const SizedBox(height: SanctumSpacing.xl),

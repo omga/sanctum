@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/design_system/atoms/date_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
+import 'package:sanctum/src/design_system/atoms/time_wheel.dart';
 import 'package:sanctum/src/design_system/atoms/zodiac_wheel.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
@@ -19,6 +20,8 @@ import 'package:sanctum/src/features/compatibility/view/pair_entry_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/celebrity_tile.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
 import 'package:sanctum/src/features/compatibility/view_model/compatibility_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 import 'package:sanctum/src/routing/app_router.dart';
 
 /// The compatibility tab.
@@ -58,6 +61,7 @@ class _AskBirthDate extends ConsumerStatefulWidget {
 
 class _AskBirthDateState extends ConsumerState<_AskBirthDate> {
   DateTime _date = DateTime(1996, 6, 15);
+  int? _minuteOfDay;
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +78,10 @@ class _AskBirthDateState extends ConsumerState<_AskBirthDate> {
         SanctumSpacing.huge + SanctumSpacing.xxl,
       ),
       children: [
-        Text('When were you born?', style: type.displaySmall),
+        Text(context.l10n.matchAskBirthTitle, style: type.displaySmall),
         const SizedBox(height: SanctumSpacing.sm),
         Text(
-          'Every match is read from your sign against theirs.',
+          context.l10n.matchAskBirthBody,
           style: type.bodyMedium,
         ),
         const SizedBox(height: SanctumSpacing.xl),
@@ -95,11 +99,29 @@ class _AskBirthDateState extends ConsumerState<_AskBirthDate> {
             onChanged: (date) => setState(() => _date = date),
           ),
         ),
+        const SizedBox(height: SanctumSpacing.xl),
+        Text(
+          context.l10n.matchAskTime,
+          style: type.bodyMedium,
+        ),
+        const SizedBox(height: SanctumSpacing.md),
+        // Asked here too, and not only in onboarding. This screen exists
+        // for anyone who reached the tab without a birth date, and if it
+        // collected only the date they would have no way to supply a
+        // time anywhere in the app — the Moon would stay permanently out
+        // of reach for exactly the users who skipped the quiz.
+        BirthTimeField(
+          minuteOfDay: _minuteOfDay,
+          onChanged: (value) => setState(() => _minuteOfDay = value),
+        ),
         const SizedBox(height: SanctumSpacing.lg),
         SanctumButton(
-          label: 'Continue',
+          label: context.l10n.commonContinue,
           expand: true,
-          onPressed: () => controller.setYourBirthDate(_date),
+          onPressed: () => controller.setYourBirthDate(
+            _date,
+            minuteOfDay: _minuteOfDay,
+          ),
         ),
       ],
     );
@@ -152,9 +174,9 @@ class _BrowserState extends State<_Browser> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Compatibility', style: type.displaySmall),
+                  Text(context.l10n.matchTitle, style: type.displaySmall),
                   Text(
-                    'Reading as ${you.sign.displayName}',
+                    context.l10n.matchReadingAs(you.sign.label(context.l10n)),
                     style: type.caption.copyWith(color: colors.gold),
                   ),
                 ],
@@ -164,14 +186,14 @@ class _BrowserState extends State<_Browser> {
         ),
         const SizedBox(height: SanctumSpacing.lg),
         SanctumButton(
-          label: 'Check someone new',
+          label: context.l10n.matchCheckSomeone,
           icon: Icons.add,
           expand: true,
           onPressed: () => const MatchEntryRoute().push<void>(context),
         ),
         const SizedBox(height: SanctumSpacing.sm),
         SanctumButton(
-          label: 'Compare two other people',
+          label: context.l10n.matchComparePair,
           icon: Icons.people_outline,
           variant: SanctumButtonVariant.ghost,
           expand: true,
@@ -179,20 +201,20 @@ class _BrowserState extends State<_Browser> {
         ),
         if (state.saved.isNotEmpty) ...[
           const SizedBox(height: SanctumSpacing.xxl),
-          const _SectionTitle(label: 'Your matches'),
+          _SectionTitle(label: context.l10n.matchYourMatches),
           for (final match in state.saved) ...[
             const SizedBox(height: SanctumSpacing.md),
             _SavedMatchTile(match: match),
           ],
         ],
         const SizedBox(height: SanctumSpacing.xxl),
-        const _SectionTitle(label: 'Or someone famous'),
+        _SectionTitle(label: context.l10n.matchSomeoneFamous),
         const SizedBox(height: SanctumSpacing.md),
         TextField(
           onChanged: (value) => setState(() => _query = value),
           style: type.bodyMedium,
           decoration: InputDecoration(
-            hintText: 'Search by name',
+            hintText: context.l10n.matchSearchByName,
             hintStyle: type.bodyMedium.copyWith(color: colors.textTertiary),
             prefixIcon: Icon(
               Icons.search,
@@ -211,7 +233,7 @@ class _BrowserState extends State<_Browser> {
           if (_matching(group).isNotEmpty) ...[
             const SizedBox(height: SanctumSpacing.xl),
             Text(
-              group.displayName.toUpperCase(),
+              group.label(context.l10n).toUpperCase(),
               style: type.caption.copyWith(
                 color: colors.textSecondary,
                 letterSpacing: 2,
@@ -259,9 +281,15 @@ class _SavedMatchTile extends StatelessWidget {
     final type = context.type;
 
     return GestureDetector(
+      // Every field that feeds `MatchPerson.key` has to travel, birth
+      // time included. Drop one and the rebuilt person keys differently
+      // from the stored id, the gate cannot find the reveal, and a
+      // reading the user has already unlocked asks to be unlocked
+      // again — which is what happened when this carried only the date.
       onTap: () => MatchResultRoute(
         name: match.them.name,
         birth: _iso(match.them.birthDate),
+        minuteOfBirth: match.them.birthTime.minuteOfDay,
         celebrityId: match.them.celebrityId,
       ).push<void>(context),
       child: GlassCard(
@@ -280,12 +308,15 @@ class _SavedMatchTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(match.aspect.displayName, style: type.caption),
+                  Text(
+                    match.aspect.label(context.l10n),
+                    style: type.caption,
+                  ),
                 ],
               ),
             ),
             Text(
-              '${match.overall}%',
+              context.l10n.matchPercent(match.overall),
               style: type.title.copyWith(color: colors.gold),
             ),
           ],

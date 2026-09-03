@@ -15,6 +15,8 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/models/subscription_plan.dart';
 import 'package:sanctum/src/features/paywall/view_model/paywall_view_model.dart';
+import 'package:sanctum/src/l10n/l10n.dart';
+import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 
 /// Sanctum Premium.
 ///
@@ -91,10 +93,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       return;
     }
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(
-        content: Text(
-          'No previous purchase found on this store account.',
-        ),
+      SnackBar(
+        content: Text(context.l10n.paywallNoPurchase),
       ),
     );
   }
@@ -152,8 +152,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   ...sellable.where((p) => p.period != BillingPeriod.yearly),
                 ];
                 if (data.isEmpty) {
-                  return const Center(
-                    child: Text('Plans are unavailable right now.'),
+                  return Center(
+                    child: Text(context.l10n.paywallUnavailable),
                   );
                 }
                 final selected = _selectedPlanId ?? data.first.id;
@@ -179,17 +179,17 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         children: [
                           const SizedBox(height: SanctumSpacing.lg),
                           Text(
-                            'SANCTUM PREMIUM',
+                            context.l10n.paywallBrand,
                             style: type.caption.copyWith(color: colors.gold),
                           ),
                           const SizedBox(height: SanctumSpacing.md),
                           Text(
-                            _headline(widget.moment),
+                            _headline(context, widget.moment),
                             style: type.displayLarge,
                           ),
                           const SizedBox(height: SanctumSpacing.md),
                           Text(
-                            _subhead(widget.moment),
+                            _subhead(context, widget.moment),
                             style: type.bodyLarge,
                           ),
                           const SizedBox(height: SanctumSpacing.xl),
@@ -225,42 +225,43 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     );
   }
 
-  String _headline(PaywallMoment moment) => switch (moment) {
-    PaywallMoment.streakEarned => 'You kept it up.',
-    PaywallMoment.ritualCompleted => 'That was the work.',
-    PaywallMoment.sessionsSampled => 'There are seven more.',
-    PaywallMoment.lockedContent => 'Open the whole sanctum.',
-    PaywallMoment.returningUser => 'You keep coming back.',
-  };
+  String _headline(BuildContext context, PaywallMoment moment) {
+    final l10n = context.l10n;
+    return switch (moment) {
+      PaywallMoment.streakEarned => l10n.paywallHeadlineStreak,
+      PaywallMoment.ritualCompleted => l10n.paywallHeadlineRitual,
+      PaywallMoment.sessionsSampled => l10n.paywallHeadlineSessions,
+      PaywallMoment.lockedContent => l10n.paywallHeadlineLocked,
+      PaywallMoment.returningUser => l10n.paywallHeadlineReturning,
+    };
+  }
 
-  String _subhead(PaywallMoment moment) => switch (moment) {
-    PaywallMoment.streakEarned =>
-      'Three days is where a practice starts to hold. Premium opens '
-          'every session and every ritual, so it has somewhere to go.',
-    PaywallMoment.ritualCompleted =>
-      'Every moon has a ritual, and every one of them is written to '
-          'be done rather than read. Premium opens the rest.',
-    PaywallMoment.sessionsSampled =>
-      'You have heard both free tones. The full library runs from '
-          '174 through 963 Hz, plus a low one for the end of the day.',
-    PaywallMoment.lockedContent =>
-      'Every sound session, every moon ritual, and the record of '
-          'every card you have drawn.',
-    PaywallMoment.returningUser =>
-      'The daily card stays free forever. Premium is for when you '
-          'want more than a minute a day.',
-  };
+  String _subhead(BuildContext context, PaywallMoment moment) {
+    final l10n = context.l10n;
+    return switch (moment) {
+      PaywallMoment.streakEarned => l10n.paywallSubheadStreak,
+      PaywallMoment.ritualCompleted => l10n.paywallSubheadRitual,
+      PaywallMoment.sessionsSampled => l10n.paywallSubheadSessions,
+      PaywallMoment.lockedContent => l10n.paywallSubheadLocked,
+      PaywallMoment.returningUser => l10n.paywallSubheadReturning,
+    };
+  }
 }
 
 class _Benefits extends StatelessWidget {
   const _Benefits();
 
-  static const List<({IconData icon, String text})> _items = [
-    (icon: Icons.graphic_eq, text: 'All nine sound sessions'),
-    (icon: Icons.brightness_2_outlined, text: 'Every moon ritual'),
-    (icon: Icons.auto_awesome, text: 'Your full oracle history'),
-    (icon: Icons.show_chart, text: 'Energy and streak insights'),
-  ];
+  static List<({IconData icon, String text})> _itemsFor(
+    BuildContext context,
+  ) {
+    final l10n = context.l10n;
+    return [
+      (icon: Icons.graphic_eq, text: l10n.paywallBenefitSessions),
+      (icon: Icons.brightness_2_outlined, text: l10n.paywallBenefitRituals),
+      (icon: Icons.auto_awesome, text: l10n.paywallBenefitOracle),
+      (icon: Icons.show_chart, text: l10n.paywallBenefitInsights),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -268,7 +269,7 @@ class _Benefits extends StatelessWidget {
 
     return Column(
       children: [
-        for (final item in _items)
+        for (final item in _itemsFor(context))
           Padding(
             padding: const EdgeInsets.only(bottom: SanctumSpacing.md),
             child: Row(
@@ -342,12 +343,14 @@ class _PlanTile extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          isYearly ? 'Yearly' : 'Monthly',
+                          isYearly
+                              ? context.l10n.paywallYearly
+                              : context.l10n.paywallMonthly,
                           style: type.title,
                         ),
                         if (plan.savingsPercent case final saving?) ...[
                           const SizedBox(width: SanctumSpacing.sm),
-                          _Banner(text: 'SAVE $saving%'),
+                          _Banner(text: context.l10n.paywallSaveBadge(saving)),
                         ],
                       ],
                     ),
@@ -359,12 +362,18 @@ class _PlanTile extends StatelessWidget {
                       // down per month, and inventing the number here
                       // would mean formatting currency ourselves.
                       switch ((isYearly, plan.displayPricePerMonth)) {
-                        (true, final perMonth?) =>
-                          '$perMonth / month · billed '
-                              '${plan.displayPrice} yearly',
-                        (true, _) => '${plan.displayPrice} / year',
-                        _ =>
-                          '${plan.displayPrice} / ${plan.period.unitLabel}',
+                        (true, final perMonth?) => context.l10n
+                            .paywallPriceYearlyPerMonth(
+                              perMonth,
+                              plan.displayPrice,
+                            ),
+                        (true, _) => context.l10n.paywallPriceYearly(
+                          plan.displayPrice,
+                        ),
+                        _ => context.l10n.paywallPricePerPeriod(
+                          plan.displayPrice,
+                          plan.period.unitLabelIn(context.l10n),
+                        ),
                       },
                       style: type.bodySmall,
                     ),
@@ -474,8 +483,8 @@ class _Footer extends ConsumerWidget {
           const SizedBox(height: SanctumSpacing.sm),
           SanctumButton(
             label: plan.hasTrial
-                ? 'Start ${plan.trialDays} days free'
-                : 'Subscribe',
+                ? context.l10n.paywallStartTrial(plan.trialDays)
+                : context.l10n.paywallSubscribe,
             icon: Icons.auto_awesome,
             expand: true,
             onPressed: onPurchase,
@@ -486,17 +495,22 @@ class _Footer extends ConsumerWidget {
             // not say what it renews at is the classic complaint, and
             // the classic refund.
             plan.hasTrial
-                ? '${plan.trialDays} days free, then ${plan.displayPrice} '
-                      'per ${plan.period.unitLabel}. Cancel anytime.'
-                : '${plan.displayPrice} per ${plan.period.unitLabel}. '
-                      'Cancel anytime.',
+                ? context.l10n.paywallTrialTerms(
+                    plan.trialDays,
+                    plan.displayPrice,
+                    plan.period.unitLabelIn(context.l10n),
+                  )
+                : context.l10n.paywallTerms(
+                    plan.displayPrice,
+                    plan.period.unitLabelIn(context.l10n),
+                  ),
             textAlign: TextAlign.center,
             style: type.caption,
           ),
           const SizedBox(height: SanctumSpacing.sm),
           TextButton(
             onPressed: onRestore,
-            child: Text('Restore purchases', style: type.caption),
+            child: Text(context.l10n.paywallRestore, style: type.caption),
           ),
         ],
       ),
