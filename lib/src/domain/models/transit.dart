@@ -88,13 +88,25 @@ class Transit with TransitMappable {
 
   /// "Mars presses on your Venus", in the language of [copy].
   ///
-  /// A method taking the copy book rather than a getter, because the
-  /// sentence is three translated words in a translated order and none
-  /// of them can be reached from a pure-domain model any other way.
+  /// ## Why the natal body has its own key
+  ///
+  /// English needs one word per planet and glues "your" on the front.
+  /// Ukrainian and Russian cannot: the possessive agrees with the
+  /// planet's gender (твій Марс, твоя Венера, твоє Сонце) *and* the
+  /// verb governs a case, so "your Venus" is four different phrases
+  /// depending on where it lands. The first draft of this template read
+  /// "САТУРН ТИСНЕ НА ТВІЙ ВЕНЕРА", which is the kind of wrong that
+  /// tells a reader immediately that nobody speaking their language
+  /// looked at it.
+  ///
+  /// So `transit.natal.*` carries the whole phrase — possessive,
+  /// gender and case already correct — and the verbs are chosen in
+  /// every language to govern one single case, so six forms are enough
+  /// instead of one per verb-and-planet pair.
   String headlineIn(CopyBook copy) => copy.format('transit.headline', {
     'transiting': copy.get('planet.${transiting.name}'),
     'verb': copy.get('transit.verb.${aspect.name}'),
-    'natal': copy.get('planet.${natal.name}'),
+    'natal': copy.get('transit.natal.${natal.name}'),
   });
 }
 
@@ -106,6 +118,7 @@ class DailyTransitReading {
   /// Creates a reading.
   const DailyTransitReading({
     required this.line,
+    required this.headline,
     required this.retrogrades,
     this.transit,
     this.tomorrow,
@@ -117,6 +130,14 @@ class DailyTransitReading {
 
   /// The reading itself.
   final String line;
+
+  /// The transit as a phrase — "Mars presses on your Venus" — or the
+  /// quiet-sky line when nothing is in orb.
+  ///
+  /// Composed here rather than built in the widget. Reaching for the
+  /// copy book from a widget means reaching for it *asynchronously*,
+  /// and the first frame renders before it arrives.
+  final String headline;
 
   /// What arrives tomorrow, when it differs from today.
   ///

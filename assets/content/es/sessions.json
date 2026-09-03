@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "sessions": [
+    {
+      "id": "grounding-174",
+      "title": "Enraizar",
+      "frequencyHz": 174.0,
+      "frequencyLabel": "174 Hz",
+      "intention": "Aterrizar en el cuerpo y en el suelo que lo sostiene.",
+      "durationSeconds": 600,
+      "chakra": "root"
+    },
+    {
+      "id": "release-396",
+      "title": "Soltar",
+      "frequencyHz": 396.0,
+      "frequencyLabel": "396 Hz",
+      "intention": "Dejar ir eso contra lo que llevas tiempo apretando.",
+      "durationSeconds": 900,
+      "chakra": "root"
+    },
+    {
+      "id": "change-417",
+      "title": "Cambio",
+      "frequencyHz": 417.0,
+      "frequencyLabel": "417 Hz",
+      "intention": "Atravesar una transición sin aferrarte a la forma vieja.",
+      "durationSeconds": 900,
+      "chakra": "sacral"
+    },
+    {
+      "id": "heart-528",
+      "title": "El tono del corazón",
+      "frequencyHz": 528.0,
+      "frequencyLabel": "528 Hz",
+      "intention": "Ablandarte contigo. Al que casi todo el mundo vuelve.",
+      "durationSeconds": 1200,
+      "chakra": "heart"
+    },
+    {
+      "id": "connection-639",
+      "title": "Vínculo",
+      "frequencyHz": 639.0,
+      "frequencyLabel": "639 Hz",
+      "intention": "Reparar, calor, y la gente que quieres más cerca.",
+      "durationSeconds": 900,
+      "chakra": "heart"
+    },
+    {
+      "id": "intuition-741",
+      "title": "Intuición",
+      "frequencyHz": 741.0,
+      "frequencyLabel": "741 Hz",
+      "intention": "Bajar el ruido hasta que tu propia voz se oiga otra vez.",
+      "durationSeconds": 900,
+      "chakra": "throat"
+    },
+    {
+      "id": "clarity-852",
+      "title": "Claridad",
+      "frequencyHz": 852.0,
+      "frequencyLabel": "852 Hz",
+      "intention": "Ver la situación como es y no como era.",
+      "durationSeconds": 900,
+      "chakra": "thirdEye"
+    },
+    {
+      "id": "expanse-963",
+      "title": "Amplitud",
+      "frequencyHz": 963.0,
+      "frequencyLabel": "963 Hz",
+      "intention": "Espacio. Mejor al final de una práctica.",
+      "durationSeconds": 1200,
+      "chakra": "crown"
+    },
+    {
+      "id": "night-tone-136",
+      "title": "Tono de noche",
+      "frequencyHz": 136.1,
+      "frequencyLabel": "136.1 Hz",
+      "intention": "Un tono grave y lento para cerrar el día.",
+      "durationSeconds": 1800,
+      "chakra": "crown"
+    }
+  ]
+}

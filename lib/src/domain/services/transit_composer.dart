@@ -35,6 +35,9 @@ abstract final class TransitComposer {
       line: today == null
           ? copy.get('transit.quietDay')
           : _lineFor(today, copy),
+      headline: today == null
+          ? copy.get('transit.quietSky')
+          : today.headlineIn(copy),
       tomorrow: _tomorrowFor(today, next, copy),
       retrogrades: retrogrades,
       retrogradeNote: retrogrades.isEmpty

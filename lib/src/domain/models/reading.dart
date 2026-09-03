@@ -1,4 +1,3 @@
-import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
 
 /// The reading shown at the end of onboarding.
@@ -6,6 +5,7 @@ class Reading {
   /// Creates a reading.
   const Reading({
     required this.sign,
+    required this.headline,
     required this.opening,
     required this.hasBirthDate,
     this.name,
@@ -26,6 +26,15 @@ class Reading {
   /// one thing that would make the whole screen a lie.
   final bool hasBirthDate;
 
+  /// Headline, addressed to them where possible.
+  ///
+  /// Composed rather than computed on demand. It used to be a method
+  /// taking the copy book, which meant the *widget* had to hold copy —
+  /// and a widget that reaches for content asynchronously renders once
+  /// before it arrives. Every other line here is already a finished
+  /// string for exactly that reason; this one is no different.
+  final String headline;
+
   /// Element-led opening line.
   final String opening;
 
@@ -43,18 +52,4 @@ class Reading {
   /// Short enough to read at a glance in someone's feed.
   String get shareLine => recognition ?? opening;
 
-  /// Headline, addressed to them where possible.
-  ///
-  /// One whole sentence per sign rather than a template plus an article.
-  /// The article rule this used to apply — "an" before a vowel — is a
-  /// fact about English, and languages that inflect the sign itself, or
-  /// have no article at all, cannot be served by patching a word in
-  /// front of it. Twelve short sentences per language is the cheap,
-  /// correct version.
-  String headlineIn(CopyBook copy) {
-    final who = name;
-    return who == null
-        ? copy.get('reading.headline.${sign.name}')
-        : copy.format('reading.headlineNamed.${sign.name}', {'name': who});
-  }
 }

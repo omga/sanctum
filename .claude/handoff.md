@@ -412,6 +412,31 @@ zone, avoiding a timezone-name dependency. The trade: someone who
 crosses a DST boundary without opening the app drifts by an hour until
 the next launch rewrites the queue.
 
+### Rituals rotate per lunation, and the catalogue is twelve
+
+The catalogue held one ritual per phase and `ritualFor` returned the
+first match, so a user six months in had done the same New Moon ritual
+six times, word for word. It is now three per phase, twelve in all.
+
+Adding entries alone would have fixed nothing — a second ritual for a
+phase was simply unreachable behind the first. `RitualSelector` picks by
+**lunation**, not by date: a phase band is several days wide, and a
+day-keyed pick would swap the ritual out from under someone halfway
+through it. `MoonPhaseCalculator.occurrenceStart` walks back to the first
+day of the current run of the phase so every day inside one window agrees
+on which occurrence it belongs to.
+
+Unlike `DailyAttunementSelector` this is **not salted per install**, and
+that is deliberate rather than lazy. A daily card is a reading and should
+be about you; a moon ritual is a practice attached to an event everyone
+is under at once, and two friends comparing notes on the same full moon
+should find they were asked to do the same thing.
+
+`content_catalog_test.dart` now asserts every ritual phase carries more
+than one, and `ritual_view_model_test.dart` walks a full year to prove
+every authored ritual is actually reachable — the check that would have
+caught the original shape.
+
 ### The check-in loop is closed
 
 `EnergyRepository.watchRecent` was implemented and called from nowhere:
@@ -451,6 +476,307 @@ that body is slow. Venus and Mars move under 1.25°/day and Saturn takes
 two and a half years to cross a sign. **The Moon moves 13°/day and its
 sign genuinely cannot be known without a birth time**, so it is not used
 and not faked. Adding it means adding that question.
+
+### Localisation: two stores of words, and why
+
+Wave 0 landed 2026-08-31. The app is now *structurally* multilingual and
+ships one locale, English. Adding a language is content and a content
+pipeline, not engineering.
+
+Words live in exactly two places, and the split is forced by the
+architecture rather than chosen for taste:
+
+| | `lib/src/l10n/app_en.arb` | `assets/content/<lang>/` |
+|---|---|---|
+| Holds | UI chrome: buttons, headings, labels, errors | The product: readings, quiz, oracle, rituals, copy.json |
+| Reached by | `context.l10n.someKey` | `CopyBook`, injected into domain services |
+| Why there | needs ICU plurals and a context | `domain/` is pure Dart and **cannot import `AppLocalizations`** |
+
+**That second cell is the whole design.** `features/ → domain/ ← data/`
+means a composer cannot see a Flutter-generated class, so the prose it
+assembles has to arrive as data. It does, as a flat dotted dictionary —
+`compatibility.dynamic.trine`, `transit.pair.saturn.venus` — built from
+the enums that select it, so adding an aspect or a facet fails on a
+missing key rather than composing a blank line.
+
+`copy.json` was **generated from the `static const` maps it replaced**,
+not retyped, so the English content is provably the same text that
+shipped before. The guard going forward is in the tests:
+`reading_composer_test` and `compatibility_composer_test` read the real
+shipped file and assert every key the composers ask for exists.
+
+Four rules worth keeping:
+
+- **No widget calls `.displayName`.** Enum names are rendered through
+  `sanctum_lexicon.dart`, which switches exhaustively — so adding an
+  enum value breaks compilation there, which is the cheapest possible
+  reminder that it needs an ARB entry too. `displayName` survives on the
+  enums as the authoring source the ARB was written from, and as a debug
+  label. A widget that reaches for it ships English inside a translated
+  screen, silently.
+- **`SanctumLocales.resolve` is the only locale decision.** `MaterialApp`
+  and the content catalogue both go through it. Two resolvers would
+  eventually disagree and put English chrome around translated readings.
+- **Content falls back per *file*, not per catalogue.** A locale missing
+  `oracle_cards.json` gets the English deck and keeps its own quiz. That
+  is what lets a language ship before its long tail is translated.
+- **`CopyBook.format` is deliberately feeble** — `{name}` substitution
+  and nothing else. Anything needing a plural or a number belongs in the
+  ARB, where ICU does it properly.
+
+Adding a locale: an ARB file, an `assets/content/<code>/` directory, the
+directory declared in `pubspec.yaml`, and the locale added to
+`SanctumLocales.supported`. `lib/src/l10n/untranslated.json` lists what
+each locale still lacks.
+
+**Known English still in the code**, all deliberate and all listed so
+nobody has to rediscover them:
+
+- `AppFailure` messages ("Could not read your matches"). They surface in
+  snackbars but are produced in repositories and controllers with no
+  context, so localising them is its own small project — probably by
+  giving `AppFailure` a key instead of a message.
+- `design_system/gallery/` — a developer surface, referenced from
+  nowhere in the app.
+- The SANCTUM wordmark on exported frames, which is a brand mark.
+- Sign *glyphs* (♈♉♊), which are Unicode and language-independent.
+
+### Ukrainian and Russian: the voice, and what Slavic broke
+
+Wave 1 landed 2026-08-31. Three locales ship: `en`, `uk`, `ru`.
+
+**The voice, decided by the owner and applied everywhere:**
+
+- **Informal singular** — «ти» / «ты», never «Ви» / «Вы». The one
+  exception is the compatibility readings, where the English "you" means
+  *the couple*; there the plural is correct and is written as «ви двоє /
+  вас двох» so it can never be misread as formal address. A sweep script
+  in the scratchpad checks that plural-you appears nowhere outside
+  `compatibility.*`.
+- **The reader is a woman.** Feminine agreement throughout — «ти
+  народилася», «ти не здалася», «Завершила». This is not decoration: it
+  removed every «(-ла)» bracket form from the first draft, which was the
+  single most machine-made thing in it.
+- **The app speaks in first person singular about its own work** —
+  «Розставляю планети», «Читаю Венеру і Марс», «Збираю твій допис». Not
+  "we". There is one voice in this app and it is not a team.
+
+**What Slavic broke that English hid:**
+
+- **`transit.headline` could not be a template.** It was
+  `{transiting} {verb} your {natal}`, and the first Ukrainian build read
+  **«САТУРН ТИСНЕ НА ТВІЙ ВЕНЕРА»** — the possessive must agree with the
+  planet's gender *and* the verb governs a case, so "your Venus" is four
+  different phrases depending on where it lands. Fixed by giving the
+  natal body its own key, `transit.natal.*`, carrying possessive, gender
+  and case together — and by choosing verbs that **all govern the
+  accusative in every language**, so six forms suffice instead of one per
+  verb-and-planet pair. English output is unchanged.
+- **Plurals.** Four hand-rolled `n == 1 ? '' : 's'` patterns became ICU
+  plurals in Wave 0 precisely for this: uk and ru need `one/few/many`,
+  and the English two-branch form is unfixable by a translator.
+- **Enum labels needed shortening, not just translating.** See the label
+  budget below.
+
+**Celebrity roles are gendered per person.** `assets/content/<loc>/
+celebrities.json` carries `knownFor` in the right gender for each of the
+141 entries (58 women). Ukrainian takes feminitives throughout
+(акторка, співачка, блогерка); Russian takes them only where they are
+the standard word rather than slang. Names stay in Latin — **so celebrity
+search does not match Cyrillic input**, which is a real gap and the
+obvious next thing to fix in the picker.
+
+### Spanish: one locale code, LatAm-neutral copy
+
+Wave 2 landed 2026-08-31. Four locales ship: `en`, `uk`, `ru`, `es`.
+
+**Registered as plain `es`, deliberately.** `SanctumLocales.resolve`
+matches language before country, so one entry serves Mexico, Colombia,
+Argentina, Spain and every other market. The copy is written to survive
+that: **`tú`** (the one informal singular understood everywhere — not
+`vos`, which is Rioplatense/Central American), **`ustedes`** for the
+couple readings (plural everywhere; `vosotros` would mark it Spain-only),
+and no market-specific vocabulary. A market that eventually needs its
+own wording gets its own entry, which resolves ahead of this one.
+
+Same voice rules as Wave 1: informal, feminine agreement for the reader,
+first person singular for the app's own work.
+
+**The register is a positioning decision, not a translation choice.**
+Spanish-language astrology content is saturated with *el universo
+conspira a tu favor* — cosmic flattery, exclamation marks, zero
+specificity. Sanctum's whole claim is the opposite, so the Spanish is
+deliberately dry and concrete: *Sospechosamente fácil.* / *La química
+nunca fue el problema.* / *De aquí no sale nadie limpio.* If this ever
+gets softened toward the category norm, the differentiation goes with
+it.
+
+Two mechanical notes:
+
+- **Spanish runs ~25% longer than English**, so the tight labels were
+  chosen for length as much as meaning — `Fondo` for Depth (5 chars,
+  matching English's `Depth`) rather than the clearer-but-double-length
+  `Profundidad`. `label_budget_test.dart` covers `es` and enforces it.
+- **`transit.headline` needed no special work here**, unlike the Slavic
+  locales: Spanish `tu` is invariant for gender. The verbs were still
+  chosen to all take a following `tu X` directly, so the same six
+  `transit.natal.*` keys serve every aspect.
+
+### Three defects that only composition revealed
+
+Worth recording as a method, because none of these are visible when you
+read the strings one at a time — only when you look at what the app
+actually assembles and puts on screen.
+
+1. **`Hoy … Hoy …`** Four of five transit openers start with the time
+   word, and I had begun ten of twenty bodies the same way — so 40 of
+   100 daily readings said it twice in two sentences. The English source
+   does this in 2 of 100. Found by composing every permutation in a
+   script rather than by reading the file. Fixed in `es`, and the same
+   audit found I had done it in `uk` and `ru` too.
+2. **The birth-time screen said the same sentence twice** — the question
+   subtitle and the hint beneath it both read "most people don't know",
+   word for word, in all three translations. Only visible on the screen,
+   because the two strings live in different files.
+3. **`Ritual de Cuarto creciente abierto`** — a capital mid-sentence,
+   which in Spanish reads as machine output. The moon name is
+   capitalised at source and is shown standalone elsewhere, so the
+   *sentence* moved instead of the noun: `{moon}: ritual abierto`.
+
+The general lesson: **read the composed screen, not the string table.**
+A key-by-key review passes all three of these.
+
+### The energy row, and a test that had to be thrown away
+
+Five energy labels share one row, each getting about sixty points. In
+Ukrainian «Виснажена» did not fit, wrapped to two lines, made its column
+taller than the other four, and left the five bars stepping up and down.
+Fixed by top-aligning the row and giving each label a fixed
+one-line slot with `FittedBox(scaleDown)`; the labels were shortened too
+(Виснажена, Низька, Рівна, Відкрита, Сяюча).
+
+**The widget test written to guard it was deleted, on purpose.** It
+passed identically with the bug present and with it fixed: `flutter_test`
+draws in a fallback font whose metrics have nothing to do with Inter, so
+nothing wrapped at any width, and loading the real face did not reproduce
+it either. A layout assertion that cannot fail is worse than no test,
+because it reads like cover.
+
+The guard now sits where the constraint actually lives —
+`test/l10n/label_budget_test.dart` caps the length of the labels that
+live in fixed-width furniture (energy levels, nav, hexagon facets, the
+aspect pill) in every shipped locale. It is deterministic, it fails on
+the exact input that caused the bug, and it is the same rule the ARB
+descriptions already state in prose. **Layout regressions in a
+translation still need a device or a golden**, and there is no
+substitute in this repo yet.
+
+### A `CopyBook.empty` fallback was hiding a crash
+
+Wave 0 gave two widgets `ref.watch(contentCopyProvider).value ??
+CopyBook.empty`. `CopyBook.get` throws on a missing key by design — so on
+the first frame, before the provider resolved, the empty book turned
+"still loading" into a `StateError` and the Today screen threw. It only
+surfaced under `uk` because that was the first cold start after the
+change.
+
+Fixed at the root rather than the symptom: **the composers now produce
+every string, including the headline.** `DailyTransitReading.headline`
+and `Reading.headline` are composed fields like every other line, the two
+widgets went back to being plain `StatelessWidget`s, and
+`contentCopyProvider` is gone. No widget reaches for content
+asynchronously any more, which is the property that made this possible.
+
+### Birth time is optional, and buys exactly one thing
+
+Added 2026-08-31. Onboarding and both compatibility entry points now ask
+for a birth time, with **"I do not know" as a first-class answer** rather
+than a skip — most people genuinely do not know, and a question that
+records nothing is a question the flow asks forever. `BirthTime` carries
+three states (never asked / known / asked-and-unknown) precisely because
+a nullable int carries two.
+
+**What it buys is the Moon, and nothing else.** The four existing bodies
+are slow by design, so a time moves them by fractions of a degree —
+`ephemeris_test.dart` pins Saturn moving under 0.15° across a whole day,
+because the tempting overclaim here is that a birth time sharpens the
+whole reading. It does not. The Moon crosses a sign every 2.3 days and is
+the one body a date cannot place, which is why it was excluded until now.
+
+Three constraints hold it together:
+
+- **The Moon enters the model only when *both* people have a time.** A
+  real Moon measured against a noon guess would report the difference as
+  a finding about the couple — the same lie as inventing a score. So
+  `_raw` has two parallel weight sets, each summing to 1.0, and readings
+  with no time compute *exactly* the numbers they did before. Spark and
+  Future deliberately take no Moon term, and a test pins that.
+- **Celebrities never get one.** The catalogue is Wikidata `P569`, which
+  records a date. A fabricated Moon sign beside a real person's name, on
+  a card built to be posted, is a different category of mistake.
+- **`Ephemeris.moonLongitude` needs no precession correction.** Its
+  series is already referred to the equinox of date, unlike the planetary
+  elements. The proof is a cross-check rather than an assertion: at four
+  documented new and full moons spanning 1990–2026, the Meeus lunar
+  series and the Keplerian solar path agree to **0.03°**, through
+  completely separate code.
+
+The zone caveat is real and written down in `BirthTime`: this is
+wall-clock time at a birth place the app never asks for. It is the same
+assumption the birth *date* already makes, one level finer, and it is
+never worse than the noon guess it replaces. Closing it properly needs a
+birth *place* — a geocoder, a historical timezone database and a screen.
+
+**`Ephemeris.julianDay` takes the time as an explicit argument, and that
+is load-bearing.** It reads only the calendar fields of its `DateTime`.
+Transits are computed from `Clock.today()`, but nothing stops a caller
+passing a full `DateTime.now()` — and if that silently moved the sky, the
+daily reading would drift through the afternoon. A test pins it.
+
+### Birth dates are calendar dates, and used to lose a day
+
+`dart_mappable` encodes every `DateTime` as UTC, which is right for an
+instant and wrong for a birth date. The app builds birth dates as
+`DateTime(y, m, d)` — local midnight — so east of Greenwich they were
+stored as the *previous* day and read back shifted:
+
+```text
+saved     1996-06-15 00:00 local  (UTC+3)
+stored    "1996-06-14T21:00:00.000Z"
+restored  1996-06-14
+```
+
+Every birth date in the app moved back a day the first time it was read
+from storage, for every user in Europe — including both of ours. Cusp
+birthdays reported the wrong sun sign from the second launch onwards,
+and `MatchPerson.key` stopped matching the id its own saved reading was
+stored under.
+
+`CalendarDateHook` fixes it by writing **UTC midnight of the local
+calendar date**, so the stored string names the right day wherever the
+phone is. Blobs written by the old behaviour do not have midnight in
+them, which is exactly what distinguishes the two formats; those are
+converted back through local time, recovering the original date on the
+device that wrote it. `birth_time_persistence_test.dart` pins both paths
+from hand-written legacy JSON.
+
+**The general rule:** a hook's return value is cast straight to the
+field's declared type, so a map-valued hook must rebuild a typed map. A
+`Map<dynamic, dynamic>` fails that cast at runtime and takes the whole
+field with it.
+
+### Every field feeding `MatchPerson.key` must travel with the route
+
+`MatchResultRoute` rebuilds the second person from loose query
+parameters. Miss one and the rebuilt person keys differently from the
+stored id, `CompatibilityGate` cannot find the reveal, and **a reading
+the user has already unlocked asks to be unlocked again.**
+
+This happened immediately: the saved-match list carried the date but not
+the newly added time, and a revealed match came back showing "that's your
+free reading used". `birth_time_test.dart` now pins the route round-trip
+in both directions — that a known time survives, and that dropping it
+changes the key.
 
 ### Aspects are harmonic, not orb-gated
 
@@ -865,8 +1191,21 @@ are in `device-testing.md`.
 - **No golden tests** (`alchemist` is installed, none written).
 - **No launcher icon of your own** — the current crescent mark is a
   placeholder generated in-repo.
-- **No localisation** (`flutter-setup-localization` skill is available and
-  unused). Needed if non-English markets are pursued.
+- **Four locales ship: English, Ukrainian, Russian, Spanish.** Waves 0-2
+  landed 2026-08-31 — see §3. 241 ARB keys and 179 content keys per
+  locale, ~2,900 words each. Both bundled fonts already cover Cyrillic
+  and the Spanish diacritics, so there was no font work. All three
+  translations were verified on device.
+- **`es` has had no native review.** uk and ru are being checked by the
+  owner, who speaks both. Nobody on the team reads Spanish, so that
+  locale rests on the checks in §3 and on device screenshots — which
+  catch grammar, layout and duplication, but not whether a line is
+  *funny* or lands the way the English does. Worth one native pass
+  before it fronts any paid acquisition.
+- **Celebrity search does not match Cyrillic.** Names are stored in
+  Latin, so a Ukrainian user typing «Тейлор» finds nothing. Either
+  transliterate the 141 names per locale or match on a folded
+  alias list.
 - **No "For entertainment purposes only" disclaimer** outside the payoff
   screen. Nebula shows it at first launch; store review for divination
   content generally expects it.
@@ -885,6 +1224,11 @@ riskiest untested assumption and costs nothing.
 What stays here is the engineering debt that is cheaper to fix now than
 later, none of which is on the revenue path:
 
+0. **Reopening a saved *pair* reading loses the first person.**
+   `_SavedMatchTile` pushes `MatchResultRoute` with `match.them` only, so
+   a stored "Taylor and Doja" reading reopens as "you and Doja". Found
+   2026-08-31, pre-existing, not fixed. It is the same root cause as the
+   item below: the route cannot express a reading the user is not in.
 1. **Replace `MatchResultRoute`'s query parameters with an opaque id.**
    It carries `name` and `birth`. Both PostHog's and Sentry's navigation
    observers are disabled specifically because of it, and `_scrub`
@@ -1001,10 +1345,23 @@ later, none of which is on the revenue path:
   the button looks alive and does nothing. `ref.watch(provider)` in
   `build` keeps it alive.
 
-  **This has now shipped three times.** The third was
-  `ReminderController`: both callers are fire-and-forget — the shell on
-  launch, the payoff screen for permission — so neither ever watched it,
-  and daily reading notifications were silently never scheduled.
+  **This has now shipped four times.** The fourth was
+  `paywallDecisionProvider`, found 2026-08-31 by reading a debug console:
+  `PaywallPresenter` reaches it once on launch through
+  `ref.read(...future)` and never watches it, so the chain was collected
+  before `streakProvider` — a Drift stream — delivered its first row.
+  The await then completed with `Bad state: the provider
+  streakProvider(...) was disposed during loading state`, and the
+  automatic paywall never appeared. Fixed at the call site with
+  `ref.listenManual`, held across the await, rather than with keepAlive:
+  `streakProvider` is a per-date family and pinning it for the app's
+  lifetime is wrong, which `riverpod_lint`'s
+  `only_use_keep_alive_inside_keep_alive` says out loud if you try.
+
+  The third was `ReminderController`: both callers are fire-and-forget —
+  the shell on launch, the payoff screen for permission — so neither ever
+  watched it, and daily reading notifications were silently never
+  scheduled.
   `dumpsys alarm | grep -ci sanctum` returned 0 on a device that was
   onboarded, had a birth date and had granted POST_NOTIFICATIONS, with
   no error anywhere — because the `UnmountedRefException` goes to

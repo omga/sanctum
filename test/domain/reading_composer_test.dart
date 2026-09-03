@@ -58,7 +58,7 @@ void main() {
         _copy,
       );
 
-      expect(a.headlineIn(_copy), b.headlineIn(_copy));
+      expect(a.headline, b.headline);
       expect(a.recognition, b.recognition);
       expect(a.opening, b.opening);
     });
@@ -79,7 +79,7 @@ void main() {
         answers(name: 'Mia', birth: DateTime(1991)),
         _copy,
       );
-      expect(reading.headlineIn(_copy), startsWith('Mia, you are a Capricorn'));
+      expect(reading.headline, startsWith('Mia, you are a Capricorn'));
     });
 
     test('still reads properly without a name', () {
@@ -87,7 +87,7 @@ void main() {
         answers(birth: DateTime(1991)),
         _copy,
       );
-      expect(reading.headlineIn(_copy), 'You are a Capricorn.');
+      expect(reading.headline, 'You are a Capricorn.');
     });
 
     test('uses the right article for vowel signs', () {
@@ -101,8 +101,8 @@ void main() {
         _copy,
       );
 
-      expect(aries.headlineIn(_copy), contains('an Aries'));
-      expect(taurus.headlineIn(_copy), contains('a Taurus'));
+      expect(aries.headline, contains('an Aries'));
+      expect(taurus.headline, contains('a Taurus'));
     });
   });
 
@@ -110,7 +110,7 @@ void main() {
     test('survives a completely empty answer set', () {
       final reading = ReadingComposer.compose(const QuizAnswers(), _copy);
 
-      expect(reading.headlineIn(_copy), isNotEmpty);
+      expect(reading.headline, isNotEmpty);
       expect(reading.opening, isNotEmpty);
       expect(reading.recognition, isNull);
       expect(reading.hasBirthDate, isFalse);

@@ -5,14 +5,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/core/analytics/analytics_event.dart';
 import 'package:sanctum/src/core/core_providers.dart';
-import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_motion.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
-import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/reading.dart';
 import 'package:sanctum/src/features/payoff/view/widgets/shareable_card.dart';
 import 'package:sanctum/src/features/payoff/view_model/payoff_view_model.dart';
@@ -111,7 +109,7 @@ class _PayoffScreenState extends ConsumerState<PayoffScreen> {
   }
 }
 
-class _Body extends ConsumerWidget {
+class _Body extends StatelessWidget {
   const _Body({
     required this.reading,
     required this.cardKey,
@@ -125,8 +123,7 @@ class _Body extends ConsumerWidget {
   final VoidCallback onContinue;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final copy = ref.watch(contentCopyProvider).value ?? CopyBook.empty;
+  Widget build(BuildContext context) {
     final type = context.type;
     var beat = 0;
     Duration next() => Duration(milliseconds: 220 * beat++);
@@ -142,7 +139,7 @@ class _Body extends ConsumerWidget {
         // Lines arrive one at a time rather than all at once. The pacing
         // is the difference between reading a result and being told
         // something.
-        Text(reading.headlineIn(copy), style: type.displayMedium)
+        Text(reading.headline, style: type.displayMedium)
             .animate(delay: next())
             .fadeIn(duration: SanctumMotion.calm)
             .slideY(begin: 0.12, end: 0),

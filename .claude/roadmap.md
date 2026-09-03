@@ -91,6 +91,23 @@ Getting this wrong costs more than the feature earns. The privacy claim
 is the one thing the product is differentiated on in a category
 notorious for the opposite.
 
+### Naming, and what it costs
+
+The working title "AI Psychic" claims more than any feature shipped so
+far, and this app's whole documented posture is the opposite: quiet days
+are admitted, the reveal captions name work that actually happens, the
+score range is honest but not cruel. It also invites App Store 3.1.2
+scrutiny and consumer-protection attention in the EU, while the
+entertainment disclaimer still is not at first launch (§6). The framing
+already used above — an astrologer that reads *your* chart, from real
+computed positions — is more honest, more defensible in review, and is
+the differentiation no thin wrapper can copy.
+
+Note also that the EU AI Act's Article 50 transparency duty (telling
+users they are interacting with an AI) was scheduled to apply from
+2 August 2026, with parts of the timeline under active discussion —
+check its current status with counsel before shipping to any EU locale.
+
 ### Effort
 
 The largest item on this list. A backend appears for the first time —
@@ -141,16 +158,79 @@ content produces. Do them first.
 3. **Instagram.** Feed carousels cap at 4:5, so the current 9:16 frames
    need a second aspect. Stories fit natively but reach existing
    followers only. Worth doing once TikTok is proven, not before.
-4. **Localise, LatAm first.** Portuguese (BR) and Spanish are the
-   highest-volume astrology markets outside English and the least
-   saturated by well-funded competitors. Russian is a strong third given
-   the team's own languages.
+4. **Localise.** The engineering is routine, and the copy is far
+   smaller than this section used to assume. Measured 2026-08-31: the
+   whole translatable surface is **~2,900 words of prose plus ~250 short
+   UI strings** — content JSON, the three composers, and feature-layer
+   text. At creative-transcreation rates that is roughly **€400–800 per
+   language**, review included; all eight on the shortlist come to
+   €3–6k once. Both bundled fonts (Cormorant Garamond, Inter) already
+   carry Cyrillic including the Ukrainian extended set, plus every
+   Romance and German diacritic, so there is no font work.
 
-   The engineering is routine. The cost is that this app's value *is*
-   its copy — roughly forty paragraphs of deliberately literary prose —
-   and machine translation strips exactly the quality people are paying
-   for. Budget a human translator per language and treat reading copy as
-   the expensive part.
+   Machine translation still strips the quality people are paying for —
+   budget a human per language. But translation is **not** the binding
+   constraint. **A locale is a content pipeline**, and the decision
+   recorded in `handoff.md` §1 applies with more force to eight
+   languages than it did to two apps: splitting a two-person team's
+   posting volume is the one cost the organic strategy cannot absorb.
+
+   > Ship a locale when someone will post in it and maintain a store
+   > listing in it — not when the translation is done.
+
+   A locale translated but never fed is worse than none: stores surface
+   reviews per language, and a stale listing collects one-star reviews
+   nobody on the team can read.
+
+   Suggested order, gated on that rule rather than on translation:
+
+   1. ~~**Infrastructure plus English as a real locale.**~~ **Done
+      2026-08-31.** 241 ARB keys, 173 content keys, per-locale content
+      directories with per-file English fallback, and the carousel
+      hardened against longer strings. The reading copy moved out of the
+      composers into `assets/content/en/copy.json` — see `handoff.md` §3
+      for the two-store split and the rules that keep it honest.
+   2. ~~**Ukrainian and Russian.**~~ **Translated 2026-08-31**, first
+      draft, in review. See `handoff.md` §3 for the voice rules (ти,
+      feminine, first-person app) and for what Slavic grammar broke that
+      English had hidden.
+
+      Original reasoning kept below, because the billing caveat still
+      governs whether this is ever a revenue bet. Free to translate, free to judge, free
+      to produce content in, and one Cyrillic typography pass covers
+      both. Treat this as validation of the localised organic loop, not
+      as a revenue bet: Google Play and the App Store both suspended
+      in-app purchases for users in Russia in 2022, so Russian-language
+      is the diaspora — Kazakhstan, Germany, Israel, the Baltics, the US
+      — not the Russian market. Verify the current billing position
+      before counting on it.
+   3. ~~**Spanish (es-419).**~~ **Translated 2026-08-31** as plain
+      `es`, LatAm-neutral, unreviewed by a native speaker. Shipped as
+      one locale covering every Spanish market — see `handoff.md` §3.
+      The creator half of this bet is untouched and is still the real
+      gate.
+
+      Original reasoning below. Where the money starts. Needs a paid
+      translator *and* a native creator; the creator is the harder half
+      and the real gate.
+   4. **Portuguese (BR).** Highest-volume astrology market on the list.
+      Same shape as Spanish, usually the same LatAm creator strategy.
+   5. **French, Italian, German — as one batch, or never.** No team
+      language advantage, no free creator, high-CPM markets already
+      saturated by funded competitors, and German is the worst case for
+      the export layout. Only once a *paid* locale has earned back its
+      cost, and pick by which one you can find a creator for.
+
+   **On sequencing this against §1:** localisation is a bet on traffic,
+   the advisor is a bet on ARPU, and nobody yet knows which is the
+   constraint — because "post twenty videos" is still undone. The
+   infrastructure plus the two free languages is the cheap, diagnostic
+   bet and should come first; it is also the cheapest way to run the
+   experiment this list already calls the riskiest. Doing it first has a
+   second benefit: the advisor adds the most legally sensitive strings
+   in the product — a consent screen making a claim about what leaves
+   the device — and those are far better translated into a codebase that
+   already has the discipline than retrofitted across eight languages.
 5. **Refresh the celebrity catalogue quarterly.** New names are a
    content update with no code change, they match what people search,
    and `tool/verify_celebrities.py` makes adding them safe.

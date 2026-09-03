@@ -128,8 +128,7 @@ class ReminderController extends _$ReminderController {
       day: day,
       copy: copy,
     );
-    final transit = reading.transit;
-    if (transit != null) return transit.headlineIn(copy);
+    if (reading.isPersonal) return reading.headline;
     return name == null
         ? copy.get('transit.quietSkyTitle')
         : copy.format('transit.quietSkyTitleNamed', {'name': name});

@@ -30,10 +30,19 @@ abstract final class SanctumLocales {
   ///
   /// Ukrainian and Russian shipped together 2026-08-31 as Wave 1 — see
   /// the roadmap for why that pairing and not, say, Spanish first.
+  /// Spanish followed the same day as Wave 2.
+  ///
+  /// Spanish is registered as plain `es`, not `es-419` or `es-ES`.
+  /// [resolve] matches on language before country, so one entry serves
+  /// every Spanish-speaking market; the copy is written LatAm-neutral
+  /// for that reason — `tú` rather than `vos`, `ustedes` rather than
+  /// `vosotros`. A market that eventually needs its own wording gets
+  /// its own entry here and resolves ahead of this one.
   static const List<Locale> supported = [
     fallback,
     Locale('uk'),
     Locale('ru'),
+    Locale('es'),
   ];
 
   /// The best supported match for [preferred], in priority order.

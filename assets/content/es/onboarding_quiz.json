@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "questions": [
+    {
+      "id": "name",
+      "kind": "text",
+      "title": "¿Cómo te llamas?",
+      "subtitle": "Solo lo uso para hablarte. De este teléfono no sale."
+    },
+    {
+      "id": "goals",
+      "kind": "multi",
+      "title": "¿A qué viniste?",
+      "subtitle": "Elige todo lo que sea verdad. De esto depende todo lo que veas después.",
+      "options": [
+        {
+          "id": "love",
+          "label": "Amor y relaciones",
+          "detail": "Alguien en concreto, o la búsqueda"
+        },
+        {
+          "id": "clarity",
+          "label": "Una decisión a la que le doy vueltas"
+        },
+        {
+          "id": "calm",
+          "label": "Silencio en mi cabeza"
+        },
+        {
+          "id": "purpose",
+          "label": "Hacia dónde va mi vida"
+        },
+        {
+          "id": "self",
+          "label": "Entenderme"
+        },
+        {
+          "id": "people",
+          "label": "Leer mejor a la gente"
+        }
+      ]
+    },
+    {
+      "id": "echo",
+      "kind": "interstitial",
+      "title": "Entonces trabajamos en eso.",
+      "subtitle": "Tu carta diaria, tus rituales y tus lecturas se van a armar alrededor de esto."
+    },
+    {
+      "id": "love_status",
+      "kind": "single",
+      "title": "¿En qué punto estás?",
+      "showIf": {
+        "questionId": "goals",
+        "anyOf": [
+          "love"
+        ]
+      },
+      "options": [
+        {
+          "id": "single",
+          "label": "Sola"
+        },
+        {
+          "id": "talking",
+          "label": "Hablando con alguien"
+        },
+        {
+          "id": "together",
+          "label": "Con alguien"
+        },
+        {
+          "id": "healing",
+          "label": "Saliendo de algo"
+        }
+      ]
+    },
+    {
+      "id": "weight",
+      "kind": "multi",
+      "title": "¿Qué es lo que más pesa ahora?",
+      "subtitle": "Sé honesta. Esto lo ves solo tú.",
+      "options": [
+        {
+          "id": "mixed_signals",
+          "label": "No consigo leer a alguien"
+        },
+        {
+          "id": "repeating",
+          "label": "Repito el mismo patrón"
+        },
+        {
+          "id": "letting_go",
+          "label": "No consigo soltar algo"
+        },
+        {
+          "id": "racing",
+          "label": "Mi cabeza no baja de revoluciones"
+        },
+        {
+          "id": "stuck",
+          "label": "Me paralizo y no hago nada"
+        },
+        {
+          "id": "drained",
+          "label": "Estoy funcionando en reserva"
+        }
+      ]
+    },
+    {
+      "id": "birth_date",
+      "kind": "date",
+      "title": "¿Cuándo naciste?",
+      "subtitle": "Tu signo define cómo escribo para ti."
+    },
+    {
+      "id": "birth_time",
+      "kind": "time",
+      "title": "¿Sabes a qué hora?",
+      "subtitle": "Solo hace falta para la Luna, y la mayoría no la sabe. Se queda en este teléfono, como todo lo demás."
+    },
+    {
+      "id": "rhythm",
+      "kind": "single",
+      "title": "¿Cuándo quieres tu lectura?",
+      "subtitle": "Un momento al día. Lo puedes cambiar cuando quieras.",
+      "options": [
+        {
+          "id": "morning",
+          "label": "En la mañana",
+          "detail": "Antes de que empiece el día"
+        },
+        {
+          "id": "midday",
+          "label": "Al mediodía",
+          "detail": "Cuando se pone ruidoso"
+        },
+        {
+          "id": "evening",
+          "label": "En la noche",
+          "detail": "Para soltar el día"
+        }
+      ]
+    },
+    {
+      "id": "commitment",
+      "kind": "single",
+      "title": "¿Cada cuánto vas a aparecer?",
+      "subtitle": "Una promesa que cumples vale más que una ambiciosa que rompes.",
+      "options": [
+        {
+          "id": "daily",
+          "label": "Todos los días",
+          "detail": "Quiero la racha"
+        },
+        {
+          "id": "most",
+          "label": "Casi todos los días"
+        },
+        {
+          "id": "when",
+          "label": "Cuando lo necesite"
+        }
+      ]
+    }
+  ]
+}

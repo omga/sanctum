@@ -4,56 +4,56 @@
     {
       "id": "taylor-swift",
       "name": "Taylor Swift",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "1989-12-13",
       "group": "music"
     },
     {
       "id": "beyonce",
       "name": "Beyoncé",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "1981-09-04",
       "group": "music"
     },
     {
       "id": "rihanna",
       "name": "Rihanna",
-      "knownFor": "Співачка, засновниця",
+      "knownFor": "Співачка і засновниця",
       "birthDate": "1988-02-20",
       "group": "music"
     },
     {
       "id": "harry-styles",
       "name": "Harry Styles",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1994-02-01",
       "group": "music"
     },
     {
       "id": "ariana-grande",
       "name": "Ariana Grande",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "1993-06-26",
       "group": "music"
     },
     {
       "id": "billie-eilish",
       "name": "Billie Eilish",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "2001-12-18",
       "group": "music"
     },
     {
       "id": "dua-lipa",
       "name": "Dua Lipa",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "1995-08-22",
       "group": "music"
     },
     {
       "id": "bad-bunny",
       "name": "Bad Bunny",
-      "knownFor": "Репер, співак(-чка)",
+      "knownFor": "Репер і співак",
       "birthDate": "1994-03-10",
       "group": "music"
     },
@@ -67,56 +67,56 @@
     {
       "id": "the-weeknd",
       "name": "The Weeknd",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1990-02-16",
       "group": "music"
     },
     {
       "id": "justin-bieber",
       "name": "Justin Bieber",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1994-03-01",
       "group": "music"
     },
     {
       "id": "selena-gomez",
       "name": "Selena Gomez",
-      "knownFor": "Співак(-чка), актор",
+      "knownFor": "Співачка і акторка",
       "birthDate": "1992-07-22",
       "group": "music"
     },
     {
       "id": "lady-gaga",
       "name": "Lady Gaga",
-      "knownFor": "Співак(-чка), актор",
+      "knownFor": "Співачка і акторка",
       "birthDate": "1986-03-28",
       "group": "music"
     },
     {
       "id": "olivia-rodrigo",
       "name": "Olivia Rodrigo",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "2003-02-20",
       "group": "music"
     },
     {
       "id": "sabrina-carpenter",
       "name": "Sabrina Carpenter",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "1999-05-11",
       "group": "music"
     },
     {
       "id": "doja-cat",
       "name": "Doja Cat",
-      "knownFor": "Репер, співак(-чка)",
+      "knownFor": "Реперка і співачка",
       "birthDate": "1995-10-21",
       "group": "music"
     },
     {
       "id": "shawn-mendes",
       "name": "Shawn Mendes",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1998-08-08",
       "group": "music"
     },
@@ -151,14 +151,14 @@
     {
       "id": "zayn-malik",
       "name": "Zayn Malik",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1993-01-12",
       "group": "music"
     },
     {
       "id": "post-malone",
       "name": "Post Malone",
-      "knownFor": "Репер, співак(-чка)",
+      "knownFor": "Репер і співак",
       "birthDate": "1995-07-04",
       "group": "music"
     },
@@ -186,14 +186,14 @@
     {
       "id": "benson-boone",
       "name": "Benson Boone",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співак і автор пісень",
       "birthDate": "2002-06-25",
       "group": "music"
     },
     {
       "id": "noah-kahan",
       "name": "Noah Kahan",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співак і автор пісень",
       "birthDate": "1997-01-01",
       "group": "music"
     },
@@ -207,21 +207,21 @@
     {
       "id": "peso-pluma",
       "name": "Peso Pluma",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1999-06-15",
       "group": "music"
     },
     {
       "id": "ed-sheeran",
       "name": "Ed Sheeran",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співак і автор пісень",
       "birthDate": "1991-02-17",
       "group": "music"
     },
     {
       "id": "bruno-mars",
       "name": "Bruno Mars",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співак",
       "birthDate": "1985-10-08",
       "group": "music"
     },
@@ -263,35 +263,35 @@
     {
       "id": "cha-eun-woo",
       "name": "Cha Eun-woo",
-      "knownFor": "Співак(-чка), актор",
+      "knownFor": "Співак і актор",
       "birthDate": "1997-03-30",
       "group": "music"
     },
     {
       "id": "chappell-roan",
       "name": "Chappell Roan",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "1998-02-19",
       "group": "music"
     },
     {
       "id": "tyla",
       "name": "Tyla",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "2002-01-30",
       "group": "music"
     },
     {
       "id": "gracie-abrams",
       "name": "Gracie Abrams",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "1999-09-07",
       "group": "music"
     },
     {
       "id": "karol-g",
       "name": "Karol G",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "1991-02-14",
       "group": "music"
     },
@@ -312,49 +312,49 @@
     {
       "id": "ice-spice",
       "name": "Ice Spice",
-      "knownFor": "Репер",
+      "knownFor": "Реперка",
       "birthDate": "2000-01-01",
       "group": "music"
     },
     {
       "id": "charli-xcx",
       "name": "Charli XCX",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "1992-08-02",
       "group": "music"
     },
     {
       "id": "tate-mcrae",
       "name": "Tate McRae",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "2003-07-01",
       "group": "music"
     },
     {
       "id": "miley-cyrus",
       "name": "Miley Cyrus",
-      "knownFor": "Співак(-чка), актор",
+      "knownFor": "Співачка і акторка",
       "birthDate": "1992-11-23",
       "group": "music"
     },
     {
       "id": "nicki-minaj",
       "name": "Nicki Minaj",
-      "knownFor": "Репер",
+      "knownFor": "Реперка",
       "birthDate": "1982-12-08",
       "group": "music"
     },
     {
       "id": "sza",
       "name": "SZA",
-      "knownFor": "Співак(-чка)",
+      "knownFor": "Співачка",
       "birthDate": "1989-11-08",
       "group": "music"
     },
     {
       "id": "adele",
       "name": "Adele",
-      "knownFor": "Співак(-чка)-автор(-ка) пісень",
+      "knownFor": "Співачка і авторка пісень",
       "birthDate": "1988-05-05",
       "group": "music"
     },
@@ -368,7 +368,7 @@
     {
       "id": "zendaya",
       "name": "Zendaya",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1996-09-01",
       "group": "screen"
     },
@@ -389,21 +389,21 @@
     {
       "id": "sydney-sweeney",
       "name": "Sydney Sweeney",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1997-09-12",
       "group": "screen"
     },
     {
       "id": "florence-pugh",
       "name": "Florence Pugh",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1996-01-03",
       "group": "screen"
     },
     {
       "id": "margot-robbie",
       "name": "Margot Robbie",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1990-07-02",
       "group": "screen"
     },
@@ -438,7 +438,7 @@
     {
       "id": "emma-watson",
       "name": "Emma Watson",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1990-04-15",
       "group": "screen"
     },
@@ -459,7 +459,7 @@
     {
       "id": "anya-taylor-joy",
       "name": "Anya Taylor-Joy",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1996-04-16",
       "group": "screen"
     },
@@ -487,14 +487,14 @@
     {
       "id": "kim-kardashian",
       "name": "Kim Kardashian",
-      "knownFor": "Засновник(-ця), ТБ",
+      "knownFor": "Бізнес і телебачення",
       "birthDate": "1980-10-21",
       "group": "screen"
     },
     {
       "id": "kylie-jenner",
       "name": "Kylie Jenner",
-      "knownFor": "Засновник(-ця), ТБ",
+      "knownFor": "Бізнес і телебачення",
       "birthDate": "1997-08-10",
       "group": "screen"
     },
@@ -655,133 +655,133 @@
     {
       "id": "jenna-ortega",
       "name": "Jenna Ortega",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "2002-09-27",
       "group": "screen"
     },
     {
       "id": "millie-bobby-brown",
       "name": "Millie Bobby Brown",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "2004-02-19",
       "group": "screen"
     },
     {
       "id": "hailee-steinfeld",
       "name": "Hailee Steinfeld",
-      "knownFor": "Актор, співак",
+      "knownFor": "Акторка і співачка",
       "birthDate": "1996-12-11",
       "group": "screen"
     },
     {
       "id": "ana-de-armas",
       "name": "Ana de Armas",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1988-04-30",
       "group": "screen"
     },
     {
       "id": "emma-stone",
       "name": "Emma Stone",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1988-11-06",
       "group": "screen"
     },
     {
       "id": "saoirse-ronan",
       "name": "Saoirse Ronan",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1994-04-12",
       "group": "screen"
     },
     {
       "id": "jodie-comer",
       "name": "Jodie Comer",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1993-03-11",
       "group": "screen"
     },
     {
       "id": "lily-collins",
       "name": "Lily Collins",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "1989-03-18",
       "group": "screen"
     },
     {
       "id": "rachel-zegler",
       "name": "Rachel Zegler",
-      "knownFor": "Актор",
+      "knownFor": "Акторка",
       "birthDate": "2001-05-03",
       "group": "screen"
     },
     {
       "id": "mrbeast",
       "name": "MrBeast",
-      "knownFor": "Ютубер(-ка)",
+      "knownFor": "Ютубер",
       "birthDate": "1998-05-07",
       "group": "influencer"
     },
     {
       "id": "khaby-lame",
       "name": "Khaby Lame",
-      "knownFor": "Блогер(-ка) TikTok",
+      "knownFor": "Блогер у TikTok",
       "birthDate": "2000-03-09",
       "group": "influencer"
     },
     {
       "id": "charli-damelio",
       "name": "Charli D'Amelio",
-      "knownFor": "Блогер(-ка) TikTok",
+      "knownFor": "Блогерка у TikTok",
       "birthDate": "2004-05-01",
       "group": "influencer"
     },
     {
       "id": "addison-rae",
       "name": "Addison Rae",
-      "knownFor": "Блогер, співак(-чка)",
+      "knownFor": "Блогерка і співачка",
       "birthDate": "2000-10-06",
       "group": "influencer"
     },
     {
       "id": "bella-poarch",
       "name": "Bella Poarch",
-      "knownFor": "Блогер, співак(-чка)",
+      "knownFor": "Блогерка і співачка",
       "birthDate": "1997-02-09",
       "group": "influencer"
     },
     {
       "id": "emma-chamberlain",
       "name": "Emma Chamberlain",
-      "knownFor": "Ютубер(-ка)",
+      "knownFor": "Ютуберка",
       "birthDate": "2001-05-22",
       "group": "influencer"
     },
     {
       "id": "alex-cooper",
       "name": "Alex Cooper",
-      "knownFor": "Ведучий(-а) подкасту",
+      "knownFor": "Ведуча подкасту",
       "birthDate": "1994-08-21",
       "group": "influencer"
     },
     {
       "id": "logan-paul",
       "name": "Logan Paul",
-      "knownFor": "Ютубер(-ка)",
+      "knownFor": "Ютубер",
       "birthDate": "1995-04-01",
       "group": "influencer"
     },
     {
       "id": "jake-paul",
       "name": "Jake Paul",
-      "knownFor": "Ютубер, боксер",
+      "knownFor": "Ютубер і боксер",
       "birthDate": "1997-01-17",
       "group": "influencer"
     },
     {
       "id": "ksi",
       "name": "KSI",
-      "knownFor": "Ютубер, репер",
+      "knownFor": "Ютубер і репер",
       "birthDate": "1993-06-19",
       "group": "influencer"
     },
@@ -802,14 +802,14 @@
     {
       "id": "james-charles",
       "name": "James Charles",
-      "knownFor": "Бʼюті-блогер",
+      "knownFor": "Б'юті-блогер",
       "birthDate": "1999-05-23",
       "group": "influencer"
     },
     {
       "id": "nikkietutorials",
       "name": "NikkieTutorials",
-      "knownFor": "Бʼюті-блогер",
+      "knownFor": "Б'юті-блогерка",
       "birthDate": "1994-03-02",
       "group": "influencer"
     },
@@ -823,7 +823,7 @@
     {
       "id": "dixie-damelio",
       "name": "Dixie D'Amelio",
-      "knownFor": "Блогер, співак(-чка)",
+      "knownFor": "Блогерка і співачка",
       "birthDate": "2001-08-12",
       "group": "influencer"
     },
@@ -844,7 +844,7 @@
     {
       "id": "hailey-bieber",
       "name": "Hailey Bieber",
-      "knownFor": "Модель, засновник(-ця)",
+      "knownFor": "Модель і засновниця",
       "birthDate": "1996-11-22",
       "group": "influencer"
     },
@@ -872,7 +872,7 @@
     {
       "id": "pokimane",
       "name": "Pokimane",
-      "knownFor": "Стрімер",
+      "knownFor": "Стрімерка",
       "birthDate": "1996-05-14",
       "group": "influencer"
     },
@@ -900,7 +900,7 @@
     {
       "id": "serena-williams",
       "name": "Serena Williams",
-      "knownFor": "Теніс",
+      "knownFor": "Тенісистка",
       "birthDate": "1981-09-26",
       "group": "sport"
     },
@@ -935,7 +935,7 @@
     {
       "id": "carlos-alcaraz",
       "name": "Carlos Alcaraz",
-      "knownFor": "Тенісист(-ка)",
+      "knownFor": "Тенісист",
       "birthDate": "2003-05-05",
       "group": "sport"
     },
@@ -956,7 +956,7 @@
     {
       "id": "jannik-sinner",
       "name": "Jannik Sinner",
-      "knownFor": "Тенісист(-ка)",
+      "knownFor": "Тенісист",
       "birthDate": "2001-08-16",
       "group": "sport"
     },
@@ -984,7 +984,7 @@
     {
       "id": "coco-gauff",
       "name": "Coco Gauff",
-      "knownFor": "Тенісист(-ка)",
+      "knownFor": "Тенісистка",
       "birthDate": "2004-03-13",
       "group": "sport"
     }

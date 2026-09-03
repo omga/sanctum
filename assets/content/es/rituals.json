@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "rituals": [
+    {
+      "id": "new-moon-intention",
+      "moon": "Luna nueva",
+      "title": "Poner la intención",
+      "phase": "newMoon",
+      "opening": "La luna oscura es la página en blanco. Todavía no se te pide nada.",
+      "steps": [
+        "Siéntate donde nadie te vaya a interrumpir durante diez minutos.",
+        "Escribe una cosa que quieras, en presente, como si ya fuera verdad.",
+        "Debajo, escribe la acción más pequeña que la haría un poco más verdad.",
+        "Haz esa acción antes de 48 horas. Ese es el ritual entero."
+      ]
+    },
+    {
+      "id": "full-moon-release",
+      "moon": "Luna llena",
+      "title": "Soltar",
+      "phase": "fullMoon",
+      "opening": "Está todo iluminado, incluido lo que preferirías no mirar.",
+      "steps": [
+        "Nombra una cosa que estés lista para dejar de cargar.",
+        "Escríbela entera. No la suavices por educación.",
+        "Léela en voz alta una vez, para ti.",
+        "Rompe la hoja. Guardarla también vale — lo que importaba era nombrarlo."
+      ]
+    },
+    {
+      "id": "first-quarter-tension",
+      "moon": "Cuarto creciente",
+      "title": "Encontrar la resistencia",
+      "phase": "firstQuarter",
+      "opening": "La luna a medio iluminar es donde aparece la fricción.",
+      "steps": [
+        "Nombra lo que se puso más difícil de lo que esperabas.",
+        "Pregúntate si es difícil o solo desconocido.",
+        "Elige una cosa que puedas hacer un 10% más fácil, y cámbiala hoy."
+      ]
+    },
+    {
+      "id": "last-quarter-review",
+      "moon": "Cuarto menguante",
+      "title": "Revisión honesta",
+      "phase": "lastQuarter",
+      "opening": "Antes de la oscuridad, una cuenta. Sin castigo.",
+      "steps": [
+        "Enumera tres cosas que pasaron este ciclo. Tres cualesquiera.",
+        "Marca cuáles repetirías.",
+        "Perdónate una cosa concreta. Dila por su nombre."
+      ]
+    },
+    {
+      "id": "new-moon-beginning-again",
+      "moon": "Luna nueva",
+      "title": "Empezar otra vez",
+      "phase": "newMoon",
+      "opening": "Todavía no empezó nada. Esa es la ventaja.",
+      "steps": [
+        "Acuérdate de algo que empezaste una vez y dejaste.",
+        "Escribe qué lo detuvo — el motivo real, no el ordenado.",
+        "Decide si ese motivo sigue siendo cierto.",
+        "Si no lo es, empieza otra vez esta semana. Si lo es, suéltalo a propósito y no por inercia."
+      ]
+    },
+    {
+      "id": "new-moon-small-yes",
+      "moon": "Luna nueva",
+      "title": "El sí pequeño",
+      "phase": "newMoon",
+      "opening": "La luna oscura pide una dirección, no un plan.",
+      "steps": [
+        "Nombra una cosa a la que le dices que no por costumbre.",
+        "Dile que sí a una versión pequeña: una hora, un mensaje, un intento.",
+        "Elige el día ahora, antes de que esta luna se vuelva a ver."
+      ]
+    },
+    {
+      "id": "full-moon-full-light",
+      "moon": "Luna llena",
+      "title": "Luz entera",
+      "phase": "fullMoon",
+      "opening": "Esta noche la luna no se guarda nada. Haz lo mismo.",
+      "steps": [
+        "Nombra una cosa que esté yendo bien. Dilo sin peros.",
+        "Escribe quién ayudó, si ayudó alguien.",
+        "Díselo. Con una frase alcanza."
+      ]
+    },
+    {
+      "id": "full-moon-unsaid",
+      "moon": "Luna llena",
+      "title": "Lo que no dijiste",
+      "phase": "fullMoon",
+      "opening": "Está todo iluminado. Lo que estás evitando también.",
+      "steps": [
+        "Nombra la frase que ensayas y no dices.",
+        "Escríbela exactamente como la dirías en voz alta.",
+        "Elige una: la dices este ciclo, o eliges no decirla.",
+        "Las dos son decisiones. Por ahora solo una es tuya."
+      ]
+    },
+    {
+      "id": "first-quarter-halfway",
+      "moon": "Cuarto creciente",
+      "title": "A mitad de camino",
+      "phase": "firstQuarter",
+      "opening": "Media luz, media sombra. Aquí es donde se abandonan las cosas.",
+      "steps": [
+        "Nombra lo que empezaste en la luna nueva.",
+        "Di con honestidad hasta dónde llegó de verdad.",
+        "Haz hoy el pedazo siguiente más pequeño, aunque salga mal."
+      ]
+    },
+    {
+      "id": "first-quarter-cost",
+      "moon": "Cuarto creciente",
+      "title": "El costo",
+      "phase": "firstQuarter",
+      "opening": "Algo te está pidiendo más de lo que calculabas.",
+      "steps": [
+        "Nombra lo que te está costando: tiempo, dinero, atención, sueño.",
+        "Decide si sigues dispuesta a pagarlo.",
+        "Si lo estás, dilo claro. Si no, deja de pagarlo en vez de guardarle rencor."
+      ]
+    },
+    {
+      "id": "last-quarter-winding-down",
+      "moon": "Cuarto menguante",
+      "title": "Bajar revoluciones",
+      "phase": "lastQuarter",
+      "opening": "La luz se va. Esta noche no hace falta terminar nada.",
+      "steps": [
+        "Enumera lo que sigues cargando de este ciclo.",
+        "Tacha todo lo que nunca fue tuyo.",
+        "Elige una cosa para cerrar antes de la oscuridad. El resto espera."
+      ]
+    },
+    {
+      "id": "last-quarter-what-it-taught",
+      "moon": "Cuarto menguante",
+      "title": "Lo que te enseñó",
+      "phase": "lastQuarter",
+      "opening": "Antes de la oscuridad, una frase honesta.",
+      "steps": [
+        "Termina esto: «Este ciclo me mostró…»",
+        "No lo suavices.",
+        "Guárdalo. Vuelve a leerlo en el próximo cuarto menguante."
+      ]
+    }
+  ]
+}

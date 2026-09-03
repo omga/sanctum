@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "id": "the-threshold",
+      "name": "El umbral",
+      "message": "Estás parada al borde de un cuarto en el que todavía no entras.",
+      "guidance": "No todas las puertas piden que las entiendas antes de cruzarlas. Fíjate más bien en esto: de quién estás esperando permiso para empezar."
+    },
+    {
+      "id": "still-water",
+      "name": "Agua quieta",
+      "message": "Lo turbio se aclara si dejas de moverlo.",
+      "guidance": "No hace falta que resuelvas esto hoy. Deja que el fondo se asiente y mira mañana."
+    },
+    {
+      "id": "the-ember",
+      "name": "La brasa",
+      "message": "Algo pequeño en ti sigue encendido.",
+      "guidance": "No necesita ser una fogata para ser real. Tápalo del viento antes de intentar avivarlo."
+    },
+    {
+      "id": "open-hands",
+      "name": "Manos abiertas",
+      "message": "Con el puño cerrado no se recibe nada.",
+      "guidance": "Piensa qué estás agarrando. Una parte ni siquiera es tuya."
+    },
+    {
+      "id": "the-long-root",
+      "name": "La raíz larga",
+      "message": "El crecimiento que no se ve también es crecimiento.",
+      "guidance": "La temporada bajo tierra no tiene premio visible. No es un retraso. Es el trabajo."
+    },
+    {
+      "id": "the-mirror",
+      "name": "El espejo",
+      "message": "Lo que te irrita casi siempre enseña algo.",
+      "guidance": "Ese rasgo que no soportas en otra persona está pidiendo que lo mires de frente."
+    },
+    {
+      "id": "low-tide",
+      "name": "Marea baja",
+      "message": "El agua no se fue. Se está juntando.",
+      "guidance": "El descanso no interrumpe el trabajo. Hoy es el trabajo."
+    },
+    {
+      "id": "the-clearing",
+      "name": "El claro",
+      "message": "Hiciste espacio. Algo va a llegar.",
+      "guidance": "Aguanta las ganas de llenarlo enseguida. El vacío es una decisión que tienes derecho a sostener."
+    },
+    {
+      "id": "borrowed-weight",
+      "name": "Peso prestado",
+      "message": "Estás cargando algo que no empacaste tú.",
+      "guidance": "Bájalo y mira de quién era. Puede que nadie venga a reclamarlo."
+    },
+    {
+      "id": "first-light",
+      "name": "Primera luz",
+      "message": "El comienzo no se anuncia.",
+      "guidance": "Mientras pasa, casi nunca se siente como un comienzo. Busca los silenciosos."
+    },
+    {
+      "id": "the-unsent-letter",
+      "name": "La carta sin enviar",
+      "message": "Dilo, aunque sea solo para ti.",
+      "guidance": "Hay cosas que necesitan decirse para salir del cuerpo. El público es opcional."
+    },
+    {
+      "id": "the-narrow-path",
+      "name": "El camino angosto",
+      "message": "Menos opciones no es lo mismo que menos elección.",
+      "guidance": "Cuando el camino se angosta, normalmente está señalando. Recórrelo antes de volver a ensancharlo."
+    },
+    {
+      "id": "soft-animal",
+      "name": "Animal blando",
+      "message": "Tu cuerpo te viene pidiendo algo.",
+      "guidance": "Probablemente lleva rato pidiéndolo. Respóndele hoy, antes de que tenga que gritar."
+    },
+    {
+      "id": "the-old-story",
+      "name": "La historia vieja",
+      "message": "La sigues contando como si estuviera pasando.",
+      "guidance": "Revisa si el peligro está presente o recordado. Piden cosas distintas."
+    },
+    {
+      "id": "wild-honey",
+      "name": "Miel silvestre",
+      "message": "Toma lo dulce sin pedir perdón por eso.",
+      "guidance": "El placer no es un premio que haya que ganarse primero. Te toca también un día cualquiera."
+    },
+    {
+      "id": "the-quiet-no",
+      "name": "El no tranquilo",
+      "message": "Una negativa no necesita defensa.",
+      "guidance": "Puedes decir que no sin expediente. «No» es una frase completa, y siempre lo fue."
+    },
+    {
+      "id": "the-crossing",
+      "name": "El cruce",
+      "message": "Estás más adelante de lo que dice el miedo.",
+      "guidance": "Mira atrás. Eso que estabas segura de no poder sobrevivir ya quedó ahí."
+    },
+    {
+      "id": "north",
+      "name": "Norte",
+      "message": "La dirección la sabes. Estás negociando el precio.",
+      "guidance": "Deja de preguntar si está bien. Empieza a preguntar qué vas a entregar a cambio."
+    },
+    {
+      "id": "the-guest",
+      "name": "La visita",
+      "message": "Este sentimiento vino de visita, no se mudó.",
+      "guidance": "Dale un té. No le des tu cuarto. Se va cuando lo reciben."
+    },
+    {
+      "id": "bare-branch",
+      "name": "Rama desnuda",
+      "message": "Lo que soltaste no fue una pérdida.",
+      "guidance": "Un árbol en invierno no está fallando en ser árbol. A ti también te toca una temporada de menos."
+    },
+    {
+      "id": "the-second-key",
+      "name": "La segunda llave",
+      "message": "Hay otra forma de entrar.",
+      "guidance": "Puede que esa puerta que empujas simplemente no sea la entrada. Camina el perímetro."
+    },
+    {
+      "id": "held",
+      "name": "Sostenida",
+      "message": "No tienes que cargar esto tú sola.",
+      "guidance": "Nombra a una persona. Pide una cosa concreta. Esa es toda la práctica de hoy."
+    }
+  ]
+}

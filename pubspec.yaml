@@ -105,6 +105,7 @@ flutter:
     - assets/content/en/
     - assets/content/uk/
     - assets/content/ru/
+    - assets/content/es/
     - assets/brand/
 
   # Variable fonts: one file per family covers every weight, selected at

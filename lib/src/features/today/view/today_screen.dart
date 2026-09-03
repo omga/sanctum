@@ -264,6 +264,11 @@ class _EnergyPrompt extends StatelessWidget {
           const SizedBox(height: SanctumSpacing.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Top-aligned so the five bars sit on one line whatever the
+            // labels beneath them do. Centred — the default — made the
+            // bars step up and down as soon as one label was taller than
+            // its neighbours, which is what Ukrainian did immediately.
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (final level in EnergyLevel.values)
                 Expanded(
@@ -297,10 +302,24 @@ class _EnergyPrompt extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: SanctumSpacing.xs),
-                          Text(
-                            level.label(context.l10n),
-                            textAlign: TextAlign.center,
-                            style: context.type.caption,
+                          // A fixed slot holding exactly one line. Five
+                          // labels share the screen width, so each gets
+                          // about sixty points — and "Виснажена" does
+                          // not fit in that at caption size. Wrapping
+                          // was the old behaviour and it broke the row;
+                          // scaling the odd long word down by a few per
+                          // cent is invisible by comparison.
+                          SizedBox(
+                            height: 16,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                level.label(context.l10n),
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: context.type.caption,
+                              ),
+                            ),
                           ),
                         ],
                       ),

@@ -29,19 +29,34 @@ class EnergyPatternStrip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Both halves are flexible. A letter-spaced uppercase heading
+          // and a counted noun beside it are each a good deal longer
+          // once translated, and this row is fixed to the card width —
+          // so unconstrained Texts here are an overflow waiting for the
+          // first language that needs the room.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                context.l10n.energyStripWindow,
-                style: type.caption.copyWith(
-                  color: colors.textSecondary,
-                  letterSpacing: 1.6,
+              Flexible(
+                child: Text(
+                  context.l10n.energyStripWindow,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: type.caption.copyWith(
+                    color: colors.textSecondary,
+                    letterSpacing: 1.6,
+                  ),
                 ),
               ),
-              Text(
-                context.l10n.energyCheckInCount(pattern.total),
-                style: type.caption.copyWith(color: colors.textTertiary),
+              const SizedBox(width: SanctumSpacing.sm),
+              Flexible(
+                child: Text(
+                  context.l10n.energyCheckInCount(pattern.total),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: type.caption.copyWith(color: colors.textTertiary),
+                ),
               ),
             ],
           ),

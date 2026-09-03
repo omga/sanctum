@@ -18,7 +18,6 @@ import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
 import 'package:sanctum/src/data/services/reminders/reminder_service.dart';
-import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/l10n/sanctum_locales.dart';
 
 part 'data_providers.g.dart';
@@ -69,17 +68,6 @@ Future<ContentCatalog> contentCatalog(Ref ref) async {
     Err(:final failure) => throw failure,
   };
 }
-
-/// The reading copy, in the loaded locale.
-///
-/// A provider of its own because widgets that render composed prose want
-/// the copy book and nothing else from the catalogue, and reaching
-/// through `contentCatalogProvider.value?.copy` at each of those call
-/// sites puts a nullable in front of a string that is never actually
-/// absent by the time a screen is drawn.
-@Riverpod(keepAlive: true)
-Future<CopyBook> contentCopy(Ref ref) async =>
-    (await ref.watch(contentCatalogProvider.future)).copy;
 
 /// Stable per-install salt for daily content selection.
 @Riverpod(keepAlive: true)

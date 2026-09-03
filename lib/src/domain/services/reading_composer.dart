@@ -38,6 +38,16 @@ abstract final class ReadingComposer {
       name: answers.name,
       sign: sign,
       hasBirthDate: birth != null,
+      // One whole sentence per sign rather than a template plus an
+      // article. The "an" before a vowel rule is a fact about English;
+      // languages that inflect the sign, or have no article at all,
+      // cannot be served by patching a word onto the front.
+      headline: switch (answers.name) {
+        null => copy.get('reading.headline.${sign.name}'),
+        final who => copy.format('reading.headlineNamed.${sign.name}', {
+          'name': who,
+        }),
+      },
       opening: copy.get('reading.opening.${sign.element.name}'),
       // The first admitted weight leads. Stacking all of them turns a
       // reading into a list of grievances.

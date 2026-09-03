@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
-import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/models/transit.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 
@@ -15,7 +12,7 @@ import 'package:sanctum/src/l10n/l10n.dart';
 /// card cannot promise anything about tomorrow, because it is a hash of
 /// the date — but the sky is on rails, so this one can, and a reason to
 /// come back is worth more than anything else on the screen.
-class TransitPanel extends ConsumerWidget {
+class TransitPanel extends StatelessWidget {
   /// Creates the panel.
   const TransitPanel({required this.reading, super.key});
 
@@ -23,10 +20,7 @@ class TransitPanel extends ConsumerWidget {
   final DailyTransitReading reading;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // The panel renders composed prose, so it needs the copy book
-    // the content was loaded with rather than any string of its own.
-    final copy = ref.watch(contentCopyProvider).value ?? CopyBook.empty;
+  Widget build(BuildContext context) {
     final colors = context.colors;
     final type = context.type;
     final transit = reading.transit;
@@ -52,9 +46,7 @@ class TransitPanel extends ConsumerWidget {
                   const SizedBox(width: SanctumSpacing.sm),
                   Expanded(
                     child: Text(
-                      (transit?.headlineIn(copy) ??
-                              copy.get('transit.quietSky'))
-                          .toUpperCase(),
+                      reading.headline.toUpperCase(),
                       style: type.caption.copyWith(
                         color: colors.gold,
                         letterSpacing: 1.6,
