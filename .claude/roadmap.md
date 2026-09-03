@@ -1,9 +1,28 @@
 # Sanctum — roadmap
 
 Written 2026-08-19, the day the first real Play purchase went through.
-Ordered by expected revenue per week of work, not by what is most fun to
-build. Read §1 before anything else: it is the only item here that
-changes the shape of the revenue curve rather than its slope.
+Restructured 2026-09-04, when a third revenue tier turned up.
+
+Sections are ranked by how much each changes the business. That is **not
+the order to build them in** — the item with the highest ceiling (§2) is
+the one that should not be started next.
+
+### Order of work
+
+1. **§3, the days-not-weeks items.** The funnel inversion and the
+   reframing come first: they cost days, reuse everything already built,
+   and sharpen the hook that the whole of §4 depends on.
+2. **§1, the relationship one-off.** A week or two, one consumable SKU,
+   no backend. Answers whether relationship intent monetises beyond the
+   subscription.
+3. **§2, the advisor.** The largest build here. Worth starting once §1
+   has shown the intent is real and has produced actual user questions
+   to design a prompt around.
+
+Doing §3 and §1 first is not a delay to §2. It is what turns §2 from a
+guess into a decision — and if the intent turns out not to be there, it
+is the cheapest possible way to find out before building a backend, a
+ledger, a consent flow and an AI Act exposure.
 
 ---
 
@@ -20,7 +39,7 @@ hundreds a month and nothing caps them.
 
 That is not a moral judgement in either direction; it is the arithmetic.
 A subscription business here is a good small business. A credits business
-is the one with a ceiling high enough to matter. Everything in §1 follows
+is the one with a ceiling high enough to matter. Everything in §2 follows
 from that.
 
 **Sanctum's own handoff has said this since day one** — "the
@@ -28,9 +47,95 @@ relationship/astrology wedge — compatibility readings, AI advisor sold as
 credits — is where the category's money actually is and is **not
 built**." Compatibility is built now. The advisor is not.
 
+### There is a second ceiling, and it is cheaper
+
+Added 2026-09-04. Sure sells one-, three-, five- and ten-year
+relationship reports, the ten-year listed near $150 and the five-year
+near $80.
+
+A listed price is a hypothesis, not a result: nothing public says those
+SKUs convert at volume, and it would be a mistake to read them as proof.
+What they *are* good evidence of is that the category believes
+**relationship analysis carries one-off pricing power that a
+subscription does not capture** — enough to price an order of magnitude
+above a monthly plan and see who bites.
+
+That argues for three tiers rather than two:
+
+- **Free** — the daily card and one compatibility reading, still gated
+  by an invite, because the gate is the viral loop and not a paywall
+  accident.
+- **Subscription** — unlimited compatibility, forecasts, rituals, sound.
+  This is the habit, and it caps at roughly £40/year.
+- **One-off** — a deep report about one named person. This is the
+  intent, it is uncapped, and it is new to this document.
+
+The intent tier is worth more than its price suggests, because it is
+bought at a different moment. Somebody opening a natal chart came to
+learn astrology. Somebody typing a specific name came with a person and
+a question about that person, and wants an answer now rather than a
+monthly plan.
+
 ---
 
-## 1. The advisor — the one bet that changes the curve
+## 1. The relationship one-off — the near-term revenue line
+
+**A deep "You & X" report about one named person, sold once.**
+
+### Why this ranks above the advisor
+
+Same buying intent, a fraction of the build:
+
+- **No backend.** No proxy, no API key to keep out of the binary, no
+  per-message inference cost.
+- **No credit ledger.** A report is one consumable SKU. No balances, no
+  top-ups, no expiry policy, no "what happens on a refund", no "what
+  happens when it restores on a second device". RevenueCat handles
+  consumables and `purchases_flutter` already supports them.
+- **No new engine.** `CompatibilityCalculator` already produces the
+  aspect, six facets, both directional splits and — when both birth
+  times are known — the Moon. The report is depth and copy on top of
+  numbers the app computes today, for free, offline.
+- **No consent screen**, because nothing leaves the device.
+
+If it sells, §2 gains a proven high-intent surface to attach to and a
+corpus of real questions to design its prompt around. If it does not
+sell, this is the cheapest available way to learn that relationship
+intent does not monetise past the subscription — and it saves the
+largest build on this list.
+
+### Sell depth, not prophecy
+
+The competitor's headline SKU is a *ten-year* report. Do not copy that
+shape.
+
+A decade-long forecast about a named private individual is the most
+overclaiming product available to this app, and it runs straight into
+the posture everything else is built on: quiet days are admitted, the
+reveal captions name work that actually happens, the score range is
+honest but not cruel. One prophecy SKU would make all of that a
+marketing position rather than a principle.
+
+The honest version of the same value is **specificity, not horizon**.
+"You & Alex" at real length — every facet explained, both directional
+splits, what each planet contact actually does between these two charts,
+what to watch and when it will show up — is defensible, differentiated,
+and requires no claim about 2036. Price it on depth.
+
+### The consent problem this creates
+
+A report reads a **named private person who never agreed to it**. That is
+already true of `PartnerEntryScreen` and is currently defensible on one
+specific ground: the data never leaves the phone.
+
+That ground disappears the moment the same person's birth data is sent
+to a model. §2's privacy gate has to cover the third party explicitly,
+not just the user — and this is a reason to ship the offline report
+first and let it establish the norm.
+
+---
+
+## 2. The advisor — the one bet that changes the curve
 
 **An AI astrologer you can ask questions, sold as credits, not included
 in the subscription.**
@@ -57,6 +162,26 @@ Suggested shape, to be tested rather than trusted:
   not enough to satisfy it. This is the mechanic that makes the
   subscription *drive* credit sales rather than substitute for them.
 
+### Build the economy last
+
+Credits are the right primitive for chat and the wrong one for a *first*
+purchase. A ledger is infrastructure — balances, top-ups, expiry, what
+happens on a refund, what happens when a purchase restores on a second
+device — and none of it answers whether anybody wants to ask an
+astrologer anything.
+
+§1 buys that answer with a single consumable and no ledger at all. Build
+the economy on the day there is more than one variable-cost thing to
+spend it on, which is the day chat ships and not before.
+
+One consequence worth holding onto: **price reports in money and chat in
+credits.** Virtual currency obscures unit cost — that is precisely what
+makes it work commercially and precisely what sits badly with an app
+whose differentiation is not overclaiming. EU consumer-protection
+attention on virtual currencies has also been sharpening. A report with
+a real price attached is consistent with everything else this product
+says about itself; a report priced at "40 crystals" is not.
+
 ### Why it fits this app specifically
 
 Most AI astrology chat is a thin wrapper around a general model that
@@ -70,6 +195,12 @@ The compatibility feature also generates the questions for free. "Why is
 our Trust only 43?" is a question a user already has, on a screen they
 are already looking at, about numbers the app already computed. Put the
 entry point there, not in a generic chat tab.
+
+§1's report is the better version of that surface still: somebody who
+has just paid for a deep read on one named person is the single most
+likely user in the app to have a follow-up question about that person,
+and they are holding the answer to "what should the prompt contain"
+while they ask it.
 
 ### The privacy gate is not optional
 
@@ -98,7 +229,7 @@ far, and this app's whole documented posture is the opposite: quiet days
 are admitted, the reveal captions name work that actually happens, the
 score range is honest but not cruel. It also invites App Store 3.1.2
 scrutiny and consumer-protection attention in the EU, while the
-entertainment disclaimer still is not at first launch (§6). The framing
+entertainment disclaimer still is not at first launch (§7). The framing
 already used above — an astrologer that reads *your* chart, from real
 computed positions — is more honest, more defensible in review, and is
 the differentiation no thin wrapper can copy.
@@ -117,36 +248,79 @@ and abuse handling, not just the prompt.
 
 ---
 
-## 2. Cheap conversion work, before any new feature
+## 3. Cheap conversion work, before any new feature
 
 These are days, not weeks, and they multiply whatever traffic the
 content produces. Do them first.
 
-1. **Personalise the paywall headline from the quiz.** Already the
+1. **Invert the funnel: their name first, not yours.** The app opens by
+   asking for the user's own birth date and building a natal chart. The
+   stronger opening asks for *someone else's* name and birthday.
+
+   One version starts with astrology, the other starts with a person and
+   a feeling, and only the second is a hook somebody films. It is also
+   days of work rather than weeks: `PartnerEntryScreen`, the match
+   engine, the reveal sequence and the carousel all exist already. What
+   changes is order and copy, not computation.
+
+   A birth date on its own already buys a real teaser — their sign,
+   element, Venus and Mars are all computable with no input from the
+   user at all. So: their name and date → a genuine read on *them* →
+   "now add yours to see what happens between you." Value first, then
+   the ask, which is also what makes the ask land.
+
+   **Keep the invite gate.** The first reading currently costs an invite
+   rather than nothing (`handoff.md` §3) and that is an acquisition
+   mechanic, not a paywall accident. A crush funnel that ends in a plain
+   free reading throws away the loop it should be feeding.
+
+2. **Reframe compatibility as investigation, not analysis.** "You are
+   78% compatible" is a verdict. "Why can't I stop thinking about Alex?"
+   is a question the reader already arrived with. The second is what
+   makes somebody tap — and the engine already answers it.
+
+   `DirectionalReading` computes who wants it more and who holds the
+   power, and the copy is already written, in four languages:
+
+   > You want this more than they do. That is not a flaw, but it is a
+   > fact, and pretending otherwise is where the trouble starts.
+
+   > One of you has already told their friends.
+
+   That is the emotional-investigation product, shipping today, filed as
+   a supporting detail underneath a hexagon chart. Promoting it to the
+   headline is a reordering of `match_result_screen.dart` plus new copy
+   keys. There is no engine work in it at all.
+
+   The score keeps its place as *evidence* rather than as the headline.
+   It is what makes the claim feel measured instead of invented, which
+   is the entire reason the numbers were made honest in the first place.
+
+3. **Personalise the paywall headline from the quiz.** Already the
    highest-value remaining conversion work in the old next-steps list.
    The answers are persisted and `ReadingComposer` already selects copy
    from them; the paywall simply does not read them. Someone who ticked
    "I keep repeating a pattern" should see that sentence back at the
    moment they are asked to pay.
-2. **Run a price test.** RevenueCat Experiments can serve different
+4. **Run a price test.** RevenueCat Experiments can serve different
    offerings to different cohorts with no app update. The current
    £6.99/£39.99 are placeholders that have never been tested against
    anything. Test the annual price first — annual mix is the single
    biggest lever on LTV in a subscription business this size.
-3. **Test trial length.** 7 days is a default, not a decision.
-4. **Fix the store title.** `Sanctum` alone wastes 22 of 30 characters
+5. **Test trial length.** 7 days is a default, not a decision.
+6. **Fix the store title.** `Sanctum` alone wastes 22 of 30 characters
    of the most heavily weighted keyword field on Play. Something like
    `Sanctum: Zodiac Compatibility` indexes for the term the app is
    actually about.
-5. **Screenshots.** The first two drive most of the install decision.
+7. **Screenshots.** The first two drive most of the install decision.
    They should be the compatibility reveal and the "who wants it more"
    split, not the Today screen — lead with the thing people share.
-6. **Win-back offers.** RevenueCat supports them on iOS; a lapsed
+8. **Win-back offers.** RevenueCat supports them on iOS; a lapsed
    subscriber is the cheapest customer available.
 
 ---
 
-## 3. Acquisition
+## 4. Acquisition
 
 1. **Post twenty videos.** Still the riskiest untested assumption, and
    still free. The carousel works end to end on TikTok. Nothing else on
@@ -221,7 +395,7 @@ content produces. Do them first.
       the export layout. Only once a *paid* locale has earned back its
       cost, and pick by which one you can find a creator for.
 
-   **On sequencing this against §1:** localisation is a bet on traffic,
+   **On sequencing this against §2:** localisation is a bet on traffic,
    the advisor is a bet on ARPU, and nobody yet knows which is the
    constraint — because "post twenty videos" is still undone. The
    infrastructure plus the two free languages is the cheap, diagnostic
@@ -237,14 +411,21 @@ content produces. Do them first.
 
 ---
 
-## 4. Premium features worth building, ranked
+## 5. Premium features worth building, ranked
 
-Only after §1 and §2.
+Only after §1–§3.
 
 1. **Full birth chart report**, sold as a one-off unlock rather than
    bundled. The ephemeris already computes everything needed; this is
    presentation plus copy, and one-off unlocks convert people who will
    never take a subscription.
+
+   **Ships after §1, not before it.** It is the same product shape
+   pointed at weaker intent: a report about *you* is bought by somebody
+   already interested in astrology, a report about *you and a named
+   person* is bought by somebody with a question about that person.
+   Build the higher-intent one first and this reuses its layout, its
+   export and its purchase plumbing.
 2. **Compatibility history and comparison.** "You have read eleven
    people. Here is who scores highest, and what your pattern is." Uses
    only data already stored, and it is the kind of summary people
@@ -264,7 +445,7 @@ Only after §1 and §2.
 
 ---
 
-## 5. Explicitly not worth building
+## 6. Explicitly not worth building
 
 Being clear about these saves more time than any item above.
 
@@ -292,7 +473,7 @@ Being clear about these saves more time than any item above.
 
 ---
 
-## 6. Engineering debt that will bite
+## 7. Engineering debt that will bite
 
 Not revenue, but each one is cheaper now than later.
 
