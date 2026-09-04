@@ -99,13 +99,31 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     );
   }
 
+  /// Buys [plan], and only celebrates if it was actually bought.
+  ///
+  /// The three things below all used to run on a cancellation, because
+  /// `purchase` returned `Result<void>` and "no error" was read as
+  /// success. Each was its own bug: `purchase_completed` inflated the
+  /// only conversion number the business has, the screen flashed its
+  /// purchased state and closed on somebody who had just declined, and
+  /// `_purchased` suppressed the dismissal — so `PaywallTrigger`'s
+  /// backoff never advanced and the same user got prompted again on the
+  /// shortest cooldown.
+  ///
+  /// A cancellation now leaves them on the paywall, which is where
+  /// backing out of a store sheet should land: the plan is still
+  /// selected, and closing it records a dismissal like any other.
   Future<void> _purchase(SubscriptionPlan plan) async {
     final analytics = ref.read(analyticsProvider)
       ..track(AnalyticsEvent.purchaseStarted(plan: plan.id));
 
-    await ref.read(paywallControllerProvider.notifier).purchase(plan);
+    final bought = await ref
+        .read(paywallControllerProvider.notifier)
+        .purchase(plan);
+
     if (!mounted) return;
     if (ref.read(paywallControllerProvider).hasError) return;
+    if (!bought) return;
 
     analytics.track(AnalyticsEvent.purchaseCompleted(plan: plan.id));
 

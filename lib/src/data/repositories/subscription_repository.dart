@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
+import 'package:sanctum/src/domain/models/report_product.dart';
 import 'package:sanctum/src/domain/models/subscription_plan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,11 +15,53 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// tiny means a feature can depend on entitlements without dragging a
 /// billing SDK into its tests.
 abstract interface class SubscriptionRepository {
+  /// Store identifier for the one-off report.
+  ///
+  /// One product, not one per pairing: the store sells "a relationship
+  /// report", and *which* pairing it unlocks is the app's own business.
+  /// A product per pairing would mean an App Store Connect entry per
+  /// human being on earth.
+  ///
+  /// It must be configured as a **consumable** (iOS) / repeatable
+  /// one-time product (Play). A non-consumable can only be bought once
+  /// ever, which would let a user buy exactly one report and then be
+  /// told they already own the product when they try to buy a second.
+  /// Verified against the RevenueCat Test Store: two purchases of this
+  /// id in a row both succeed.
+  ///
+  /// Lives on the interface rather than on the local stub, so the
+  /// RevenueCat implementation does not have to reach into a
+  /// development stand-in for the id it sells.
+  static const String reportProductId = 'sanctum.report.relationship';
+
   /// The plans on offer.
   Future<Result<List<SubscriptionPlan>>> plans();
 
   /// Purchases [planId].
-  Future<Result<void>> purchase(String planId);
+  ///
+  /// Returns **whether it was actually bought**. Backing out of the
+  /// store sheet is a decision rather than a fault, so it must not be an
+  /// `Err` — that would land in Sentry and show an error for something
+  /// the user chose. It must not read as success either: this returned
+  /// `Result<void>` once, and the paywall consequently treated every
+  /// cancellation as a completed sale — firing `purchase_completed`,
+  /// flipping the screen to its purchased state, closing itself, and
+  /// skipping the dismissal that drives the trigger's backoff.
+  Future<Result<bool>> purchase(String planId);
+
+  /// The one-off relationship report, or `null` where it is not on sale.
+  ///
+  /// Null is a real answer: a build with no store account, a product not
+  /// yet approved, or a region where it is not offered. The caller shows
+  /// no offer at all rather than a button that cannot work.
+  Future<Result<ReportProduct?>> reportProduct();
+
+  /// Buys the one-off report.
+  ///
+  /// Same contract as [purchase] — the bool is whether they bought —
+  /// and a separate method because it is a separate store call: a
+  /// consumable product rather than a package from an offering.
+  Future<Result<bool>> purchaseReport();
 
   /// Restores a previous purchase. See [EntitlementRepository.restore].
   Future<Result<bool>> restore();
@@ -65,33 +108,47 @@ class LocalSubscriptionRepository implements BillingRepository {
     yield* _controller.stream;
   }
 
+  /// Stand-in plans, mirroring what the store is configured at today.
+  ///
+  /// Kept in step with the real products for one reason: a local-billing
+  /// build is what gets screenshotted and demoed, and a paywall showing
+  /// a price nobody will be charged — or, worse, a free trial that does
+  /// not exist — is a promise the store will not keep. **`trialDays` is
+  /// null because the live products have no introductory offer.** The
+  /// previous value here claimed seven free days.
+  ///
+  /// Still not authoritative. Real prices are per storefront and change
+  /// without the app shipping; only the store knows them, which is why
+  /// every other path reads them at runtime.
   @override
   Future<Result<List<SubscriptionPlan>>> plans() async {
     return const Result.ok([
       SubscriptionPlan(
         id: 'sanctum.premium.monthly',
         period: BillingPeriod.monthly,
-        displayPrice: '£6.99',
-        displayPricePerMonth: '£6.99',
+        displayPrice: r'$9.99',
+        displayPricePerMonth: r'$9.99',
       ),
       SubscriptionPlan(
         id: 'sanctum.premium.yearly',
         period: BillingPeriod.yearly,
-        displayPrice: '£39.99',
-        displayPricePerMonth: '£3.33',
-        trialDays: 7,
-        savingsPercent: 52,
+        displayPrice: r'$79.99',
+        displayPricePerMonth: r'$6.66',
+        savingsPercent: 33,
       ),
     ]);
   }
 
   @override
-  Future<Result<void>> purchase(String planId) {
+  Future<Result<bool>> purchase(String planId) {
     return Result.guard(
       () async {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_entitlementKey, true);
         _controller.add(SanctumEntitlement.premium);
+        // Always true: cancellation is only reachable through a real
+        // store sheet, and the bool exists for that path.
+        return true;
       },
       onError: (error, stackTrace) => UnexpectedFailure(
         'Purchase could not be completed',
@@ -99,6 +156,32 @@ class LocalSubscriptionRepository implements BillingRepository {
         stackTrace: stackTrace,
       ),
     );
+  }
+
+  /// A stand-in price, and it says so.
+  ///
+  /// Mirrors what the store is configured at today so a local-billing
+  /// build does not show a number nobody will ever be charged — but it
+  /// is not authoritative and never can be: a real price is per
+  /// storefront, per currency, and changes without the app shipping.
+  /// The only real price is [SubscriptionRepository.reportProduct]'s,
+  /// read from the store at runtime.
+  static const String placeholderReportPrice = r'$3.99';
+
+  @override
+  Future<Result<ReportProduct?>> reportProduct() async => const Result.ok(
+    ReportProduct(
+      id: SubscriptionRepository.reportProductId,
+      displayPrice: placeholderReportPrice,
+    ),
+  );
+
+  @override
+  Future<Result<bool>> purchaseReport() async {
+    // The local store always succeeds. Cancellation is only reachable
+    // through a real store sheet, and the tri-state exists for that
+    // path — see the interface.
+    return const Result.ok(true);
   }
 
   @override

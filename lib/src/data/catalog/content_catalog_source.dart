@@ -68,6 +68,18 @@ class AssetContentCatalogSource implements ContentCatalogSource {
         );
         final quiz = await _readList('onboarding_quiz.json', 'questions');
         final copy = await _readMap('copy.json');
+        // English is loaded alongside as a per-key fallback, because a
+        // locale's `copy.json` existing does not mean it is complete:
+        // new copy lands in English first and is translated later, and
+        // in between `CopyBook.get` would throw at a real user. See
+        // `CopyBook` for why this is not the same as the per-file
+        // fallback above.
+        final copyFallback = _locale == SanctumLocales.fallback
+            ? const <String, String>{}
+            : await _readMapIn(
+                SanctumLocales.contentDirFor(SanctumLocales.fallback),
+                'copy.json',
+              );
         final famous = await _readList(
           'celebrities.json',
           'celebrities',
@@ -95,7 +107,7 @@ class AssetContentCatalogSource implements ContentCatalogSource {
             for (final entry in famous)
               CelebrityMapper.fromMap(entry! as Map<String, dynamic>),
           ],
-          copy: CopyBook(copy),
+          copy: CopyBook(copy, fallback: copyFallback),
         );
       },
       // Malformed bundled content is a build mistake, not a user-facing
@@ -139,8 +151,18 @@ class AssetContentCatalogSource implements ContentCatalogSource {
   }
 
   /// Reads a flat `{"key": "line"}` file, e.g. the reading copy.
-  Future<Map<String, String>> _readMap(String file) async {
-    final decoded = jsonDecode(await _readString(file)) as Map<String, dynamic>;
+  Future<Map<String, String>> _readMap(String file) async =>
+      _decodeMap(await _readString(file));
+
+  /// Reads a flat file from one specific content directory.
+  ///
+  /// No fallback of its own — this is what the fallback is read *with*,
+  /// and a missing English file is a build mistake that should throw.
+  Future<Map<String, String>> _readMapIn(String dir, String file) async =>
+      _decodeMap(await _assets.loadString('$dir/$file'));
+
+  static Map<String, String> _decodeMap(String raw) {
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
     return {
       for (final entry in decoded.entries)
         if (!entry.key.startsWith('@')) entry.key: entry.value! as String,

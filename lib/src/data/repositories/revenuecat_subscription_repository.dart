@@ -7,6 +7,7 @@ import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
+import 'package:sanctum/src/domain/models/report_product.dart';
 import 'package:sanctum/src/domain/models/subscription_plan.dart';
 
 /// Billing, backed by RevenueCat.
@@ -203,7 +204,7 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
   );
 
   @override
-  Future<Result<void>> purchase(String planId) async {
+  Future<Result<bool>> purchase(String planId) async {
     if (!_configured) {
       return const Result.err(
         UnexpectedFailure('Purchases are unavailable in this build'),
@@ -224,15 +225,19 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
       // the only one that can carry a promotional or win-back offer if a
       // one-off lifetime offer ever gets built on top of this.
       await Purchases.purchase(PurchaseParams.package(package));
-      return const Result.ok(null);
+      return const Result.ok(true);
     } on PlatformException catch (error, stackTrace) {
       // Backing out of the store sheet is a decision, not a fault. Left
       // to `Result.guard` it would land in Sentry as a handled failure
       // and the paywall would show an error for something the user did
       // deliberately — so it is caught before the guard sees it.
+      //
+      // `ok(false)`, not `ok(null)`: for a long time this returned the
+      // latter and the paywall could not tell a cancellation from a
+      // sale. See the interface.
       if (PurchasesErrorHelper.getErrorCode(error) ==
           PurchasesErrorCode.purchaseCancelledError) {
-        return const Result.ok(null);
+        return const Result.ok(false);
       }
       return Result.err(
         UnexpectedFailure(
@@ -262,6 +267,80 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
       stackTrace: stackTrace,
     ),
   );
+
+  @override
+  Future<Result<ReportProduct?>> reportProduct() {
+    return Result.guard(
+      () async {
+        if (!_configured) return null;
+
+        // Fetched as a product rather than from an offering.
+        // `getOfferings` returns what the dashboard has arranged into
+        // packages for a paywall; a single consumable does not need to
+        // be in one, and requiring it there would make the offer
+        // disappear the day somebody reorganises the offerings.
+        final products = await Purchases.getProducts(
+          const [SubscriptionRepository.reportProductId],
+          productCategory: ProductCategory.nonSubscription,
+        );
+        final product = products.firstOrNull;
+        if (product == null) return null;
+
+        return ReportProduct(
+          id: product.identifier,
+          // Straight from the store: already localised, already in the
+          // user's currency. Never computed here.
+          displayPrice: product.priceString,
+        );
+      },
+      onError: (error, stackTrace) => UnexpectedFailure(
+        'Could not load the report price',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<bool>> purchaseReport() async {
+    if (!_configured) {
+      return const Result.err(
+        UnexpectedFailure('Purchases are unavailable in this build'),
+      );
+    }
+    try {
+      final products = await Purchases.getProducts(
+        const [SubscriptionRepository.reportProductId],
+        productCategory: ProductCategory.nonSubscription,
+      );
+      final product = products.firstOrNull;
+      if (product == null) {
+        return const Result.err(
+          NotFoundFailure('That report is not available right now'),
+        );
+      }
+
+      await Purchases.purchase(PurchaseParams.storeProduct(product));
+      return const Result.ok(true);
+    } on PlatformException catch (error, stackTrace) {
+      // Cancelling returns `ok(false)`, not `ok(null)`: backing out is a
+      // decision rather than a fault, so it must not reach Sentry or
+      // show an error — and it must not be mistaken for a completed
+      // purchase either, or the caller grants a paid document to
+      // somebody who declined to buy it.
+      if (PurchasesErrorHelper.getErrorCode(error) ==
+          PurchasesErrorCode.purchaseCancelledError) {
+        return const Result.ok(false);
+      }
+      return Result.err(
+        UnexpectedFailure(
+          'Purchase could not be completed',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
 
   SanctumEntitlement _entitlementFrom(CustomerInfo info) =>
       info.entitlements.active.containsKey(entitlementId)

@@ -71,11 +71,11 @@ class _AskBirthDateState extends ConsumerState<_AskBirthDate> {
     final controller = ref.read(compatibilityControllerProvider.notifier);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         SanctumSpacing.xl,
         SanctumSpacing.xl,
         SanctumSpacing.xl,
-        SanctumSpacing.huge + SanctumSpacing.xxl,
+        context.navBarClearance,
       ),
       children: [
         Text(context.l10n.matchAskBirthTitle, style: type.displaySmall),
@@ -159,11 +159,11 @@ class _BrowserState extends State<_Browser> {
     final you = state.you!;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         SanctumSpacing.xl,
         SanctumSpacing.lg,
         SanctumSpacing.xl,
-        SanctumSpacing.huge + SanctumSpacing.xxl,
+        context.navBarClearance,
       ),
       children: [
         Row(

@@ -95,11 +95,11 @@ class _TodayContent extends ConsumerWidget {
     });
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         SanctumSpacing.screenGutter,
         SanctumSpacing.lg,
         SanctumSpacing.screenGutter,
-        SanctumSpacing.huge + SanctumSpacing.xxl,
+        context.navBarClearance,
       ),
       children: [
         Row(

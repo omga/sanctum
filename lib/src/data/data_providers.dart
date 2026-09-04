@@ -13,6 +13,7 @@ import 'package:sanctum/src/data/repositories/journal_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
 import 'package:sanctum/src/data/repositories/quiz_repository.dart';
+import 'package:sanctum/src/data/repositories/report_repository.dart';
 import 'package:sanctum/src/data/repositories/revenuecat_subscription_repository.dart';
 import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
@@ -88,6 +89,15 @@ ReminderService reminderService(Ref ref) =>
 @Riverpod(keepAlive: true)
 CompatibilityRepository compatibilityRepository(Ref ref) =>
     const PreferencesCompatibilityRepository();
+
+/// Which relationship reports have been bought.
+///
+/// Its own repository rather than a field on the compatibility blob —
+/// see [ReportRepository] for why receipts must not share a store with
+/// data that is deliberately discarded when it fails to decode.
+@Riverpod(keepAlive: true)
+ReportRepository reportRepository(Ref ref) =>
+    const PreferencesReportRepository();
 
 /// Onboarding quiz answers.
 @Riverpod(keepAlive: true)

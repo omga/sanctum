@@ -98,11 +98,11 @@ class _PersonPickerState extends ConsumerState<PersonPickerScreen> {
     ];
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         SanctumSpacing.xl,
         0,
         SanctumSpacing.xl,
-        SanctumSpacing.huge + SanctumSpacing.xxl,
+        context.navBarClearance,
       ),
       children: [
         TextField(

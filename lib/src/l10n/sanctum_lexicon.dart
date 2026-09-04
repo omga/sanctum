@@ -4,6 +4,7 @@ import 'package:sanctum/src/domain/models/energy_check_in.dart';
 import 'package:sanctum/src/domain/models/journal_entry.dart';
 import 'package:sanctum/src/domain/models/moon_phase.dart';
 import 'package:sanctum/src/domain/models/planet.dart';
+import 'package:sanctum/src/domain/models/relationship_report.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/models/subscription_plan.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
@@ -172,6 +173,46 @@ extension PlanetL10n on Planet {
     Planet.mars => l10n.planetMars,
     Planet.jupiter => l10n.planetJupiter,
     Planet.saturn => l10n.planetSaturn,
+  };
+}
+
+/// The geometric name of an aspect, for the report's table of angles.
+///
+/// Separate from [ZodiacAspectL10n] because the two do different jobs.
+/// That one names how a pairing *feels* — "Magnetic", "Charged" — which
+/// is right on a chip under two sun signs and wrong in a column of
+/// measured angles, where the reader is being shown the working and
+/// expects the name of the angle. It also collides: "Charged" is both
+/// the square's chip and a score band's verdict, and the two would sit
+/// two lines apart meaning different things.
+extension ZodiacAspectGeometryL10n on ZodiacAspect {
+  /// The angle's conventional name in the reader's language.
+  String geometry(AppLocalizations l10n) => switch (this) {
+    ZodiacAspect.conjunction => l10n.aspectNameConjunction,
+    ZodiacAspect.semiSextile => l10n.aspectNameSemiSextile,
+    ZodiacAspect.sextile => l10n.aspectNameSextile,
+    ZodiacAspect.square => l10n.aspectNameSquare,
+    ZodiacAspect.trine => l10n.aspectNameTrine,
+    ZodiacAspect.quincunx => l10n.aspectNameQuincunx,
+    ZodiacAspect.opposition => l10n.aspectNameOpposition,
+  };
+}
+
+/// Names for the points a relationship report is allowed to name.
+///
+/// Overlaps [PlanetL10n] on four of five, and reuses its strings rather
+/// than duplicating them — the Sun is the Sun. The Moon needs its own
+/// entry because [Planet] deliberately has no Moon: a birth *date*
+/// cannot place a body that moves thirteen degrees a day, and only the
+/// report, which requires both birth times, may speak about it.
+extension ChartPointL10n on ChartPoint {
+  /// The point's name in the reader's language.
+  String label(AppLocalizations l10n) => switch (this) {
+    ChartPoint.sun => l10n.planetSun,
+    ChartPoint.moon => l10n.chartPointMoon,
+    ChartPoint.venus => l10n.planetVenus,
+    ChartPoint.mars => l10n.planetMars,
+    ChartPoint.saturn => l10n.planetSaturn,
   };
 }
 

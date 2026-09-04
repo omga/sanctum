@@ -28,11 +28,11 @@ class SessionsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('$error')),
         data: (data) => ListView(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             SanctumSpacing.screenGutter,
             SanctumSpacing.lg,
             SanctumSpacing.screenGutter,
-            SanctumSpacing.huge + SanctumSpacing.xxl,
+            context.navBarClearance,
           ),
           children: [
             Text(context.l10n.soundTitle, style: context.type.displayMedium),

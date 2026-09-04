@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_colors.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_radii.dart';
+import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_typography.dart';
 
 /// Builds Sanctum's [ThemeData].
@@ -117,4 +118,26 @@ extension SanctumThemeX on BuildContext {
 
   /// The type scale.
   SanctumTypography get type => Theme.of(this).extension<SanctumTypography>()!;
+
+  /// Bottom padding that clears the shell's floating nav pill.
+  ///
+  /// The shell sets `extendBody: true`, so every screen inside it draws
+  /// underneath the pill and has to inset its own scroll padding. The
+  /// idiom used to be a fixed `huge + xxl`, which is 96 — and the pill's
+  /// top edge on an iPhone 16e sits 97 points above the bottom of the
+  /// screen. One point short, which is invisible on a screen ending in a
+  /// card and very visible on one ending in a wrapped caption: the last
+  /// line renders behind the glass.
+  ///
+  /// It is short because a fixed number cannot be right on both kinds of
+  /// phone. The pill floats *above* the home-indicator inset, so the
+  /// clearance it needs is its own height plus that inset — 34 points
+  /// here, zero on a phone with a physical button. `journal_screen`
+  /// already worked this out for its compose button and says so in a
+  /// comment; this is the same measurement, named once, so the next
+  /// screen does not have to rediscover it.
+  double get navBarClearance =>
+      MediaQuery.paddingOf(this).bottom +
+      SanctumSpacing.huge +
+      SanctumSpacing.lg;
 }

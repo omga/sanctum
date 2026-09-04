@@ -77,11 +77,11 @@ class _PartnerEntryScreenState extends State<PartnerEntryScreen> {
         top: false,
         bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             SanctumSpacing.xl,
             0,
             SanctumSpacing.xl,
-            SanctumSpacing.huge + SanctumSpacing.xxl,
+            context.navBarClearance,
           ),
           children: [
             Text(context.l10n.partnerTitle, style: type.displaySmall),

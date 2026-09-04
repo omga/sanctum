@@ -79,8 +79,20 @@ class SanctumButton extends StatefulWidget {
   State<SanctumButton> createState() => _SanctumButtonState();
 }
 
+/// `TickerProviderStateMixin`, not `SingleTickerProviderStateMixin`.
+///
+/// The single variant permits exactly one ticker for the whole life of
+/// the State, disposed or not. [_syncSheen] disposes the controller when
+/// the button becomes disabled and builds a new one when it is enabled
+/// again — so a button that goes enabled → disabled → enabled asks for a
+/// second ticker and trips the assertion.
+///
+/// Nothing did that until the report's buy button, which disables itself
+/// while the store sheet is open and re-enables when the user backs out.
+/// The crash was on *cancel*, which is the path least likely to be tried
+/// by hand.
 class _SanctumButtonState extends State<SanctumButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   /// One pass plus its pause. The sweep itself takes [_sheenSweep] of it.
   static const Duration _sheenPeriod = Duration(milliseconds: 4200);
   static const double _sheenSweep = 0.34;

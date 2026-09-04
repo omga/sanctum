@@ -81,11 +81,11 @@ class _PairEntryScreenState extends State<PairEntryScreen> {
         child: Starfield(
           child: SafeArea(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 SanctumSpacing.xl,
                 0,
                 SanctumSpacing.xl,
-                SanctumSpacing.huge + SanctumSpacing.xxl,
+                context.navBarClearance,
               ),
               children: [
                 Text(

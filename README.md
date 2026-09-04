@@ -112,3 +112,6 @@ and the assertions are pinned to reality wherever reality exists:
 - **`.claude/device-testing.md`** — running and verifying on real
   hardware: simulator coordinates, resetting onboarding, adb, and where
   the build sizes actually come from.
+- **`.claude/analytics.md`** — every event the app emits, what each one
+  answers, and the gaps: six declared events currently fire from
+  nowhere.

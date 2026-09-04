@@ -136,6 +136,15 @@ class DirectionalReading with DirectionalReadingMappable {
   /// How far from an even split still counts as even.
   static const int evenTolerance = 6;
 
+  /// How far from even a split has to be before it is the most specific
+  /// thing true about a pairing.
+  ///
+  /// Used by the share card to decide that the lopsided line beats every
+  /// other candidate, and by the report to pick the decisive wording
+  /// over the hedged one. One constant rather than two literals, so the
+  /// card and the document cannot describe the same split differently.
+  static const int strongTolerance = 18;
+
   /// Whether this is close enough to even to be worth calling even.
   bool get isBalanced => (yourShare - 50).abs() <= evenTolerance;
 

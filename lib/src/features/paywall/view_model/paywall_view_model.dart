@@ -109,7 +109,13 @@ class PaywallController extends _$PaywallController {
   }
 
   /// Buys [plan].
-  Future<void> purchase(SubscriptionPlan plan) async {
+  ///
+  /// Returns whether the purchase actually completed. `false` is a
+  /// cancellation — not an error, and not a sale. The screen needs the
+  /// difference: it decides whether to report a purchase, celebrate, and
+  /// close, and doing any of those on a cancellation is what this
+  /// method's `Future<void>` version caused.
+  Future<bool> purchase(SubscriptionPlan plan) async {
     state = const AsyncLoading();
     final result = await ref
         .read(subscriptionRepositoryProvider)
@@ -117,6 +123,10 @@ class PaywallController extends _$PaywallController {
     state = switch (result) {
       Ok() => const AsyncData(null),
       Err(:final failure) => AsyncError(failure, StackTrace.current),
+    };
+    return switch (result) {
+      Ok(:final value) => value,
+      Err() => false,
     };
   }
 

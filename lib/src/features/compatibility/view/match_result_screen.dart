@@ -16,6 +16,7 @@ import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/services/compatibility_gate.dart';
 import 'package:sanctum/src/features/compatibility/view/match_carousel_screen.dart';
+import 'package:sanctum/src/features/compatibility/view/report_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/direction_bar.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/hexagon_chart.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/match_computing.dart';
@@ -23,6 +24,7 @@ import 'package:sanctum/src/features/compatibility/view/widgets/match_share_card
 import 'package:sanctum/src/features/compatibility/view/widgets/score_dial.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/sign_avatar.dart';
 import 'package:sanctum/src/features/compatibility/view_model/compatibility_view_model.dart';
+import 'package:sanctum/src/features/compatibility/view_model/report_view_model.dart';
 import 'package:sanctum/src/features/sharing/view_model/share_controller.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
@@ -248,11 +250,11 @@ class _Result extends StatelessWidget {
     return Stack(
       children: [
         ListView(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             SanctumSpacing.xl,
             0,
             SanctumSpacing.xl,
-            SanctumSpacing.huge + SanctumSpacing.xxl,
+            context.navBarClearance,
           ),
           children: [
             _Pair(match: match, dimmed: _locked),
@@ -339,7 +341,27 @@ class _Result extends StatelessWidget {
                     expand: true,
                     onPressed: _locked ? null : onShare,
                   ),
-                  const SizedBox(height: SanctumSpacing.lg),
+                  const SizedBox(height: SanctumSpacing.xxl),
+
+                  // The report offer sits *below* the share buttons and
+                  // *above* the note about what the reading was computed
+                  // from, and both of those are deliberate.
+                  //
+                  // Below the share, because posts are the only
+                  // acquisition channel this product has and a paid CTA
+                  // above them taxes the growth loop to make a sale.
+                  //
+                  // Above the note, because that note is stated as a
+                  // limit rather than as an upsell — it says so in its
+                  // own comment — and putting a Buy button directly
+                  // under it would convert an honest disclosure into a
+                  // sales hook. The offer sells depth on its own terms
+                  // and leaves the note as the last word on the screen.
+                  if (!_locked) ...[
+                    _ReportOffer(match: match),
+                    const SizedBox(height: SanctumSpacing.xxl),
+                  ],
+
                   Text(
                     // Says what the reading was actually computed from.
                     // A user who gave a birth time should be able to see
@@ -365,7 +387,7 @@ class _Result extends StatelessWidget {
             // SafeArea — a card that stops at `huge` puts its primary
             // button underneath the tab bar on every phone with a home
             // indicator.
-            bottom: SanctumSpacing.huge + SanctumSpacing.xxl,
+            bottom: context.navBarClearance,
             child: _LockCard(access: access, onInvite: onInvite),
           ),
       ],
@@ -487,6 +509,66 @@ class _Side extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           Text(label, style: type.caption),
+        ],
+      ),
+    );
+  }
+}
+
+/// The offer for the deep report, on an already-revealed reading.
+///
+/// Never on a first reveal: that one is bought with an invite, and the
+/// invite is the acquisition mechanic. Stacking a purchase ask onto the
+/// same moment cannibalises it, so `_locked` gates this out and the
+/// first reading a user ever opens is never asked for money.
+class _ReportOffer extends ConsumerWidget {
+  const _ReportOffer({required this.match});
+
+  final CompatibilityMatch match;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final type = context.type;
+    final colors = context.colors;
+
+    // Owned or for sale changes the button, not the card. Someone who
+    // has already bought this should find their way back in from the
+    // same place they bought it, rather than being sold it twice.
+    final state = ref.watch(reportControllerProvider(match)).value;
+    final owned = state?.isOwned ?? false;
+    final price = state?.product?.displayPrice;
+
+    // No price and nothing owned means the store has nothing to sell —
+    // a build with no products, or a region without them. Show no offer
+    // at all rather than a button that cannot work.
+    if (!owned && price == null) return const SizedBox.shrink();
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            // Names the person. The product is a document about one
+            // named human being, and an offer that cannot say who it is
+            // about is selling a category instead.
+            l10n.reportOfferTitle(match.them.name),
+            style: type.title,
+          ),
+          const SizedBox(height: SanctumSpacing.sm),
+          Text(
+            l10n.reportOfferBody,
+            style: type.bodyMedium.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: SanctumSpacing.lg),
+          SanctumButton(
+            label: owned
+                ? l10n.reportOfferAction
+                : l10n.reportOfferAction2(price!),
+            icon: Icons.menu_book_outlined,
+            expand: true,
+            onPressed: () => unawaited(ReportScreen.open(context, match)),
+          ),
         ],
       ),
     );

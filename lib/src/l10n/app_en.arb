@@ -1103,5 +1103,205 @@
   "transitTomorrow": "TOMORROW",
   "@transitTomorrow": {
     "description": "Label over the next-day tease. Small uppercase label."
+  },
+  "reportTitle": "You & {name}",
+  "@reportTitle": {
+    "description": "Title of the deep relationship report, naming the other person.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alex"
+      }
+    }
+  },
+  "reportSubtitle": "{pairing} · {score}% · {verdict}",
+  "@reportSubtitle": {
+    "description": "Report subtitle: the two sun signs, the headline score and its one-word verdict.",
+    "placeholders": {
+      "pairing": {
+        "type": "String",
+        "example": "Gemini and Virgo"
+      },
+      "score": {
+        "type": "int",
+        "example": "62"
+      },
+      "verdict": {
+        "type": "String",
+        "example": "Workable"
+      }
+    }
+  },
+  "reportContacts": "WHAT THIS NUMBER IS MADE OF",
+  "@reportContacts": {
+    "description": "Heading above the list of planetary contacts behind a facet score. Small caps."
+  },
+  "reportContactPair": "your {yours} · their {theirs}",
+  "@reportContactPair": {
+    "description": "Names one planetary contact, e.g. \"your Venus · their Mars\".",
+    "placeholders": {
+      "yours": {
+        "type": "String",
+        "example": "Venus"
+      },
+      "theirs": {
+        "type": "String",
+        "example": "Mars"
+      }
+    }
+  },
+  "reportContactNamed": "{aspect} · {orb}° off exact",
+  "@reportContactNamed": {
+    "description": "Shown when two placements form a named aspect. {orb} is one decimal place.",
+    "placeholders": {
+      "aspect": {
+        "type": "String",
+        "example": "Square"
+      },
+      "orb": {
+        "type": "String",
+        "example": "4.6"
+      }
+    }
+  },
+  "reportContactApart": "{degrees}° apart · no aspect",
+  "@reportContactApart": {
+    "description": "Shown when two placements form no named aspect. The angle is still real and still shown.",
+    "placeholders": {
+      "degrees": {
+        "type": "String",
+        "example": "47"
+      }
+    }
+  },
+  "reportSectionMoon": "THE MOON",
+  "@reportSectionMoon": {
+    "description": "Heading of the Moon section. Small caps."
+  },
+  "reportSectionWatch": "WHAT TO WATCH",
+  "@reportSectionWatch": {
+    "description": "Heading of the fault-line section. Small caps."
+  },
+  "reportSectionClosing": "IN CLOSING",
+  "@reportSectionClosing": {
+    "description": "Heading of the final section. Small caps."
+  },
+  "reportMoonSigns": "{yours} and {theirs}",
+  "@reportMoonSigns": {
+    "description": "Subheading under THE MOON naming both Moon signs.",
+    "placeholders": {
+      "yours": {
+        "type": "String",
+        "example": "Gemini"
+      },
+      "theirs": {
+        "type": "String",
+        "example": "Sagittarius"
+      }
+    }
+  },
+  "reportMoonMissing": "No birth time",
+  "@reportMoonMissing": {
+    "description": "Subheading under THE MOON when a birth time is missing."
+  },
+  "reportDisclaimer": "Computed on this phone from two birth charts. For entertainment purposes only.",
+  "@reportDisclaimer": {
+    "description": "Footer of the report. Must keep the entertainment-purposes wording."
+  },
+  "reportShare": "Share this report",
+  "@reportShare": {
+    "description": "Button that shares the report."
+  },
+  "chartPointMoon": "Moon",
+  "@chartPointMoon": {
+    "description": "The Moon, as a point in a birth chart. Use the conventional astrological name in the target language."
+  },
+  "reportOfferTitle": "There is more to you and {name}",
+  "@reportOfferTitle": {
+    "description": "Heading of the card offering the deep report, at the foot of a revealed reading.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alex"
+      }
+    }
+  },
+  "reportOfferBody": "All six axes explained, both splits in full, and the exact angles behind every number in this reading.",
+  "@reportOfferBody": {
+    "description": "Body of the report offer. Sells depth — never a forecast, and never the missing birth time."
+  },
+  "reportOfferAction": "Read the full report",
+  "@reportOfferAction": {
+    "description": "Button on the report offer card."
+  },
+  "aspectNameConjunction": "Conjunction",
+  "@aspectNameConjunction": {
+    "description": "The geometric name of the conjunction aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectConjunction which names how the pairing feels."
+  },
+  "aspectNameSemiSextile": "Semi-sextile",
+  "@aspectNameSemiSextile": {
+    "description": "The geometric name of the semi-sextile aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectSemiSextile which names how the pairing feels."
+  },
+  "aspectNameSextile": "Sextile",
+  "@aspectNameSextile": {
+    "description": "The geometric name of the sextile aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectSextile which names how the pairing feels."
+  },
+  "aspectNameSquare": "Square",
+  "@aspectNameSquare": {
+    "description": "The geometric name of the square aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectSquare which names how the pairing feels."
+  },
+  "aspectNameTrine": "Trine",
+  "@aspectNameTrine": {
+    "description": "The geometric name of the trine aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectTrine which names how the pairing feels."
+  },
+  "aspectNameQuincunx": "Quincunx",
+  "@aspectNameQuincunx": {
+    "description": "The geometric name of the quincunx aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectQuincunx which names how the pairing feels."
+  },
+  "aspectNameOpposition": "Opposition",
+  "@aspectNameOpposition": {
+    "description": "The geometric name of the opposition aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectOpposition which names how the pairing feels."
+  },
+  "reportOfferAction2": "Unlock the full report · {price}",
+  "@reportOfferAction2": {
+    "description": "Button on the report offer card when it has not been bought. {price} arrives from the store, already localised. The price string comes from the store already formatted for the user's storefront — never write a currency symbol into the translation.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$3.99"
+      }
+    }
+  },
+  "reportLockedTitle": "You & {name}, in full",
+  "@reportLockedTitle": {
+    "description": "Heading of the locked report screen.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alex"
+      }
+    }
+  },
+  "reportLockedBody": "Six axes explained one at a time, both splits at length, the exact angle behind every number, and the fault line named. Yours to keep — no subscription.",
+  "@reportLockedBody": {
+    "description": "Body of the locked report screen. Sells depth. Must not promise a forecast."
+  },
+  "reportLockedNote": "A single purchase, for this pairing. It stays on this phone.",
+  "@reportLockedNote": {
+    "description": "Small print under the buy button: what is bought, and the honest limit that it does not restore across devices."
+  },
+  "reportBuy": "Unlock · {price}",
+  "@reportBuy": {
+    "description": "Buy button on the locked report screen. The price string comes from the store already formatted for the user's storefront — never write a currency symbol into the translation.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$3.99"
+      }
+    }
+  },
+  "reportUnavailable": "This is not available right now. Please try again later.",
+  "@reportUnavailable": {
+    "description": "Shown when the store has no price for the report."
   }
 }

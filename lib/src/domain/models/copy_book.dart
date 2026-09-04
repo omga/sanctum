@@ -30,9 +30,25 @@
 /// The typing that matters is kept: [get] throws rather than returning
 /// an empty string, so a missing key surfaces as a loud failure with the
 /// key in the message instead of a blank line in a published post.
+///
+/// ## Falling back per key, not only per file
+///
+/// The catalogue falls back to English when a locale is missing a whole
+/// *file*. That is the right granularity for a locale that has not
+/// started on the oracle deck, and the wrong one for the ordinary case:
+/// new copy lands in `en/copy.json` first, and until a translator gets
+/// to it every other locale has a file that exists and is missing keys.
+/// Without a per-key fallback that is not a missing translation, it is a
+/// [StateError] thrown at a paying user in Kyiv.
+///
+/// So a book may carry a [fallback] map — English — consulted only when
+/// the locale's own file has nothing. Absent keys still throw when they
+/// are absent from *both*, which keeps the loud failure for the case it
+/// was written for: copy that was never authored at all.
 class CopyBook {
-  /// Creates a copy book over [entries].
-  const CopyBook(this.entries);
+  /// Creates a copy book over [entries], optionally backed by
+  /// [fallback] for keys this locale has not translated yet.
+  const CopyBook(this.entries, {this.fallback = const {}});
 
   /// An empty book. Only useful as a placeholder in tests that do not
   /// compose anything.
@@ -41,29 +57,32 @@ class CopyBook {
   /// Every line, by dotted key.
   final Map<String, String> entries;
 
+  /// English lines, used only where [entries] has no answer.
+  final Map<String, String> fallback;
+
   /// The line at [key].
   ///
-  /// Throws when it is missing. Bundled content is a build-time
-  /// artefact, so an absent key is a mistake in the repository rather
-  /// than a condition a user can cause — and the loudest possible
-  /// failure is the cheapest one to find.
+  /// Throws when it is missing from both this locale and the fallback.
+  /// Bundled content is a build-time artefact, so an absent key is a
+  /// mistake in the repository rather than a condition a user can cause
+  /// — and the loudest possible failure is the cheapest one to find.
   String get(String key) {
-    final value = entries[key];
+    final value = maybe(key);
     if (value == null) {
       throw StateError('Missing copy for "$key"');
     }
     return value;
   }
 
-  /// The line at [key], or null when it is absent.
+  /// The line at [key], or null when it is absent everywhere.
   ///
   /// For the genuinely optional case — a transiting body that has no
   /// note written for it — where absence is a content decision rather
   /// than an omission.
-  String? maybe(String key) => entries[key];
+  String? maybe(String key) => entries[key] ?? fallback[key];
 
   /// Whether [key] has a line.
-  bool has(String key) => entries.containsKey(key);
+  bool has(String key) => maybe(key) != null;
 
   /// The line at [key] with `{placeholder}` slots filled from [values].
   ///

@@ -121,7 +121,7 @@ abstract final class CompatibilityComposer {
     ZodiacAspect aspect,
     CopyBook copy,
   ) {
-    if ((pull.yourShare - 50).abs() >= 18) {
+    if ((pull.yourShare - 50).abs() >= DirectionalReading.strongTolerance) {
       return copy.get('compatibility.lopsided');
     }
 

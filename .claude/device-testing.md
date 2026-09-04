@@ -76,6 +76,56 @@ problem is your coordinate.
   `UIKit:EventDispatch … Sending UIEvent … to window` means the touch
   arrived and the problem is above the OS layer.
 
+### Testing purchases
+
+Purchases run against the **RevenueCat Test Store** in debug builds. Its
+sheet offers three outcomes — *Test valid purchase*, *Test failed
+purchase*, *Cancel* — and all three are worth exercising, because two of
+them are where the bugs were.
+
+Getting back to a sellable state is the awkward part: a granted report is
+recorded in `shared_preferences` and there is no in-app way to give it
+back. Reach into the container rather than reinstalling, which would take
+the quiz and the match history with it:
+
+```bash
+D=228D0C56-5AFA-442F-9142-F1C226AD451D
+xcrun simctl terminate $D com.soulheals.sanctum
+C=$(xcrun simctl get_app_container $D com.soulheals.sanctum data)
+/usr/libexec/PlistBuddy -c "Delete :flutter.sanctum.reports_purchased" \
+  "$C/Library/Preferences/com.soulheals.sanctum.plist"
+```
+
+`flutter.` is not a typo — `shared_preferences` prefixes every key.
+`flutter.sanctum.entitlement_premium` is the subscription equivalent, and
+only exists under `SANCTUM_LOCAL_BILLING=true`; the RevenueCat
+entitlement lives in `com.revenuecat.user_defaults.plist` beside it.
+
+Three things this flow has already caught:
+
+- **Cancel used to crash the app.** `SanctumButton` disposes its sheen
+  ticker when disabled and builds a new one when re-enabled, which
+  `SingleTickerProviderStateMixin` forbids — a State may create one
+  ticker, ever, disposed or not. Nothing toggled a button that way until
+  the buy button, which disables itself while the sheet is open. It is
+  `TickerProviderStateMixin` now, pinned by `sanctum_button_test.dart`.
+- **The report product must be repeatable.** It is sold once per pairing
+  but is a single store product, so a *non-consumable* would let a user
+  buy exactly one report and then be told they already own the item.
+  Verified by clearing only the receipt above and buying the same id
+  twice in a row; both succeeded.
+- **The Dart console shows none of this.** RevenueCat logs through the
+  native SDK, so `flutter run` output is empty of it — use
+  `xcrun simctl spawn $D log stream --predicate 'processImagePath
+  CONTAINS "Runner"'`. Flutter's own exceptions *do* reach `flutter run`,
+  which is how the ticker crash was traced.
+
+Prices are never hard-coded: both paywalls read `priceString` /
+`pricePerMonthString` from the store, already localised for the viewer's
+storefront. `LocalSubscriptionRepository` carries stand-in prices for
+`SANCTUM_LOCAL_BILLING=true` builds only, kept in step with the live
+products so demo screenshots do not promise a price nobody is charged.
+
 ### Verified on iOS specifically
 
 - Zodiac glyphs (U+2648–2653) render as **real symbols, not coloured
