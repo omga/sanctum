@@ -31,18 +31,41 @@ SanctumDatabase sanctumDatabase(Ref ref) {
   return database;
 }
 
+/// The language the user picked, or null to follow the device.
+///
+/// Read once at startup — `app.dart` holds the first frame until it
+/// lands, alongside the onboarding answer — so nothing renders in one
+/// language and then swaps to another.
+@Riverpod(keepAlive: true)
+Future<String?> languagePreference(Ref ref) async {
+  final result = await ref.watch(settingsRepositoryProvider)
+      .preferredLanguage();
+  // A preference we cannot read is the same as not having one: follow
+  // the device, which is what an unconfigured install does anyway.
+  return result.getOrElse(null);
+}
+
 /// The locale the content catalogue is loaded in.
 ///
-/// Resolved from the device's preferred locales through
-/// [SanctumLocales], which is the same function `MaterialApp` is given
-/// for the widget tree — so the JSON and the ARB strings can never
-/// disagree about which language the user is being shown.
+/// Resolved through [SanctumLocales], which is the same function
+/// `MaterialApp` is given for the widget tree — so the JSON and the ARB
+/// strings can never disagree about which language the user is being
+/// shown. This is the seam the in-app language picker uses; the picker
+/// stores a code, and both trees resolve it here.
 ///
-/// Overridable in tests, and the seam an in-app language picker would
-/// use if one is ever added.
+/// Reading `.value` collapses "still loading" and "no preference" into
+/// the same branch, and that is correct: both mean follow the device.
+/// The first frame is held until the preference has landed, so the
+/// loading case is not one a user can see.
 @Riverpod(keepAlive: true)
-Locale contentLocale(Ref ref) =>
-    SanctumLocales.resolve(PlatformDispatcher.instance.locales);
+Locale contentLocale(Ref ref) {
+  final chosen = ref.watch(languagePreferenceProvider).value;
+  return SanctumLocales.resolve(
+    chosen == null
+        ? PlatformDispatcher.instance.locales
+        : [Locale(chosen)],
+  );
+}
 
 /// Where bundled content is read from.
 @Riverpod(keepAlive: true)

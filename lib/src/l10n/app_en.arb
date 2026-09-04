@@ -1262,16 +1262,6 @@
   "@aspectNameOpposition": {
     "description": "The geometric name of the opposition aspect, used in the report's table of angles. Use the standard astrological term in the target language — this names the angle itself, unlike aspectOpposition which names how the pairing feels."
   },
-  "reportOfferAction2": "Unlock the full report · {price}",
-  "@reportOfferAction2": {
-    "description": "Button on the report offer card when it has not been bought. {price} arrives from the store, already localised. The price string comes from the store already formatted for the user's storefront — never write a currency symbol into the translation.",
-    "placeholders": {
-      "price": {
-        "type": "String",
-        "example": "$3.99"
-      }
-    }
-  },
   "reportLockedTitle": "You & {name}, in full",
   "@reportLockedTitle": {
     "description": "Heading of the locked report screen.",
@@ -1303,5 +1293,85 @@
   "reportUnavailable": "This is not available right now. Please try again later.",
   "@reportUnavailable": {
     "description": "Shown when the store has no price for the report."
+  },
+  "reportIncludedBadge": "Included with Premium",
+  "@reportIncludedBadge": {
+    "description": "Shown in place of a price when a subscriber has not yet spent their one included report."
+  },
+  "reportIncludedOpen": "Open my included report",
+  "@reportIncludedOpen": {
+    "description": "Button a subscriber taps to spend their one included report on this pairing."
+  },
+  "reportIncludedNote": "Your first report is included with Premium. This is it — after this, reports are a one-off each.",
+  "@reportIncludedNote": {
+    "description": "Small print under the included-report button. Must make clear it is one, once, and that it is being spent here."
+  },
+  "reportLockedBodySubscriber": "Six axes explained one at a time, both splits at length, the exact angle behind every number, and the fault line named.",
+  "@reportLockedBodySubscriber": {
+    "description": "Body of the locked report screen for a subscriber. Deliberately omits the \"no subscription\" line that the free-tier version ends on — to somebody who just subscribed, that reads as a taunt."
+  },
+  "paywallBenefitMatches": "Every compatibility reading",
+  "@paywallBenefitMatches": {
+    "description": "Premium benefit: unlimited compatibility readings. Listed because the compatibility lock screen is what sells most subscriptions."
+  },
+  "reportOfferUnlock": "Unlock the full report",
+  "@reportOfferUnlock": {
+    "description": "Button on the report offer card when it has not been bought. The price sits on its own line beneath — a button label must stay short enough to fit one line on the narrowest phone in every language."
+  },
+  "reportOfferPrice": "{price} · one-off",
+  "@reportOfferPrice": {
+    "description": "Price line under the report offer button. {price} arrives from the store already formatted for the viewer's storefront — never write a currency symbol into the translation.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$3.99"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Title of the settings screen."
+  },
+  "settingsLanguage": "LANGUAGE",
+  "@settingsLanguage": {
+    "description": "Section heading above the language list. Small caps."
+  },
+  "settingsLanguageSystem": "Match my phone",
+  "@settingsLanguageSystem": {
+    "description": "The default language option: follow the device rather than pinning one."
+  },
+  "settingsLanguageNote": "Readings and the interface both change. Everything is already on this phone, so nothing is downloaded.",
+  "@settingsLanguageNote": {
+    "description": "Note under the language list. The second clause is a real property of the app worth stating: content is bundled, not fetched."
+  },
+  "settingsVersion": "Sanctum {version}",
+  "@settingsVersion": {
+    "description": "App version line at the foot of settings.",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.0.0"
+      }
+    }
+  },
+  "verdictRare": "Rare",
+  "@verdictRare": {
+    "description": "One-word verdict for a compatibility score band (\"Rare\"). Shown on the score dial and in the report subtitle, so it must stay one short word."
+  },
+  "verdictStrong": "Strong",
+  "@verdictStrong": {
+    "description": "One-word verdict for a compatibility score band (\"Strong\"). Shown on the score dial and in the report subtitle, so it must stay one short word."
+  },
+  "verdictCharged": "Charged",
+  "@verdictCharged": {
+    "description": "One-word verdict for a compatibility score band (\"Charged\"). Shown on the score dial and in the report subtitle, so it must stay one short word."
+  },
+  "verdictWorkable": "Workable",
+  "@verdictWorkable": {
+    "description": "One-word verdict for a compatibility score band (\"Workable\"). Shown on the score dial and in the report subtitle, so it must stay one short word."
+  },
+  "verdictHardWon": "Hard-won",
+  "@verdictHardWon": {
+    "description": "One-word verdict for a compatibility score band (\"Hard-won\"). Shown on the score dial and in the report subtitle, so it must stay one short word."
   }
 }

@@ -160,9 +160,21 @@ class _SanctumButtonState extends State<SanctumButton>
           Icon(icon, size: 18, color: _foreground(colors)),
           const SizedBox(width: SanctumSpacing.sm),
         ],
-        Text(
-          widget.label,
-          style: type.button.copyWith(color: _foreground(colors)),
+        // Flexible, because the label is translated and nothing else
+        // bounds it: a Row child sized to its own text simply overflows
+        // the button, and Russian and Ukrainian run 20–30% longer than
+        // the English these widths were eyeballed against. Ellipsis is
+        // an ugly last resort rather than the plan — the plan is short
+        // labels — but it fails as a truncated word instead of as
+        // yellow-and-black stripes across a paywall.
+        Flexible(
+          child: Text(
+            widget.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: type.button.copyWith(color: _foreground(colors)),
+          ),
         ),
       ],
     );

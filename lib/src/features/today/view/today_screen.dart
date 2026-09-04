@@ -121,7 +121,20 @@ class _TodayContent extends ConsumerWidget {
                 ],
               ),
             ),
-            MoonDisc(reading: state.moon, size: 52),
+            // The moon is the settings entry. It is the only persistent
+            // chrome on this screen and it sits where a settings control
+            // conventionally does, so it costs no space and adds no
+            // affordance — at the price of not looking tappable, which
+            // is why the semantics label says what it opens.
+            Semantics(
+              button: true,
+              label: context.l10n.settingsTitle,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => const SettingsRoute().push<void>(context),
+                child: MoonDisc(reading: state.moon, size: 52),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: SanctumSpacing.xl),

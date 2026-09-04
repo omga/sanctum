@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
+import 'package:sanctum/src/l10n/sanctum_locales.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Small, non-relational app state.
@@ -38,6 +39,23 @@ abstract interface class SettingsRepository {
 
   /// Records that the paywall was dismissed without purchase.
   Future<Result<void>> recordPaywallDismissed();
+
+  /// The language the user picked, or null to follow the device.
+  ///
+  /// A language *code* rather than a `Locale`: `domain/` and this
+  /// interface stay free of `dart:ui`, and the code is what
+  /// [SanctumLocales] matches on anyway — it resolves on language and
+  /// ignores country on purpose, so one stored `es` serves every Spanish
+  /// market.
+  ///
+  /// Null is a real answer and the default: following the device is what
+  /// most people want, and a stored value would silently stop tracking a
+  /// phone whose language changed.
+  Future<Result<String?>> preferredLanguage();
+
+  /// Stores the chosen language, or null to go back to following the
+  /// device.
+  Future<Result<void>> setPreferredLanguage(String? code);
 }
 
 /// [SettingsRepository] backed by shared_preferences.
@@ -51,6 +69,7 @@ class PreferencesSettingsRepository implements SettingsRepository {
   static const _paywallShownKey = 'sanctum.paywall_shown_count';
   static const _paywallDismissedKey = 'sanctum.paywall_dismissed_count';
   static const _paywallLastShownKey = 'sanctum.paywall_last_shown';
+  static const _languageKey = 'sanctum.language';
 
   @override
   Future<Result<String>> installSalt() {
@@ -173,6 +192,41 @@ class PreferencesSettingsRepository implements SettingsRepository {
       },
       onError: (error, stackTrace) => StorageFailure(
         'Could not record paywall dismissal',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<String?>> preferredLanguage() {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final code = prefs.getString(_languageKey);
+        return (code == null || code.isEmpty) ? null : code;
+      },
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not read your language',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<void>> setPreferredLanguage(String? code) {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        if (code == null) {
+          await prefs.remove(_languageKey);
+          return;
+        }
+        await prefs.setString(_languageKey, code);
+      },
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not save your language',
         cause: error,
         stackTrace: stackTrace,
       ),

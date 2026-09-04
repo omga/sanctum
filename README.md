@@ -4,9 +4,10 @@ A spiritual-wellness app for iOS and Android. A daily reading computed
 from the user's own birth chart, compatibility readings between the user
 and anyone — or between any two other people, including a catalogue of
 141 public figures — that export as a four-frame 9:16 carousel for
-TikTok and Reels, live moon phase, an oracle card, sound-bath sessions,
-moon rituals, and a journal, with a personalising onboarding quiz and a
-subscription paywall.
+TikTok and Reels, a deep "You & X" relationship report sold as a one-off,
+live moon phase, an oracle card, sound-bath sessions, moon rituals, and a
+journal, with a personalising onboarding quiz, a subscription paywall,
+and four languages the reader can switch between in the app.
 
 **There is no backend and no account.** Every reading — the daily
 transit, compatibility, moon phase, the oracle draw — is computed on the
@@ -99,6 +100,13 @@ and the assertions are pinned to reality wherever reality exists:
 - **The analytics taxonomy** for anything that could identify a user —
   a property denylist, a primitives-only check, and a length check that
   would catch prose.
+- **The report** against the reading it deepens: every score is copied,
+  never recomputed, so the paid document can never disagree with the
+  free reveal.
+- **Every locale** for key parity and placeholder parity with English.
+  Copy falls back per key at runtime, so a missing translation degrades
+  silently instead of failing — which is exactly why the gap is asserted
+  here instead.
 
 ## Docs
 

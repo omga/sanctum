@@ -91,6 +91,14 @@ class _Settings implements SettingsRepository {
   Future<Result<({int dismissed, DateTime? lastShown, int shown})>>
   paywallState() async =>
       const Result.ok((shown: 0, dismissed: 0, lastShown: null));
+
+  @override
+  Future<Result<String?>> preferredLanguage() async =>
+      const Result.ok(null);
+
+  @override
+  Future<Result<void>> setPreferredLanguage(String? code) async =>
+      const Result.ok(null);
 }
 
 ({RecordingAnalyticsService analytics, _Settings settings, _Store store})

@@ -55,7 +55,7 @@ class ReportUiState {
     required this.isPurchasing,
   });
 
-  /// Owned, or for sale.
+  /// Owned, included with a subscription, or for sale.
   final ReportAccess access;
 
   /// What it costs, when it is on sale at all.
@@ -67,8 +67,11 @@ class ReportUiState {
   /// Whether the document may be shown.
   bool get isOwned => access == ReportAccess.owned;
 
+  /// Whether a subscriber can open this one on their included slot.
+  bool get isIncluded => access == ReportAccess.includedWithPremium;
+
   /// Whether there is something to sell and a price to sell it at.
-  bool get canBuy => !isOwned && product != null;
+  bool get canBuy => access == ReportAccess.forSale && product != null;
 }
 
 /// Owns the buy flow for one match's report.
@@ -76,16 +79,23 @@ class ReportUiState {
 class ReportController extends _$ReportController {
   @override
   Future<ReportUiState> build(CompatibilityMatch match) async {
-    final purchased = await ref.watch(reportRepositoryProvider).purchased();
+    final repository = ref.watch(reportRepositoryProvider);
+    final purchased = await repository.purchased();
+    final included = await repository.includedReportId();
     final product = await ref.watch(reportProductProvider.future);
 
+    // A read failure must not be read as "owns nothing": that would
+    // offer to re-sell a document the user has already paid for, or hand
+    // out a second free one. Both are surfaced as errors instead, and
+    // the screen says so.
     return ReportUiState(
       access: ReportGate.decide(
         matchId: match.id,
-        // A read failure must not be read as "owns nothing": that would
-        // offer to re-sell a document the user has already paid for. It
-        // is surfaced as an error instead, and the screen says so.
         purchasedIds: switch (purchased) {
+          Ok(:final value) => value,
+          Err(:final failure) => throw StateError(failure.message),
+        },
+        includedReportId: switch (included) {
           Ok(:final value) => value,
           Err(:final failure) => throw StateError(failure.message),
         },
@@ -96,11 +106,54 @@ class ReportController extends _$ReportController {
     );
   }
 
+  /// Spends the subscriber's included report on this pairing.
+  ///
+  /// Deliberately an action rather than something that happens on open:
+  /// it is the only one they get, and spending it silently on a pairing
+  /// they tapped out of curiosity would be a worse surprise than one
+  /// extra tap. The compatibility gate asks for its invite the same way.
+  Future<bool> claimIncluded() async {
+    final current = state.value;
+    if (current == null || !current.isIncluded) return false;
+
+    // Captured before the await. See [buy] for why reaching for a
+    // provider afterwards is not safe.
+    final reports = ref.read(reportRepositoryProvider);
+    final analytics = ref.read(analyticsProvider);
+
+    final saved = await reports.claimIncludedReport(match.id);
+
+    if (saved case Err(:final failure)) {
+      if (ref.mounted) state = AsyncError(failure, StackTrace.current);
+      return false;
+    }
+
+    // Not `purchaseCompleted`: nothing was bought. Counting this as a
+    // sale would inflate the number the whole SKU is being judged on.
+    analytics.track(AnalyticsEvent.reportUnlocked(access: 'included'));
+    if (ref.mounted) ref.invalidateSelf();
+    return true;
+  }
+
   /// Buys the report for this pairing.
   ///
   /// Returns whether the user now owns it. `false` covers backing out of
   /// the store sheet, which is not an error and must not be reported as
   /// one — nor granted as a purchase.
+  ///
+  /// ## Every dependency is read before the first await
+  ///
+  /// This provider auto-disposes, and a store sheet can outlive the
+  /// screen that opened it — the user can background the app or pop back
+  /// while it is up. `ref.read(...)` on a disposed `Ref` throws, so
+  /// reaching for the repository *after* the purchase returns would
+  /// crash exactly where the money has already moved, losing the grant
+  /// for a report they were charged for. Reading them up front means the
+  /// grant only needs the objects, not the `Ref`.
+  ///
+  /// `state` and `invalidateSelf` still need it, and those are guarded:
+  /// skipping a UI update for a screen that is gone is correct, whereas
+  /// skipping the receipt never is.
   Future<bool> buy() async {
     final current = state.value;
     if (current == null || current.isOwned) return current?.isOwned ?? false;
@@ -110,6 +163,8 @@ class ReportController extends _$ReportController {
 
     final analytics = ref.read(analyticsProvider)
       ..track(AnalyticsEvent.purchaseStarted(plan: product.id));
+    final reports = ref.read(reportRepositoryProvider);
+    final store = ref.read(subscriptionRepositoryProvider);
 
     state = AsyncData(
       ReportUiState(
@@ -119,9 +174,7 @@ class ReportController extends _$ReportController {
       ),
     );
 
-    final result = await ref
-        .read(subscriptionRepositoryProvider)
-        .purchaseReport();
+    final result = await store.purchaseReport();
 
     switch (result) {
       case Ok(value: final bought):
@@ -129,33 +182,35 @@ class ReportController extends _$ReportController {
           // Cancelled. Nothing is granted and nothing is reported: a
           // purchase event here is exactly the bug that makes
           // `purchase_completed` unusable on the subscription paywall.
-          state = AsyncData(
-            ReportUiState(
-              access: current.access,
-              product: product,
-              isPurchasing: false,
-            ),
-          );
+          if (ref.mounted) {
+            state = AsyncData(
+              ReportUiState(
+                access: current.access,
+                product: product,
+                isPurchasing: false,
+              ),
+            );
+          }
           return false;
         }
 
         // Recorded before the state flips, so a write failure cannot
         // leave the user looking at a document the app will not
         // remember they bought.
-        final saved = await ref
-            .read(reportRepositoryProvider)
-            .recordPurchase(match.id);
+        final saved = await reports.recordPurchase(match.id);
         if (saved case Err(:final failure)) {
-          state = AsyncError(failure, StackTrace.current);
+          if (ref.mounted) state = AsyncError(failure, StackTrace.current);
           return false;
         }
 
-        analytics.track(AnalyticsEvent.purchaseCompleted(plan: product.id));
-        ref.invalidateSelf();
+        analytics
+          ..track(AnalyticsEvent.purchaseCompleted(plan: product.id))
+          ..track(AnalyticsEvent.reportUnlocked(access: 'purchase'));
+        if (ref.mounted) ref.invalidateSelf();
         return true;
 
       case Err(:final failure):
-        state = AsyncError(failure, StackTrace.current);
+        if (ref.mounted) state = AsyncError(failure, StackTrace.current);
         return false;
     }
   }

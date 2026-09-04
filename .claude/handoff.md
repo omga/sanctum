@@ -1092,6 +1092,193 @@ offerings` — so read logcat for `[Purchases]` before touching code.
 everything into one message, so the screen names which of the two
 mistakes it is.
 
+### The relationship report deepens a reading, it never recomputes one
+
+`ReportComposer` takes an already-composed `CompatibilityMatch` and
+copies every score out of it. Recomputing from the two birth dates would
+be a line shorter and would let the paid document disagree with the free
+reveal the user is looking at — a 77 on the dial and a 78 in the thing
+they bought — which is the fastest available way to make every number in
+the app look invented. A test asserts the equality across all 144
+pairings.
+
+What it sells is depth, not horizon. `roadmap.md` §1 rejects the
+category's ten-year-forecast shape, and this composer has nowhere to put
+one: `watchFor` names the fault line and the conditions it shows up
+under, never a date.
+
+`Aspects.contact` is the descriptive layer beside the harmonic scoring,
+not a replacement. `heat`/`ease` stay continuous because that is right
+for a number and wrong for a sentence — nobody wants to read "your Venus
+is 0.41 heat to their Mars", they want to read that it is square, and by
+how much. Orbs here reintroduce none of the flat-with-spikes
+distribution the scoring model avoids, because nothing here feeds a
+number.
+
+Two thresholds were measured across 47,961 pairings rather than guessed:
+facet bands land 42/28/30 high/mid/low, near-uniform across all six
+axes, and direction leans come out symmetric. The same sweep found that
+**39.7% of facet sections have no contact in orb at all** — which is why
+every contact carries its real separation whether or not it forms a named
+aspect. Rendering those as bare "no contact" lines would put an empty
+table under a paragraph promising to show its working.
+
+`aspectName*` is a second set of ARB keys for the same enum. `aspect*`
+names how a pairing *feels* — "Magnetic", "Charged" — which is right on
+a chip under two sun signs and wrong in a column of measured angles. They
+also collided: "Charged" was both the square's chip and a score band's
+verdict, two lines apart, meaning different things.
+
+### A subscriber's first report is included, and that is not generosity
+
+The compatibility lock card promises Premium "reads you against anyone,
+as often as you like". A user who buys on that promise lands on the
+reading they just paid for and finds a second price at the foot of it,
+seconds later, on the same screen — and the locked report's own copy
+said "Yours to keep — no subscription", which to somebody who subscribed
+ninety seconds ago reads as a taunt. That is a bait and switch whatever
+the SKU's merits, and freshly-converted subscribers are both the most
+alert to it and the most likely to refund.
+
+One included report removes that moment and keeps the revenue line: the
+*second* report a subscriber wants is still sold, and by then the ask
+reads as "you have had one" rather than "you just paid".
+
+**Once ever, not once per period.** A renewing allowance is a credit
+ledger — balances, expiry, refunds, second devices — which `roadmap.md`
+§1 rejects explicitly. The storage is a single nullable id rather than a
+count precisely because there is exactly one, and the copy says "your
+first report is included" rather than naming a rate, so becoming more
+generous later never means taking something away.
+
+The experiment survives it: the offer appears on any *revealed* reading,
+including the one a non-subscriber unlocks with an invite, so the
+price-elasticity question is still answered where nearly all the traffic
+is.
+
+Three smaller decisions inside it. The claim is **explicit**, not granted
+on open — it is the only one they get, and spending it silently on a
+pairing tapped out of curiosity is a worse surprise than one extra tap.
+A claimed report **survives a lapsed subscription**, because rule one of
+the gate is that owned stays owned and clawing back a document somebody
+has read is what produces refunds. And it is recorded as the *pairing's
+id*, not a boolean, so "what do they own" stays one question and a
+claimed report can be told from a bought one in the data —
+`report_unlocked` carries `access: purchase | included` for exactly that
+reason, and a claim must never reach `purchase_completed`.
+
+### Receipts do not share a store with match history
+
+`PreferencesCompatibilityRepository` catches a decode failure and returns
+an *empty* state, on the stated reasoning that losing old matches on an
+upgrade is a small cost. That is right for match history and wrong for
+receipts: a match is four taps to recompute, a document somebody paid for
+is a refund and a support email. So purchases live under their own
+preferences key as a flat list of ids that no model change can
+invalidate, and — unlike the match blob — a *read* failure there is
+surfaced rather than swallowed, because reading "owns nothing" would
+offer to re-sell something already bought.
+
+**Consumables do not restore.** A reinstall loses every purchased report,
+and the locked screen says so before the money changes hands. That is the
+honest minimum, not a solution: the alternatives are a backend mapping
+customers to pairings, or granting on request.
+
+### `purchase` returns whether it purchased
+
+`RevenueCatSubscriptionRepository` maps a cancelled store sheet to a
+*success* result, so that backing out is not an error and does not reach
+Sentry. That is correct. It also returned `Result<void>`, so the paywall
+read "no error" as a sale — three bugs in one line:
+
+- `purchase_completed` fired on every cancellation, inflating the only
+  conversion number the business has;
+- the screen flashed its purchased state and closed on somebody who had
+  just declined;
+- `_purchased` suppresses the dismissal, so a cancellation recorded
+  none — `PaywallTrigger`'s 3 → 7 → 14 → 30 day backoff never advanced,
+  and `paywall_dismissed` under-counted.
+
+Both purchase paths now return `Result<bool>` where the bool is whether
+they bought. A cancellation leaves the user on the paywall with their
+plan still selected, which is where backing out of a store sheet should
+land. Data collected before 2026-09-04 is wrong in both directions — see
+`analytics.md` §5.
+
+### Providers that outlive the screen that started them
+
+`ref.read(someProvider.notifier).method()` registers **no listener**, so
+an auto-disposing provider is collected at the end of the frame while an
+async method is still awaiting. It then resumes on a dead `Ref` and
+throws *Cannot use the Ref of … after it has been disposed*. This shipped
+in the language picker and crashed on Android; iOS was winning the same
+race by luck.
+
+Two different fixes, and the difference matters:
+
+- **`LanguageController` is `keepAlive`.** Guarding it with `ref.mounted`
+  would stop the crash and silently skip the invalidate, leaving the
+  preference saved and the app still in the old language — the failure
+  mode hardest to report. The work has to outlive the screen, so the
+  provider does.
+- **The purchase controllers read every dependency before the first
+  await.** A store sheet can outlive the screen that opened it, and
+  `ref.read` on the far side would throw exactly where the money has
+  already moved, losing the grant for a report the user was charged for.
+  `state` and `invalidateSelf` are guarded with `ref.mounted` on the
+  reverse principle: skipping a UI update for a screen that is gone is
+  correct, skipping a receipt never is.
+
+### The language picker, and the one seam it uses
+
+`contentLocaleProvider`'s doc comment already called itself "the seam an
+in-app language picker would use if one is ever added", and that is
+exactly what happened. A stored language *code* — not a `Locale`, so the
+repository stays free of `dart:ui` — feeds that one provider, and both
+trees resolve from it. `MaterialApp` now gets an explicit `locale` from
+the same source, because letting Flutter resolve the widget tree from the
+platform while the JSON resolved from a preference is precisely the
+disagreement `SanctumLocales` exists to prevent.
+
+Null is a real answer and the default: following the device is what most
+people want, and a stored value silently stops tracking a phone whose
+language changed. `app.dart` holds the first frame until the preference
+lands, alongside the onboarding answer, so nothing renders in one
+language and swaps a frame later.
+
+Changing it invalidates the preference, and the catalogue chain re-runs
+from the asset read — the content catalogue is a *cached future* over an
+asset bundle and would otherwise keep serving the old language's JSON
+under new ARB chrome.
+
+**Saved readings are recomposed, not replayed.** The prose is derived
+data: the same two birth dates and the same copy book always compose the
+same reading. It is persisted so the tab can list matches without
+recomputing them, but the stored *words* are not the source of truth —
+the two people are. `createdAt` is passed back in as `now` so the date
+stays what the user first saw, and every score is a pure function of the
+two charts, so nothing else can move. Without this a Ukrainian reader
+changed language and found their own history still in English.
+
+`verdictFor` returns bare English strings from `domain/`, which cannot
+reach `AppLocalizations` — so "Charged" and "Hard-won" rendered inside
+Russian sentences on the dial, the share card, the carousel and the
+report subtitle. `verdictLabel` maps them, keyed off `verdictFor`'s own
+output rather than a second switch on the same thresholds.
+
+### A button label had no bound
+
+`SanctumButton` put its `Text` straight into a `Row`, so any label wider
+than the button overflowed — latent for *every* button in the app, and
+Russian and Ukrainian run 20–30% longer than the English these widths
+were eyeballed against. It is `Flexible` with a one-line ellipsis now:
+an ugly last resort rather than the plan, but it fails as a truncated
+word instead of yellow-and-black stripes across a paywall. The plan is
+short labels, which is why the report offer's price moved out of its
+button and onto its own line. That button is not a purchase control —
+it opens the report screen, where the price sits beside the thing that
+reaches the store — so nothing about the move is a compliance question.
+
 ### Fonts are bundled, never fetched
 
 `google_fonts` fetches at runtime — font flash, jank, wrong text offline.
@@ -1165,6 +1352,30 @@ the obvious-sounding choice, contains zero of the twelve.
 - **Compare two other people** (`PairEntryScreen`) — any two people, not
   just the user and someone. The engine always supported it; it only
   ever received two birth dates.
+- **The relationship report** (`roadmap.md` §1) — composed, screened,
+  gated and sold. Verified 2026-09-04 on the iOS 26.1 simulator against
+  the RevenueCat Test Store: `$3.99` fetched live for
+  `sanctum.report.relationship`, all three sheet outcomes correct on
+  both purchase paths, the grant surviving a relaunch, and **the same
+  product id bought twice in a row** — it must be a consumable, or a
+  user could buy exactly one report and then be told they already own
+  the item. **Play has not had the same check on a device.**
+- **A subscriber's first report is included**, claimed explicitly and
+  once, with the second onwards sold. Verified on the simulator end to
+  end, including the sequence the feature exists for: second
+  compatibility → subscribe → reading → offer, which now shows
+  "Included" rather than a price.
+- **In-app language picker** (`features/settings/`) — reached from the
+  moon on Today. Verified 2026-09-04 on the simulator: choosing Русский
+  switched the chrome *and* the readings in the same frame, with no
+  restart, and saved readings recomposed rather than staying in the
+  language they were revealed in.
+- **All four locales are complete.** Zero untranslated ARB strings and
+  identical `copy.json` key sets, pinned by
+  `test/l10n/content_parity_test.dart`. The report prose in `uk`, `ru`
+  and `es` was machine-translated in voice and **has not had a native
+  speaker's pass** — worth one before leaning on it commercially, since
+  the copy is the product.
 
 ### Size, measured
 
@@ -1185,17 +1396,27 @@ are in `device-testing.md`.
 
 ### Stubbed or missing
 
-- **iOS billing is entirely untested.** Android is verified end to end;
-  the App Store side has no products, no `appl_` key, and has never been
-  run.
+- **iOS billing is entirely untested against the real App Store.**
+  Android is verified end to end and iOS has now been exercised against
+  the RevenueCat **Test Store**, which simulates purchases and
+  transacts against nothing. The App Store side still has no `appl_`
+  key and no products of its own.
+- **The report product is unverified on Play.** It resolves and sells on
+  the Test Store; nobody has confirmed on an Android device that
+  `sanctum.report.relationship` can be bought *twice*, which is the one
+  thing a repeatable one-off has to do.
 - **No golden tests** (`alchemist` is installed, none written).
 - **No launcher icon of your own** — the current crescent mark is a
   placeholder generated in-repo.
 - **Four locales ship: English, Ukrainian, Russian, Spanish.** Waves 0-2
-  landed 2026-08-31 — see §3. 241 ARB keys and 179 content keys per
-  locale, ~2,900 words each. Both bundled fonts already cover Cyrillic
-  and the Spanish diacritics, so there was no font work. All three
-  translations were verified on device.
+  landed 2026-08-31 — see §3; the report and settings copy followed
+  2026-09-04. 292 ARB keys and 237 content keys per locale. Both bundled
+  fonts already cover Cyrillic and the Spanish diacritics, so there was
+  no font work. All three translations were verified on device.
+- **The report prose has had no native review in any locale.** The 58
+  `report.*` paragraphs were translated in voice but not by a speaker,
+  and unlike a button label a mistranslated reading is a worse product
+  rather than a bug. `es` has had no native review at all — see below.
 - **`es` has had no native review.** uk and ru are being checked by the
   owner, who speaks both. Nobody on the team reads Spanish, so that
   locale rests on the checks in §3 and on device screenshots — which
@@ -1238,9 +1459,15 @@ later, none of which is on the revenue path:
 2. **Add the entertainment disclaimer to first launch.** It is on the
    payoff screen and the carousel's closing frame, nowhere else.
 3. **Replace the placeholder launcher icon.**
-4. **Run the billing integration on iOS at least once.** Everything in
-   §3's RevenueCat notes has only ever executed against Google Play.
-5. **Golden tests.** `alchemist` is installed and unused. The carousel
+4. **Run the billing integration on iOS against the real App Store.**
+   The Test Store now covers the code path, but it simulates purchases
+   and transacts against nothing; there is still no `appl_` key and no
+   App Store products.
+5. **Confirm the report sells twice on Play.** It is a consumable, and a
+   non-consumable there would let a user buy exactly one report and then
+   be told they already own the item. Verified on the Test Store, never
+   on an Android device.
+6. **Golden tests.** `alchemist` is installed and unused. The carousel
    frames are the obvious first subject, since they are the one surface
    whose output is published and cannot be corrected after the fact.
 

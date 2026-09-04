@@ -68,11 +68,23 @@ class CompatibilityUiState {
     isPremium: isPremium,
   );
 
-  /// The reading for [them], composing it if it is new.
+  /// Every saved reading, recomposed in the language being read now.
   ///
-  /// A previously revealed match is returned as stored rather than
-  /// recomposed, so its date — and anything else recorded at the time —
-  /// stays what the user first saw.
+  /// The list on the tab shows a name, a verdict and a score, all of
+  /// which come out of the composer — so it has to go through the same
+  /// recomposition as [matchBetween] or the list stays in the language
+  /// the readings were first revealed in.
+  List<CompatibilityMatch> get savedReadings => [
+    for (final match in saved)
+      CompatibilityComposer.compose(
+        you: match.you,
+        them: match.them,
+        now: match.createdAt,
+        copy: copy,
+      ),
+  ];
+
+  /// The reading for [them], composed from what we know of them both.
   CompatibilityMatch? matchWith(MatchPerson them) {
     final me = you;
     if (me == null) return null;
@@ -89,10 +101,33 @@ class CompatibilityUiState {
   /// unlocking one would silently unlock the other. Order is kept
   /// because the reading is directional: who wants it more is not a
   /// symmetric question.
+  /// ## A stored reading is recomposed, not replayed
+  ///
+  /// The prose is derived data: the same two birth dates and the same
+  /// copy book always compose the same reading. It is persisted so the
+  /// tab can list matches without recomputing them, but the stored
+  /// *words* are not the source of truth — the two people are.
+  ///
+  /// So a saved match is recomposed from its own stored people, which is
+  /// what makes an in-app language change reach readings the user
+  /// revealed before it. Replaying the stored lines instead left a
+  /// Ukrainian reader looking at their own history in English, with no
+  /// way to convert it short of deleting and re-revealing.
+  ///
+  /// `createdAt` is passed back in as `now`, so the date — and anything
+  /// else genuinely recorded at the time rather than computed from it —
+  /// stays what the user first saw. Every score is a pure function of
+  /// the two charts, so nothing else can move.
   CompatibilityMatch matchBetween(MatchPerson first, MatchPerson second) {
     final id = '${first.key}|${second.key}';
     for (final match in saved) {
-      if (match.id == id) return match;
+      if (match.id != id) continue;
+      return CompatibilityComposer.compose(
+        you: match.you,
+        them: match.them,
+        now: match.createdAt,
+        copy: copy,
+      );
     }
     return CompatibilityComposer.compose(
       you: first,

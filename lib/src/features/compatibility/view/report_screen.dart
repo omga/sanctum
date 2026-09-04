@@ -78,9 +78,16 @@ class ReportScreen extends ConsumerWidget {
               : _Locked(
                   report: data,
                   state: state,
-                  onBuy: () => ref
-                      .read(reportControllerProvider(match).notifier)
-                      .buy(),
+                  onUnlock: () {
+                    final controller = ref.read(
+                      reportControllerProvider(match).notifier,
+                    );
+                    // A subscriber's included report is claimed, not
+                    // bought: no store sheet, no purchase event.
+                    return state.isIncluded
+                        ? controller.claimIncluded()
+                        : controller.buy();
+                  },
                 ),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -107,12 +114,12 @@ class _Locked extends StatefulWidget {
   const _Locked({
     required this.report,
     required this.state,
-    required this.onBuy,
+    required this.onUnlock,
   });
 
   final RelationshipReport report;
   final ReportUiState state;
-  final Future<bool> Function() onBuy;
+  final Future<bool> Function() onUnlock;
 
   @override
   State<_Locked> createState() => _LockedState();
@@ -121,10 +128,10 @@ class _Locked extends StatefulWidget {
 class _LockedState extends State<_Locked> {
   bool _busy = false;
 
-  Future<void> _buy() async {
+  Future<void> _unlock() async {
     if (_busy) return;
     setState(() => _busy = true);
-    await widget.onBuy();
+    await widget.onUnlock();
     // The provider invalidates itself on success, which rebuilds this
     // widget out of existence — so only a cancellation or a failure
     // reaches here with the widget still mounted.
@@ -137,6 +144,7 @@ class _LockedState extends State<_Locked> {
     final type = context.type;
     final colors = context.colors;
     final product = widget.state.product;
+    final included = widget.state.isIncluded;
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
@@ -155,14 +163,44 @@ class _LockedState extends State<_Locked> {
           l10n.reportSubtitle(
             widget.report.match.pairing,
             widget.report.match.overall,
-            widget.report.match.verdict,
+            verdictLabel(widget.report.match.verdict, l10n),
           ),
           style: type.label.copyWith(color: colors.gold),
         ),
         const SizedBox(height: SanctumSpacing.xl),
-        Text(l10n.reportLockedBody, style: type.bodyLarge),
+        Text(
+          // The free-tier line ends on "Yours to keep — no subscription",
+          // which is a fine thing to say to somebody deciding whether to
+          // subscribe and an insult to somebody who just did.
+          included ? l10n.reportLockedBodySubscriber : l10n.reportLockedBody,
+          style: type.bodyLarge,
+        ),
         const SizedBox(height: SanctumSpacing.xxl),
-        if (product == null)
+        if (included) ...[
+          Text(
+            l10n.reportIncludedBadge.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: type.caption.copyWith(
+              color: colors.gold,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: SanctumSpacing.md),
+          SanctumButton(
+            label: l10n.reportIncludedOpen,
+            icon: Icons.menu_book_outlined,
+            expand: true,
+            onPressed: _busy ? null : _unlock,
+          ),
+          const SizedBox(height: SanctumSpacing.md),
+          Text(
+            // Says it is being spent, before it is spent. They only get
+            // one, and finding that out afterwards is the bad version.
+            l10n.reportIncludedNote,
+            textAlign: TextAlign.center,
+            style: type.caption,
+          ),
+        ] else if (product == null)
           Text(
             l10n.reportUnavailable,
             style: type.bodyMedium.copyWith(color: colors.textSecondary),
@@ -172,7 +210,7 @@ class _LockedState extends State<_Locked> {
             label: l10n.reportBuy(product.displayPrice),
             icon: Icons.menu_book_outlined,
             expand: true,
-            onPressed: _busy ? null : _buy,
+            onPressed: _busy ? null : _unlock,
           ),
           const SizedBox(height: SanctumSpacing.md),
           Text(
@@ -216,7 +254,7 @@ class _Document extends StatelessWidget {
           l10n.reportSubtitle(
             match.pairing,
             match.overall,
-            match.verdict,
+            verdictLabel(match.verdict, l10n),
           ),
           style: type.label.copyWith(color: colors.gold),
         ),

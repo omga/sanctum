@@ -13,6 +13,7 @@ import 'package:sanctum/src/features/quiz/view/quiz_screen.dart';
 import 'package:sanctum/src/features/rituals/view/ritual_screen.dart';
 import 'package:sanctum/src/features/sessions/view/session_player_screen.dart';
 import 'package:sanctum/src/features/sessions/view/sessions_screen.dart';
+import 'package:sanctum/src/features/settings/view/settings_screen.dart';
 import 'package:sanctum/src/features/shell/branch_switcher.dart';
 import 'package:sanctum/src/features/shell/sanctum_shell.dart';
 import 'package:sanctum/src/features/today/view/today_screen.dart';
@@ -276,6 +277,17 @@ class QuizRoute extends GoRouteData with $QuizRoute {
   Widget build(BuildContext context, GoRouterState state) => QuizScreen(
     onFinished: () => const PayoffRoute().go(context),
   );
+}
+
+/// Settings, reached from the moon on the Today screen.
+@TypedGoRoute<SettingsRoute>(path: '/settings')
+class SettingsRoute extends GoRouteData with $SettingsRoute {
+  /// Creates the route.
+  const SettingsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const SettingsScreen();
 }
 
 /// First-run onboarding, outside the shell so it has no nav bar.

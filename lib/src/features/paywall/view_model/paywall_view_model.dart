@@ -95,17 +95,25 @@ class PaywallController extends _$PaywallController {
   FutureOr<void> build() {}
 
   /// Records that the paywall was displayed.
+  ///
+  /// The write is issued through objects captured up front so it lands
+  /// even if the screen closes mid-flight — this feeds the cooldown, and
+  /// an impression the trigger never hears about is one the user gets
+  /// asked again for tomorrow.
   Future<void> recordShown() async {
-    await ref
-        .read(settingsRepositoryProvider)
-        .recordPaywallShown(ref.read(clockProvider).now());
-    ref.invalidate(paywallSignalsProvider);
+    final settings = ref.read(settingsRepositoryProvider);
+    final now = ref.read(clockProvider).now();
+
+    await settings.recordPaywallShown(now);
+    if (ref.mounted) ref.invalidate(paywallSignalsProvider);
   }
 
   /// Records a dismissal, which lengthens the next cooldown.
   Future<void> recordDismissed() async {
-    await ref.read(settingsRepositoryProvider).recordPaywallDismissed();
-    ref.invalidate(paywallSignalsProvider);
+    final settings = ref.read(settingsRepositoryProvider);
+
+    await settings.recordPaywallDismissed();
+    if (ref.mounted) ref.invalidate(paywallSignalsProvider);
   }
 
   /// Buys [plan].
@@ -116,14 +124,22 @@ class PaywallController extends _$PaywallController {
   /// close, and doing any of those on a cancellation is what this
   /// method's `Future<void>` version caused.
   Future<bool> purchase(SubscriptionPlan plan) async {
+    // Read before the await: this provider auto-disposes and a store
+    // sheet can outlive the screen that opened it, so a `ref.read` on
+    // the far side would throw on a disposed `Ref`. The writes to
+    // `state` are guarded for the same reason — a screen that is gone
+    // does not need a state update, and skipping one is harmless.
+    final store = ref.read(subscriptionRepositoryProvider);
+
     state = const AsyncLoading();
-    final result = await ref
-        .read(subscriptionRepositoryProvider)
-        .purchase(plan.id);
-    state = switch (result) {
-      Ok() => const AsyncData(null),
-      Err(:final failure) => AsyncError(failure, StackTrace.current),
-    };
+    final result = await store.purchase(plan.id);
+
+    if (ref.mounted) {
+      state = switch (result) {
+        Ok() => const AsyncData(null),
+        Err(:final failure) => AsyncError(failure, StackTrace.current),
+      };
+    }
     return switch (result) {
       Ok(:final value) => value,
       Err() => false,
@@ -137,12 +153,17 @@ class PaywallController extends _$PaywallController {
   /// looks exactly like a broken button otherwise, which is how this
   /// shipped the first time.
   Future<bool> restore() async {
+    final store = ref.read(subscriptionRepositoryProvider);
+
     state = const AsyncLoading();
-    final result = await ref.read(subscriptionRepositoryProvider).restore();
-    state = switch (result) {
-      Ok() => const AsyncData(null),
-      Err(:final failure) => AsyncError(failure, StackTrace.current),
-    };
+    final result = await store.restore();
+
+    if (ref.mounted) {
+      state = switch (result) {
+        Ok() => const AsyncData(null),
+        Err(:final failure) => AsyncError(failure, StackTrace.current),
+      };
+    }
     return switch (result) {
       Ok(:final value) => value,
       Err() => false,

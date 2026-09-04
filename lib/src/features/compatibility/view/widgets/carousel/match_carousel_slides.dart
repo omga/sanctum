@@ -74,7 +74,7 @@ class _CoverSlide extends StatelessWidget {
           const SizedBox(height: SanctumSpacing.xl),
           ScoreDial(
             score: match.overall,
-            verdict: match.verdict,
+            verdict: verdictLabel(match.verdict, context.l10n),
             yours: match.you.sign.element,
             theirs: match.them.sign.element,
             size: 214,

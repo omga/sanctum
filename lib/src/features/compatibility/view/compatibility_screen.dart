@@ -202,7 +202,7 @@ class _BrowserState extends State<_Browser> {
         if (state.saved.isNotEmpty) ...[
           const SizedBox(height: SanctumSpacing.xxl),
           _SectionTitle(label: context.l10n.matchYourMatches),
-          for (final match in state.saved) ...[
+          for (final match in state.savedReadings) ...[
             const SizedBox(height: SanctumSpacing.md),
             _SavedMatchTile(match: match),
           ],

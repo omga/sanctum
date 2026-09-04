@@ -26,6 +26,7 @@ final _everyEvent = <AnalyticsEvent>[
   const AnalyticsEvent.matchInviteSent(),
   AnalyticsEvent.matchRevealed(access: 'needsInvite'),
   const AnalyticsEvent.matchShared(),
+  AnalyticsEvent.reportUnlocked(access: 'included'),
   const AnalyticsEvent.cardRevealed(),
   AnalyticsEvent.energyCheckedIn(level: 'radiant'),
   AnalyticsEvent.sessionStarted(sessionId: 'tone-528'),

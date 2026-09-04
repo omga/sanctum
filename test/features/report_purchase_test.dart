@@ -29,12 +29,14 @@ final CompatibilityMatch _match = CompatibilityComposer.compose(
 /// An in-memory receipt store.
 class _Reports implements ReportRepository {
   _Reports({this.owned = const {}, this.failsToRead = false,
-      this.failsToWrite = false});
+      this.failsToWrite = false, this.included});
 
   Set<String> owned;
   bool failsToRead;
   bool failsToWrite;
+  String? included;
   int writes = 0;
+  int claims = 0;
 
   @override
   Future<Result<Set<String>>> purchased() async => failsToRead
@@ -46,6 +48,19 @@ class _Reports implements ReportRepository {
     if (failsToWrite) return const Result.err(StorageFailure('nope'));
     writes++;
     owned = {...owned, matchId};
+    return const Result.ok(null);
+  }
+
+  @override
+  Future<Result<String?>> includedReportId() async => failsToRead
+      ? const Result.err(StorageFailure('nope'))
+      : Result.ok(included);
+
+  @override
+  Future<Result<void>> claimIncludedReport(String matchId) async {
+    if (failsToWrite) return const Result.err(StorageFailure('nope'));
+    claims++;
+    included ??= matchId;
     return const Result.ok(null);
   }
 }
@@ -136,7 +151,11 @@ void main() {
 
     expect(bought, isTrue);
     expect(reports.owned, contains(_match.id));
-    expect(h.analytics.names, ['purchase_started', 'purchase_completed']);
+    expect(h.analytics.names, [
+      'purchase_started',
+      'purchase_completed',
+      'report_unlocked',
+    ]);
 
     final state = await h.container.read(
       reportControllerProvider(_match).future,
@@ -234,17 +253,112 @@ void main() {
     expect(bought, isFalse);
   });
 
-  test('a subscriber is still offered the report', () async {
-    final h = _harness(
-      reports: _Reports(),
-      store: _Store(),
-      isPremium: true,
-    );
-    final state = await h.container.read(
-      reportControllerProvider(_match).future,
-    );
+  group("a subscriber's included report", () {
+    test('is offered instead of a price', () async {
+      // The moment this exists for: they subscribed on the compatibility
+      // lock card seconds ago, and a price at the foot of the reading
+      // they just paid for reads as a bait and switch.
+      final h = _harness(
+        reports: _Reports(),
+        store: _Store(),
+        isPremium: true,
+      );
+      final state = await h.container.read(
+        reportControllerProvider(_match).future,
+      );
 
-    expect(state.isOwned, isFalse);
-    expect(state.canBuy, isTrue);
+      expect(state.isIncluded, isTrue);
+      expect(state.canBuy, isFalse);
+    });
+
+    test('claiming grants it without a purchase', () async {
+      final reports = _Reports();
+      final store = _Store();
+      final h = _harness(reports: reports, store: store, isPremium: true);
+      await h.container.read(reportControllerProvider(_match).future);
+
+      final claimed = await h.container
+          .read(reportControllerProvider(_match).notifier)
+          .claimIncluded();
+
+      expect(claimed, isTrue);
+      expect(reports.included, _match.id);
+      // No store call, and emphatically no purchase event: counting this
+      // as a sale would inflate the number the SKU is judged on.
+      expect(store.attempts, 0);
+      expect(h.analytics.names, ['report_unlocked']);
+      expect(
+        h.analytics.events.single.properties['access'],
+        'included',
+      );
+
+      final state = await h.container.read(
+        reportControllerProvider(_match).future,
+      );
+      expect(state.isOwned, isTrue);
+    });
+
+    test('is spent once — the second report costs money', () async {
+      final h = _harness(
+        reports: _Reports(included: 'person:someone-else|celeb:x'),
+        store: _Store(),
+        isPremium: true,
+      );
+      final state = await h.container.read(
+        reportControllerProvider(_match).future,
+      );
+
+      expect(state.isIncluded, isFalse);
+      expect(state.canBuy, isTrue);
+    });
+
+    test('cannot be claimed by a free user', () async {
+      final reports = _Reports();
+      final h = _harness(reports: reports, store: _Store());
+      await h.container.read(reportControllerProvider(_match).future);
+
+      final claimed = await h.container
+          .read(reportControllerProvider(_match).notifier)
+          .claimIncluded();
+
+      expect(claimed, isFalse);
+      expect(reports.claims, 0);
+      expect(h.analytics.names, isEmpty);
+    });
+
+    test('a write failure grants nothing', () async {
+      final h = _harness(
+        reports: _Reports(failsToWrite: true),
+        store: _Store(),
+        isPremium: true,
+      );
+      await h.container.read(reportControllerProvider(_match).future);
+
+      final claimed = await h.container
+          .read(reportControllerProvider(_match).notifier)
+          .claimIncluded();
+
+      expect(claimed, isFalse);
+      expect(h.analytics.names, isEmpty);
+      expect(
+        h.container.read(reportControllerProvider(_match)).hasError,
+        isTrue,
+      );
+    });
+  });
+
+  test('a bought report reports both the sale and the unlock', () async {
+    final h = _harness(reports: _Reports(), store: _Store());
+    await h.container.read(reportControllerProvider(_match).future);
+    await h.container
+        .read(reportControllerProvider(_match).notifier)
+        .buy();
+
+    expect(h.analytics.names, [
+      'purchase_started',
+      'purchase_completed',
+      'report_unlocked',
+    ]);
+    expect(h.analytics.events.last.properties['access'], 'purchase');
   });
 }

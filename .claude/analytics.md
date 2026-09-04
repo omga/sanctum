@@ -131,6 +131,15 @@ Report figures were never affected.
 | `match_invite_sent` | — | [`compatibility_view_model.dart:162`](../lib/src/features/compatibility/view_model/compatibility_view_model.dart:162) |
 | `match_revealed` | `access` | [`compatibility_view_model.dart:172`](../lib/src/features/compatibility/view_model/compatibility_view_model.dart:172) — **misreports, see §5.** |
 | `match_shared` | — | **Nowhere.** See §5. |
+| `report_unlocked` | `access` | [`report_view_model.dart`](../lib/src/features/compatibility/view_model/report_view_model.dart) — a report opened for the first time. |
+
+`report_unlocked`'s `access` is `purchase` or `included`. The two are not
+interchangeable: a report claimed with a subscriber's one included slot
+is owned but was never bought, so it must never reach
+`purchase_completed` — that would count a giveaway as a sale on the
+number the whole SKU is judged by. Report *unlocks* are this event;
+report *revenue* is `purchase_completed` filtered to
+`sanctum.report.relationship`.
 
 `match_invite_sent` reports that the user **picked a target app in the
 share sheet**, not that a message was sent. Nothing on either platform
@@ -207,6 +216,10 @@ paywall split is currently unmeasurable, and the value duplicates what
 
 - **Second-person entry.** `match_started(source:)` marks intent; nothing
   reports that a name and date were actually submitted.
+- **Language changes.** The in-app picker writes a preference nothing
+  reports, so there is no way to see which locale people actually choose
+  versus which one their device gave them — which is the number that
+  says where the next translation wave should go.
 - **The invite-gate impression.** `match_invite_sent` exists, but nothing
   reports that the gate was *shown*, so there is a numerator with no
   denominator — invite counts, not an invite rate.

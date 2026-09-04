@@ -96,6 +96,17 @@ class AnalyticsEvent {
   AnalyticsEvent.matchRevealed({required String access})
     : this._('match_revealed', {'access': access});
 
+  /// A relationship report was opened for the first time, and how it
+  /// was come by.
+  ///
+  /// [access] is `purchase` or `included`. The two are not
+  /// interchangeable: a report claimed with a subscriber's included slot
+  /// is owned but was never bought, so it must not reach
+  /// [AnalyticsEvent.purchaseCompleted] — and without this event there
+  /// is no way to count the claims at all.
+  AnalyticsEvent.reportUnlocked({required String access})
+    : this._('report_unlocked', {'access': access});
+
   /// The match card went to the share sheet.
   const AnalyticsEvent.matchShared() : this._('match_shared');
 

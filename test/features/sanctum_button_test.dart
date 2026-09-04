@@ -52,6 +52,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a long label never overflows the button', (tester) async {
+    // The label is translated and nothing else bounds it: a Row child
+    // sized to its own text simply overflows. Russian and Ukrainian run
+    // 20–30% longer than the English these widths were eyeballed
+    // against, so this is not hypothetical.
+    tester.view.physicalSize = const Size(640, 1136);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      testApp(
+        Scaffold(
+          body: SanctumButton(
+            label: r'Розблокувати повний звіт про сумісність · 3,99 $',
+            icon: Icons.menu_book_outlined,
+            expand: true,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a disabled button does not fire', (tester) async {
     final enabled = ValueNotifier<bool>(false);
     addTearDown(enabled.dispose);

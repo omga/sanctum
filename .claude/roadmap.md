@@ -2,6 +2,7 @@
 
 Written 2026-08-19, the day the first real Play purchase went through.
 Restructured 2026-09-04, when a third revenue tier turned up.
+**§1 shipped the same day** — see the note on it below.
 
 Sections are ranked by how much each changes the business. That is **not
 the order to build them in** — the item with the highest ceiling (§2) is
@@ -9,15 +10,20 @@ the one that should not be started next.
 
 ### Order of work
 
-1. **§3, the days-not-weeks items.** The funnel inversion and the
-   reframing come first: they cost days, reuse everything already built,
-   and sharpen the hook that the whole of §4 depends on.
-2. **§1, the relationship one-off.** A week or two, one consumable SKU,
-   no backend. Answers whether relationship intent monetises beyond the
-   subscription.
+1. ~~**§3, the days-not-weeks items.**~~ **Still the next thing.** §1 was
+   built ahead of it, which was out of order — the reframing, the
+   paywall headline personalised from quiz answers, the price test and
+   the trial-length test are all still open, all still days rather than
+   weeks, and all still multiply whatever traffic §4 produces. The
+   funnel inversion was considered and deferred; see §3.1.
+2. ~~**§1, the relationship one-off.**~~ **Shipped 2026-09-04.** One
+   consumable SKU, no backend, no ledger. It has produced no revenue
+   data yet, so the question it was built to answer — whether
+   relationship intent monetises beyond the subscription — is still
+   open.
 3. **§2, the advisor.** The largest build here. Worth starting once §1
    has shown the intent is real and has produced actual user questions
-   to design a prompt around.
+   to design a prompt around. It has not yet done either.
 
 Doing §3 and §1 first is not a delay to §2. It is what turns §2 from a
 guess into a decision — and if the intent turns out not to be there, it
@@ -81,6 +87,30 @@ monthly plan.
 ## 1. The relationship one-off — the near-term revenue line
 
 **A deep "You & X" report about one named person, sold once.**
+
+> **Shipped 2026-09-04.** `sanctum.report.relationship`, a consumable,
+> priced from the store. What follows is the reasoning it was built on,
+> kept because the decisions are still live. Three things changed on
+> contact with reality:
+>
+> - **A subscriber's first report is included.** Not planned, and not
+>   generosity: the compatibility lock card sells Premium as "reads you
+>   against anyone, as often as you like", so a second price at the foot
+>   of the reading they just paid for reads as a bait and switch. One
+>   included report removes that moment; the second onwards is still
+>   sold, so subscribers still meet the price. See `handoff.md`.
+> - **The offer is never shown on a first reveal.** That one is bought
+>   with an invite, and the invite is the acquisition mechanic — putting
+>   a purchase ask on the same screen cannibalises it.
+> - **Consumables do not restore.** A reinstall loses every purchased
+>   report. The locked screen says so before the money changes hands,
+>   which is the honest minimum and not a solution. Deciding between a
+>   backend that maps customers to pairings and granting on request is
+>   still open, and should be settled before the volume makes it support
+>   work.
+>
+> Nothing about the revenue question is answered yet — no report has
+> been sold to a real user.
 
 ### Why this ranks above the advisor
 
@@ -434,6 +464,29 @@ Only after §1–§3.
    good days marked. `TransitCalculator` already knows this; the app
    just never shows more than tomorrow. This is the strongest retention
    surface that requires no new engine.
+
+   Asked about again 2026-09-04 as "yesterday, tomorrow, week, month on
+   the main screen, all Premium". **Week and month, yes — this item.
+   Yesterday, no, and tomorrow is not yours to sell.**
+
+   *Yesterday* has close to negative value: nobody needs telling what
+   yesterday was going to be like, and a prediction shown after the fact
+   invites the reader to check it against what happened. Every other
+   honesty decision in this app — quiet days admitted, captions naming
+   real work, a score floor that is kind but not a lie — exists to avoid
+   exactly that.
+
+   *Tomorrow already ships, free.* `transit_panel.dart` calls it "the
+   only honest open loop the app has"; it is why there is a point in
+   opening the app on a particular day. Moving it behind the paywall
+   takes something users already have, which is how a retention feature
+   becomes a one-star review.
+
+   Worth naming why a month of transits is fine when §1 refuses a
+   ten-year relationship forecast: **a transit is where Saturn will be.**
+   That is astronomy, pinned in tests against documented events. A
+   long-range relationship forecast is a claim about two people. Same
+   shape on screen, completely different epistemics.
 4. **Energy insights over time.** The paywall already advertises
    "insights" and `EnergyPatternCalculator` already refuses to speak
    without enough data, which is the hard part. What is missing is a
@@ -470,6 +523,28 @@ Being clear about these saves more time than any item above.
 - **A second app.** Already decided against on 2026-08-16 and still
   right: splitting a two-person team's posting volume is the one cost
   the organic strategy cannot absorb.
+- **Profiles for other people, with their own daily horoscope.**
+  Proposed 2026-09-04 as avatars at the top of Today, switching whose
+  day you are reading. Declined, for the reason §5.1 already gives about
+  the solo birth-chart report: it takes the input that produces the
+  highest-intent product in the app — their birth date, inside a
+  compatibility reading — and points it at a weaker one. Somebody
+  checking their partner's horoscope is a lower-intent buyer than
+  somebody asking about *them and their partner*.
+
+  It also breaks the retention machinery rather than extending it. The
+  daily notification carries one composed transit line and fires at the
+  hour one `rhythm` answer chose; streaks are one person's. With N
+  profiles, neither has an answer. And Today leads with the transit
+  precisely because "it is the only thing on this screen that is true of
+  *this* user on *this* day" — a switcher turns a ritual into a lookup.
+
+  **The narrow version is worth building instead:** a "their day" section
+  inside a compatibility reading, where the chart is already loaded and
+  the intent is already higher. No profile system, no notification
+  redesign, no change to Today. If avatars are wanted, source them from
+  `CompatibilityState.matches` — the people already checked — rather
+  than inventing a profile concept to hold them.
 
 ---
 

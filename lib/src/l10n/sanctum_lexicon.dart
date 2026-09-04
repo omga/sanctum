@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/energy_check_in.dart';
@@ -8,6 +10,8 @@ import 'package:sanctum/src/domain/models/relationship_report.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/models/subscription_plan.dart';
 import 'package:sanctum/src/domain/models/zodiac_sign.dart';
+import 'package:sanctum/src/domain/services/compatibility_calculator.dart';
+import 'package:sanctum/src/domain/services/report_composer.dart';
 import 'package:sanctum/src/l10n/generated/app_localizations.dart';
 
 /// How the domain's enums are spoken to a user.
@@ -173,6 +177,43 @@ extension PlanetL10n on Planet {
     Planet.mars => l10n.planetMars,
     Planet.jupiter => l10n.planetJupiter,
     Planet.saturn => l10n.planetSaturn,
+  };
+}
+
+/// The one-word verdict for a score band, in the reader's language.
+///
+/// Keyed off [CompatibilityCalculator.verdictFor]'s own output rather
+/// than a second switch on the same thresholds, exactly as the report's
+/// closing paragraph is — two switches would be free to drift, and the
+/// day they did, a score would show one word on the dial and select the
+/// paragraph for another.
+///
+/// It was English in every language until now: the verdict is computed
+/// in `domain/`, which cannot reach `AppLocalizations`, so it travelled
+/// as a bare string and was rendered as one.
+String verdictLabel(String verdict, AppLocalizations l10n) =>
+    switch (ReportComposer.verdictKey(verdict)) {
+      'rare' => l10n.verdictRare,
+      'strong' => l10n.verdictStrong,
+      'charged' => l10n.verdictCharged,
+      'workable' => l10n.verdictWorkable,
+      _ => l10n.verdictHardWon,
+    };
+
+/// A language's name, written in that language.
+///
+/// Endonyms, deliberately: somebody looking for Ukrainian is looking for
+/// "Українська", not for whatever the language they cannot read calls
+/// it. That also means these are *not* localised — they read the same in
+/// every locale, which is why they are constants here rather than ARB
+/// keys, and why a translator is never asked to translate them.
+extension SanctumLanguageName on Locale {
+  /// The language's own name for itself.
+  String get endonym => switch (languageCode) {
+    'uk' => 'Українська',
+    'ru' => 'Русский',
+    'es' => 'Español',
+    _ => 'English',
   };
 }
 

@@ -6,7 +6,11 @@ enum ReportAccess {
   /// They own it. Show the document.
   owned,
 
-  /// They do not. Show the offer.
+  /// A subscriber who has not spent their included report yet. Show the
+  /// document behind one deliberate tap, at no charge.
+  includedWithPremium,
+
+  /// They do not own it and have nothing to spend. Show the offer.
   forSale,
 }
 
@@ -32,41 +36,92 @@ enum ReportAccess {
 /// bought once and granted forever here, because the customer's mental
 /// model is that they bought *a document*, and a document you can no
 /// longer open is a refund request.
+/// ## A subscriber's first report is included
+///
+/// Not because the report is a subscription feature — it is not, and
+/// `roadmap.md` §1 exists to find out whether it sells on its own — but
+/// because of where the second ask landed without it. The compatibility
+/// lock card promises that Premium "reads you against anyone, as often
+/// as you like"; a user who buys on that promise reaches the reading
+/// they just paid for and finds a second price at the bottom of it,
+/// seconds later, on the same screen. That reads as a bait and switch
+/// whatever the SKU's merits, and freshly-converted subscribers are both
+/// the most alert to it and the most likely to refund.
+///
+/// One included report removes that moment and keeps the revenue line:
+/// the *second* report a subscriber wants is still sold, and by then the
+/// ask reads as "you have had one" rather than "you just paid".
+///
+/// **Once ever, not once per period.** A renewing allowance is a credit
+/// ledger — balances, expiry, refunds, what happens on a second device —
+/// which §1 rejects explicitly. The storage is a single nullable id
+/// rather than a count precisely because there is exactly one, and the
+/// copy says "your first report is included" rather than naming a rate,
+/// so becoming more generous later never means taking something away.
+///
+/// The experiment survives this. The offer appears on any *revealed*
+/// reading, including the one a non-subscriber unlocks with an invite,
+/// so the price-elasticity question is answered where nearly all the
+/// traffic is — and subscribers still meet the price on their second
+/// report.
 abstract final class ReportGate {
-  /// Whether a Sanctum Premium subscription includes the one-off reports.
-  ///
-  /// **False, deliberately.** `roadmap.md` §1 exists to answer whether
-  /// relationship intent monetises *beyond* the subscription. If Premium
-  /// included reports then no subscriber would ever buy one, and the
-  /// only conversion data would come from non-subscribers — which is the
-  /// half of the audience least likely to pay for anything, and cannot
-  /// answer the question the SKU was built to ask.
-  ///
-  /// It is a named constant rather than an inlined `false` because it is
-  /// a pricing decision, not a fact about the code: flipping it is one
-  /// line here plus copy on the offer card, and the tests below pin both
-  /// behaviours so the flip cannot break quietly.
-  static const bool premiumIncludesReports = false;
-
   /// Decides access to the report for [matchId].
+  ///
+  /// [includedReportId] is the pairing a subscriber spent their included
+  /// report on, or null if they have not spent it. An id rather than a
+  /// flag so that "what do they own" stays one question, and so a
+  /// claimed report can be told from a bought one in the data.
   static ReportAccess decide({
     required String matchId,
     required Set<String> purchasedIds,
+    required String? includedReportId,
     required bool isPremium,
   }) {
-    if (purchasedIds.contains(matchId)) return ReportAccess.owned;
-    if (isPremium && premiumIncludesReports) return ReportAccess.owned;
+    if (isOwned(
+      matchId: matchId,
+      purchasedIds: purchasedIds,
+      includedReportId: includedReportId,
+    )) {
+      return ReportAccess.owned;
+    }
+
+    // Only offered while it is unspent. A subscriber who has already
+    // claimed theirs sees the price, which is the whole point of
+    // including one rather than all of them.
+    if (isPremium && includedReportId == null) {
+      return ReportAccess.includedWithPremium;
+    }
+
     return ReportAccess.forSale;
   }
 
-  /// Whether [matchId] has been bought.
+  /// Whether [matchId] is already the user's, however they got it.
   ///
-  /// Distinct from [decide] on purpose: a subscriber who has not bought
-  /// this report still has not bought it, and the day
-  /// [premiumIncludesReports] flips, the receipt history must not start
-  /// claiming purchases that never happened.
+  /// **A claimed report is not given back when a subscription lapses.**
+  /// Rule one of this gate is that owned stays owned: clawing back a
+  /// document somebody has read is what produces refunds and one-star
+  /// reviews. It does mean a month's subscription can be turned into a
+  /// permanent report, which is the same small, deliberate leak the free
+  /// reveal allowance already accepts.
+  static bool isOwned({
+    required String matchId,
+    required Set<String> purchasedIds,
+    required String? includedReportId,
+  }) => purchasedIds.contains(matchId) || includedReportId == matchId;
+
+  /// Whether [matchId] was paid for in money.
+  ///
+  /// Distinct from [isOwned] on purpose: a report claimed with a
+  /// subscription's included slot is owned but was never bought, and the
+  /// receipt history must not claim a purchase that never happened.
   static bool isPurchased({
     required String matchId,
     required Set<String> purchasedIds,
   }) => purchasedIds.contains(matchId);
+
+  /// Whether a subscriber still has their included report to spend.
+  static bool hasIncludedReport({
+    required bool isPremium,
+    required String? includedReportId,
+  }) => isPremium && includedReportId == null;
 }

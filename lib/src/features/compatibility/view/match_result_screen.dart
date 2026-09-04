@@ -271,7 +271,7 @@ class _Result extends StatelessWidget {
                   Center(
                     child: ScoreDial(
                       score: match.overall,
-                      verdict: match.verdict,
+                      verdict: verdictLabel(match.verdict, context.l10n),
                       yours: match.you.sign.element,
                       theirs: match.them.sign.element,
                       animate: !_locked,
@@ -537,12 +537,15 @@ class _ReportOffer extends ConsumerWidget {
     // same place they bought it, rather than being sold it twice.
     final state = ref.watch(reportControllerProvider(match)).value;
     final owned = state?.isOwned ?? false;
+    final included = state?.isIncluded ?? false;
     final price = state?.product?.displayPrice;
 
-    // No price and nothing owned means the store has nothing to sell —
-    // a build with no products, or a region without them. Show no offer
-    // at all rather than a button that cannot work.
-    if (!owned && price == null) return const SizedBox.shrink();
+    // Nothing owned, nothing included and no price means the store has
+    // nothing to sell — a build with no products, or a region without
+    // them. Show no offer at all rather than a button that cannot work.
+    if (!owned && !included && price == null) {
+      return const SizedBox.shrink();
+    }
 
     return GlassCard(
       child: Column(
@@ -562,13 +565,42 @@ class _ReportOffer extends ConsumerWidget {
           ),
           const SizedBox(height: SanctumSpacing.lg),
           SanctumButton(
-            label: owned
+            label: owned || included
                 ? l10n.reportOfferAction
-                : l10n.reportOfferAction2(price!),
+                : l10n.reportOfferUnlock,
             icon: Icons.menu_book_outlined,
             expand: true,
             onPressed: () => unawaited(ReportScreen.open(context, match)),
           ),
+
+          // The qualifier goes under the button, not inside it. This is
+          // not a buy button — it opens the report screen, where the
+          // price sits beside the control that actually reaches the
+          // store — so nothing here has to carry a price to be
+          // compliant, and a label with a price appended is the thing
+          // that overflowed on a narrow phone.
+          //
+          // The price is still shown, because a card that hides it until
+          // the next screen is the shape of a bait, and this product's
+          // whole posture is the opposite.
+          //
+          // A subscriber who still has their included report never sees
+          // a price here at all. That ask, on this screen, seconds after
+          // they paid for the reading above it, is the entire reason the
+          // included report exists.
+          if (!owned) ...[
+            const SizedBox(height: SanctumSpacing.sm),
+            Center(
+              child: Text(
+                included
+                    ? l10n.reportIncludedBadge
+                    : l10n.reportOfferPrice(price!),
+                style: type.caption.copyWith(
+                  color: included ? colors.gold : colors.textSecondary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

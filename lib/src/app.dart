@@ -34,6 +34,17 @@ GoRouter appRouter(Ref ref) {
   return buildRouter(startAtOnboarding: needsOnboarding);
 }
 
+/// The locale the whole app is shown in.
+///
+/// The *same* provider the content catalogue resolves from, handed to
+/// `MaterialApp` as an explicit `locale`. Letting Flutter resolve the
+/// widget tree from the platform while the JSON resolved from a stored
+/// preference is exactly the disagreement `SanctumLocales` was written
+/// to make impossible — English chrome around Ukrainian readings, with
+/// nothing in the type system to notice.
+@Riverpod(keepAlive: true)
+Locale appLocale(Ref ref) => ref.watch(contentLocaleProvider);
+
 /// The root widget.
 ///
 /// Deliberately thin: it owns the theme, the router, and the one listener
@@ -107,12 +118,16 @@ class _SanctumAppState extends ConsumerState<SanctumApp> {
   @override
   Widget build(BuildContext context) {
     final onboarding = ref.watch(needsOnboardingProvider);
+    // Held for the same reason as the onboarding answer: rendering in
+    // the device's language and swapping to the chosen one a frame later
+    // is worse than an imperceptible wait on one more preference read.
+    final language = ref.watch(languagePreferenceProvider);
 
     // Hold the first frame until the start destination is known. This is
     // a single preference read, so the wait is imperceptible — and it
     // avoids the alternative, which is showing /today and then yanking
     // the user to onboarding a frame later.
-    if (onboarding.isLoading) {
+    if (onboarding.isLoading || language.isLoading) {
       return MaterialApp(
         theme: SanctumTheme.nocturne(),
         debugShowCheckedModeBanner: false,
@@ -131,6 +146,7 @@ class _SanctumAppState extends ConsumerState<SanctumApp> {
       // The same list the content catalogue resolves against, so the
       // JSON and the ARB strings cannot end up in different languages.
       supportedLocales: SanctumLocales.supported,
+      locale: ref.watch(appLocaleProvider),
       routerConfig: ref.watch(appRouterProvider),
     );
   }

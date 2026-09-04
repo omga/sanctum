@@ -274,6 +274,10 @@ class _Benefits extends StatelessWidget {
   ) {
     final l10n = context.l10n;
     return [
+      // First, because the compatibility lock card is what sells most
+      // of these subscriptions — and until now the screen it sent people
+      // to did not mention compatibility at all.
+      (icon: Icons.favorite_outline, text: l10n.paywallBenefitMatches),
       (icon: Icons.graphic_eq, text: l10n.paywallBenefitSessions),
       (icon: Icons.brightness_2_outlined, text: l10n.paywallBenefitRituals),
       (icon: Icons.auto_awesome, text: l10n.paywallBenefitOracle),

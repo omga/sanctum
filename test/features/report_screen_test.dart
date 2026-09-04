@@ -41,9 +41,10 @@ CompatibilityMatch _match({int? yourMinute, int? theirMinute}) =>
 
 /// A receipt store that owns whatever it is told to.
 class _Reports implements ReportRepository {
-  _Reports(this.owned);
+  _Reports(this.owned, {this.included});
 
   final Set<String> owned;
+  String? included;
 
   @override
   Future<Result<Set<String>>> purchased() async => Result.ok(owned);
@@ -51,6 +52,15 @@ class _Reports implements ReportRepository {
   @override
   Future<Result<void>> recordPurchase(String matchId) async =>
       const Result.ok(null);
+
+  @override
+  Future<Result<String?>> includedReportId() async => Result.ok(included);
+
+  @override
+  Future<Result<void>> claimIncludedReport(String matchId) async {
+    included ??= matchId;
+    return const Result.ok(null);
+  }
 }
 
 /// A store with one product and no sheet.
@@ -79,6 +89,8 @@ Future<void> _pump(
   WidgetTester tester,
   CompatibilityMatch match, {
   bool owned = true,
+  bool isPremium = false,
+  String? included,
   ReportProduct? product = const ReportProduct(
     id: 'sanctum.report.relationship',
     displayPrice: '£4.99',
@@ -105,12 +117,12 @@ Future<void> _pump(
           ),
         ),
         reportRepositoryProvider.overrideWithValue(
-          _Reports(owned ? {match.id} : const {}),
+          _Reports(owned ? {match.id} : const {}, included: included),
         ),
         subscriptionRepositoryProvider.overrideWithValue(
           _Store(product: product),
         ),
-        isPremiumProvider.overrideWithValue(false),
+        isPremiumProvider.overrideWithValue(isPremium),
       ],
       child: testApp(ReportScreen(match: match)),
     ),
@@ -246,6 +258,47 @@ void main() {
       // before the money changes hands rather than after.
       await _pump(tester, _match(), owned: false);
       expect(find.textContaining('stays on this phone'), findsOneWidget);
+    });
+  });
+
+  group('for a subscriber who still has their included report', () {
+    testWidgets('offers it instead of a price', (tester) async {
+      await _pump(tester, _match(), owned: false, isPremium: true);
+
+      expect(find.textContaining('INCLUDED WITH PREMIUM'), findsOneWidget);
+      expect(find.text('Open my included report'), findsOneWidget);
+      expect(find.textContaining('Unlock ·'), findsNothing);
+    });
+
+    testWidgets('does not say "no subscription" to a subscriber', (
+      tester,
+    ) async {
+      // The free-tier line ends on "Yours to keep — no subscription",
+      // which reads as a taunt to somebody who subscribed a minute ago.
+      await _pump(tester, _match(), owned: false, isPremium: true);
+      expect(find.textContaining('no subscription'), findsNothing);
+    });
+
+    testWidgets('says it is being spent, before it is spent', (tester) async {
+      // They only get one. Finding that out afterwards is the bad
+      // version of this feature.
+      await _pump(tester, _match(), owned: false, isPremium: true);
+      expect(find.textContaining('one-off each'), findsOneWidget);
+    });
+
+    testWidgets('shows the price again once it is spent elsewhere', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _match(),
+        owned: false,
+        isPremium: true,
+        included: 'person:someone-else|celeb:x',
+      );
+
+      expect(find.text('Unlock · £4.99'), findsOneWidget);
+      expect(find.textContaining('INCLUDED WITH PREMIUM'), findsNothing);
     });
   });
 }

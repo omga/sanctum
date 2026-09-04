@@ -45,6 +45,22 @@ abstract interface class ReportRepository {
   /// a fresh install. Until one is chosen, this is what the refund policy
   /// has to cover.
   Future<Result<void>> recordPurchase(String matchId);
+
+  /// The pairing a subscriber spent their included report on, or null
+  /// if they still have it.
+  ///
+  /// An id rather than a flag: it answers "have they used it" and "which
+  /// one did they use it on" with one value, keeps [purchased] as the
+  /// single question for money spent, and lets a claimed report be told
+  /// from a bought one in the data.
+  Future<Result<String?>> includedReportId();
+
+  /// Spends the included report on [matchId].
+  ///
+  /// Writes only if nothing has been claimed yet, so a double tap — or
+  /// two screens racing — cannot move the slot onto a second pairing and
+  /// silently take away the first.
+  Future<Result<void>> claimIncludedReport(String matchId);
 }
 
 /// [ReportRepository] backed by shared_preferences.
@@ -53,6 +69,7 @@ class PreferencesReportRepository implements ReportRepository {
   const PreferencesReportRepository();
 
   static const _key = 'sanctum.reports_purchased';
+  static const _includedKey = 'sanctum.report_included';
 
   @override
   Future<Result<Set<String>>> purchased() {
@@ -84,6 +101,44 @@ class PreferencesReportRepository implements ReportRepository {
       },
       onError: (error, stackTrace) => StorageFailure(
         'Could not save your purchase',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<String?>> includedReportId() {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final claimed = prefs.getString(_includedKey);
+        return (claimed == null || claimed.isEmpty) ? null : claimed;
+      },
+      // Surfaced rather than swallowed, like `purchased`: reading "not
+      // claimed" when it was would hand out a second free report.
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not read your included report',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<void>> claimIncludedReport(String matchId) {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final existing = prefs.getString(_includedKey);
+        // First claim wins. Overwriting would move the slot to a second
+        // pairing and revoke the first, which is the one thing this
+        // model must never do.
+        if (existing != null && existing.isNotEmpty) return;
+        await prefs.setString(_includedKey, matchId);
+      },
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not save your included report',
         cause: error,
         stackTrace: stackTrace,
       ),
