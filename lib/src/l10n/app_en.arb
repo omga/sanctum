@@ -1373,5 +1373,85 @@
   "verdictHardWon": "Hard-won",
   "@verdictHardWon": {
     "description": "One-word verdict for a compatibility score band (\"Hard-won\"). Shown on the score dial and in the report subtitle, so it must stay one short word."
+  },
+  "advisorEntryTitle": "Ask about you & {name}",
+  "@advisorEntryTitle": {
+    "description": "Heading of the card that opens a conversation about a pairing, at the foot of a reading and of the report.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alex"
+      }
+    }
+  },
+  "advisorEntryBody": "{count} questions about this pairing, answered from the same numbers you are looking at.",
+  "@advisorEntryBody": {
+    "description": "Body of the conversation entry card. The count is the turn cap, so the offer states what is bought.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advisorEntryAction": "Start a conversation",
+  "@advisorEntryAction": {
+    "description": "Button on the conversation entry card."
+  },
+  "advisorDisclosure": "Answers are written by an AI from your computed positions. Your name and birth date stay on this phone.",
+  "@advisorDisclosure": {
+    "description": "Shown at the head of every advisor conversation. Two duties in one line: EU AI Act Article 50 transparency, and the privacy promise this feature has to keep. Do not shorten it to only one of them."
+  },
+  "advisorComposerHint": "Ask something",
+  "@advisorComposerHint": {
+    "description": "Placeholder in the message field."
+  },
+  "advisorSend": "Send",
+  "@advisorSend": {
+    "description": "Accessibility label for the send button, which shows an icon."
+  },
+  "advisorSuggested": "SUGGESTED",
+  "@advisorSuggested": {
+    "description": "Label above the row of suggested questions. Caps, like the other section labels."
+  },
+  "advisorTurnsLeft": "{count, plural, =1{1 question left} other{{count} questions left}}",
+  "@advisorTurnsLeft": {
+    "description": "How many questions remain in a conversation. Shown only once it is nearly spent — a counter from the first message makes the whole screen feel metered.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advisorSpentTitle": "That was the last question",
+  "@advisorSpentTitle": {
+    "description": "Heading shown where the composer was, once every turn is spent."
+  },
+  "advisorSpentBody": "The conversation stays here to read, for good.",
+  "@advisorSpentBody": {
+    "description": "Under advisorSpentTitle. States the rule the gate enforces: turns are spent, transcripts are permanent."
+  },
+  "advisorThinking": "Reading the chart",
+  "@advisorThinking": {
+    "description": "Shown in place of an answer while one is being written."
+  },
+  "advisorFailedOffline": "No connection. Your question is still here.",
+  "@advisorFailedOffline": {
+    "description": "Send failed with no network. Says the question survived, because retyping it is the thing that makes this infuriating."
+  },
+  "advisorFailedBusy": "Too many questions at once. Try again in a minute.",
+  "@advisorFailedBusy": {
+    "description": "Send was rate limited. Not an apology — nothing is broken."
+  },
+  "advisorFailedRefused": "That one cannot be answered. Try asking it another way.",
+  "@advisorFailedRefused": {
+    "description": "The model or the proxy declined. Deliberately does not offer a bare retry, because an identical retry will fail identically."
+  },
+  "advisorFailedServer": "That did not get through. Nothing was spent.",
+  "@advisorFailedServer": {
+    "description": "Any other far-end failure. Names the money question first, because it is the one the user has."
+  },
+  "advisorRetry": "Try again",
+  "@advisorRetry": {
+    "description": "Re-sends the question that failed."
   }
 }

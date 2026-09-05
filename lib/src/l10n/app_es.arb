@@ -286,5 +286,21 @@
   "verdictHardWon": "A pulso",
   "verdictRare": "Poco común",
   "verdictStrong": "Fuerte",
-  "verdictWorkable": "Viable"
+  "verdictWorkable": "Viable",
+  "advisorEntryTitle": "Pregunta sobre ti y {name}",
+  "advisorEntryBody": "{count} preguntas sobre esta pareja, respondidas con los mismos números que estás mirando.",
+  "advisorEntryAction": "Empezar una conversación",
+  "advisorDisclosure": "Las respuestas las escribe una IA a partir de tus posiciones calculadas. Tu nombre y tu fecha de nacimiento se quedan en este teléfono.",
+  "advisorComposerHint": "Pregunta algo",
+  "advisorSend": "Enviar",
+  "advisorSuggested": "PUEDES PREGUNTAR",
+  "advisorTurnsLeft": "{count, plural, one{Queda {count} pregunta} other{Quedan {count} preguntas}}",
+  "advisorSpentTitle": "Esa fue la última pregunta",
+  "advisorSpentBody": "La conversación se queda aquí para releerla siempre.",
+  "advisorThinking": "Leyendo la carta",
+  "advisorFailedOffline": "Sin conexión. Tu pregunta sigue aquí.",
+  "advisorFailedBusy": "Demasiadas preguntas seguidas. Inténtalo en un minuto.",
+  "advisorFailedRefused": "Esa no se puede responder. Prueba a preguntarla de otra forma.",
+  "advisorFailedServer": "No llegó. No se ha gastado nada.",
+  "advisorRetry": "Reintentar"
 }

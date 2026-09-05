@@ -6,6 +6,7 @@ import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/relationship_report.dart';
+import 'package:sanctum/src/features/advisor/view/advisor_entry_card.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/direction_bar.dart';
 import 'package:sanctum/src/features/compatibility/view_model/report_view_model.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
@@ -310,6 +311,12 @@ class _Document extends StatelessWidget {
         _Heading(l10n.reportSectionClosing),
         const SizedBox(height: SanctumSpacing.md),
         Text(report.closing, style: type.quote),
+
+        // The best surface in the app for this: somebody holding a
+        // document they paid for, about one named person, is the most
+        // likely user here to have a follow-up question about them.
+        const SizedBox(height: SanctumSpacing.xxl),
+        AdvisorEntryCard(match: report.match),
 
         const SizedBox(height: SanctumSpacing.xxl),
         Text(

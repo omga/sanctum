@@ -286,5 +286,21 @@
   "verdictHardWon": "Непростое",
   "verdictRare": "Редкое",
   "verdictStrong": "Сильное",
-  "verdictWorkable": "Рабочее"
+  "verdictWorkable": "Рабочее",
+  "advisorEntryTitle": "Спросить про вас с {name}",
+  "advisorEntryBody": "{count} вопросов про эту пару — с ответами по тем же числам, которые ты сейчас видишь.",
+  "advisorEntryAction": "Начать разговор",
+  "advisorDisclosure": "Ответы пишет ИИ по твоим вычисленным позициям. Имя и дата рождения остаются на этом телефоне.",
+  "advisorComposerHint": "Спроси что-нибудь",
+  "advisorSend": "Отправить",
+  "advisorSuggested": "МОЖНО СПРОСИТЬ",
+  "advisorTurnsLeft": "{count, plural, one{Остался {count} вопрос} few{Осталось {count} вопроса} many{Осталось {count} вопросов} other{Осталось {count} вопросов}}",
+  "advisorSpentTitle": "Это был последний вопрос",
+  "advisorSpentBody": "Разговор остаётся здесь — перечитать можно всегда.",
+  "advisorThinking": "Читаю карту",
+  "advisorFailedOffline": "Нет связи. Твой вопрос никуда не делся.",
+  "advisorFailedBusy": "Слишком много вопросов сразу. Попробуй через минуту.",
+  "advisorFailedRefused": "На это ответить не получится. Попробуй спросить иначе.",
+  "advisorFailedServer": "Не дошло. Ничего не потрачено.",
+  "advisorRetry": "Попробовать ещё раз"
 }

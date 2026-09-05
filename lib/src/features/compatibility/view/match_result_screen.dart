@@ -15,6 +15,7 @@ import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/services/compatibility_gate.dart';
+import 'package:sanctum/src/features/advisor/view/advisor_entry_card.dart';
 import 'package:sanctum/src/features/compatibility/view/match_carousel_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/report_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/widgets/direction_bar.dart';
@@ -359,6 +360,14 @@ class _Result extends StatelessWidget {
                   // and leaves the note as the last word on the screen.
                   if (!_locked) ...[
                     _ReportOffer(match: match),
+                    const SizedBox(height: SanctumSpacing.lg),
+
+                    // Under the report offer, not above it. The report
+                    // is the higher-value product and the one this
+                    // screen was already selling; a conversation is the
+                    // cheaper follow-up, and putting it first would sell
+                    // the smaller thing to the same curiosity.
+                    AdvisorEntryCard(match: match),
                     const SizedBox(height: SanctumSpacing.xxl),
                   ],
 

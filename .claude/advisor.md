@@ -345,9 +345,11 @@ the shape is right.
    no key, no cost. `AdvisorFailure` was added to the sealed `AppFailure`
    set with a `kind`, because the screen has to tell "you are offline"
    from "you have asked a lot in a short time".
-2. **The UI.** Conversation screen, streaming render, entry points on
-   the report and compatibility screens. Runs entirely on the scripted
-   transport — demoable, screenshot-able, on a plane.
+2. ~~**The UI.**~~ **Done.** Conversation screen, streaming render,
+   suggestion row, failure and retry, spent state, entry cards on the
+   reading and the report. Runs entirely on the scripted transport.
+   Copy shipped in all four locales. **Not yet seen on a device** — the
+   guard is a widget test at 375pt rather than a screenshot.
 3. **Storage.** Drift tables, migration, delete, history trimming.
 4. **The proxy.** Deploy, then `ProxyChatTransport`. One provider flag
    swaps it for the scripted one; keep both forever, because the

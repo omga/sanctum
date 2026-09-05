@@ -286,5 +286,21 @@
   "verdictHardWon": "Непросте",
   "verdictRare": "Рідкісне",
   "verdictStrong": "Сильне",
-  "verdictWorkable": "Робоче"
+  "verdictWorkable": "Робоче",
+  "advisorEntryTitle": "Запитати про вас із {name}",
+  "advisorEntryBody": "{count} запитань про цю пару — з відповідями за тими самими числами, які ти зараз бачиш.",
+  "advisorEntryAction": "Почати розмову",
+  "advisorDisclosure": "Відповіді пише ШІ за твоїми обчисленими позиціями. Ім’я і дата народження залишаються на цьому телефоні.",
+  "advisorComposerHint": "Запитай щось",
+  "advisorSend": "Надіслати",
+  "advisorSuggested": "МОЖНА ЗАПИТАТИ",
+  "advisorTurnsLeft": "{count, plural, one{Лишилось {count} запитання} few{Лишилось {count} запитання} many{Лишилось {count} запитань} other{Лишилось {count} запитань}}",
+  "advisorSpentTitle": "Це було останнє запитання",
+  "advisorSpentBody": "Розмова залишається тут — читати можна завжди.",
+  "advisorThinking": "Читаю карту",
+  "advisorFailedOffline": "Немає зв’язку. Твоє запитання нікуди не зникло.",
+  "advisorFailedBusy": "Забагато запитань одразу. Спробуй за хвилину.",
+  "advisorFailedRefused": "На це відповісти не вийде. Спробуй запитати інакше.",
+  "advisorFailedServer": "Не дійшло. Нічого не витрачено.",
+  "advisorRetry": "Спробувати ще раз"
 }
