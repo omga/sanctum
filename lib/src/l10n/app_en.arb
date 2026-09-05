@@ -43,7 +43,7 @@
   "@navJournal": {
     "description": "Bottom navigation label. One short word."
   },
-  "onboardingBody": "A quiet room that is only yours.\n\nOne card, one tone, one honest sentence a day. No account, ever. Your name, your birth date and your journal stay on this phone.",
+  "onboardingBody": "A quiet room that is only yours.\n\nOne card, one tone, one honest sentence a day, computed from your own chart.",
   "@onboardingBody": {
     "description": "Welcome copy. The second half is a privacy promise the product is differentiated on — it must stay literally true, so translate the claim exactly rather than loosening it."
   },
@@ -507,7 +507,7 @@
   "@partnerTitle": {
     "description": "Heading of the screen collecting the other person’s details."
   },
-  "partnerBody": "Their birth date is all the reading needs. A time is optional and only places the Moon. Both stay on this phone.",
+  "partnerBody": "Their birth date is all the reading needs. A time is optional and only places the Moon.",
   "@partnerBody": {
     "description": "Explains what is collected and what it is for. The last sentence is a privacy claim and must stay true."
   },
@@ -1276,9 +1276,9 @@
   "@reportLockedBody": {
     "description": "Body of the locked report screen. Sells depth. Must not promise a forecast."
   },
-  "reportLockedNote": "A single purchase, for this pairing. It stays on this phone.",
+  "reportLockedNote": "A single purchase, for this pairing. It does not carry over to another device.",
   "@reportLockedNote": {
-    "description": "Small print under the buy button: what is bought, and the honest limit that it does not restore across devices."
+    "description": "Small print under the report price. It is a consumable: it does not restore on a second device, and saying so before the money changes hands is the whole point of the line. It used to say \"stays on this phone\", which conveyed the same thing by implying a privacy promise the app no longer makes."
   },
   "reportBuy": "Unlock · {price}",
   "@reportBuy": {
@@ -1397,7 +1397,7 @@
   "@advisorEntryAction": {
     "description": "Button on the conversation entry card."
   },
-  "advisorDisclosure": "Answers are written by an AI from your computed positions. Your name and birth date stay on this phone.",
+  "advisorDisclosure": "Answers are written by an AI from your computed positions.",
   "@advisorDisclosure": {
     "description": "Shown at the head of every advisor conversation. Two duties in one line: EU AI Act Article 50 transparency, and the privacy promise this feature has to keep. Do not shorten it to only one of them."
   },

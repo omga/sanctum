@@ -130,14 +130,14 @@ Future<void> _pump(
 
 void main() {
   group('opening a conversation', () {
-    testWidgets('says an AI is answering, and what stays on the phone', (
-      tester,
-    ) async {
-      // Two duties in one line: EU AI Act Article 50, and the promise
-      // this whole feature is built to keep. Neither may be dropped.
+    testWidgets('says an AI is answering', (tester) async {
+      // EU AI Act Article 50. The line used to carry a second promise —
+      // that the name and birth date stay on the phone — and that came
+      // out with the rest of the absolute privacy copy: the claim now
+      // belongs on the consent screen, where it can say precisely what
+      // is sent rather than gesture at it in a caption.
       await _pump(tester);
       expect(find.textContaining('written by an AI'), findsOneWidget);
-      expect(find.textContaining('stay on this phone'), findsOneWidget);
     });
 
     testWidgets('offers questions rather than a blank box', (tester) async {

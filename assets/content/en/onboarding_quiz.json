@@ -5,7 +5,7 @@
       "id": "name",
       "kind": "text",
       "title": "What should we call you?",
-      "subtitle": "Only ever used to address you, and it never leaves this phone."
+      "subtitle": "Only ever used to address you."
     },
     {
       "id": "goals",
@@ -117,7 +117,7 @@
       "id": "birth_time",
       "kind": "time",
       "title": "Do you know what time?",
-      "subtitle": "Only the Moon needs it, and most people do not know. It stays on this phone like everything else."
+      "subtitle": "Only the Moon needs it, and most people do not know."
     },
     {
       "id": "rhythm",

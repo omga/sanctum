@@ -253,11 +253,15 @@ void main() {
       expect(find.textContaining('Unlock ·'), findsNothing);
     });
 
-    testWidgets('says the purchase does not leave the phone', (tester) async {
+    testWidgets('says the purchase does not restore elsewhere', (
+      tester,
+    ) async {
       // Consumables do not restore, and the small print has to say so
-      // before the money changes hands rather than after.
+      // before the money changes hands rather than after. This test
+      // caught the privacy-copy sweep deleting the warning along with
+      // the promise it was phrased as.
       await _pump(tester, _match(), owned: false);
-      expect(find.textContaining('stays on this phone'), findsOneWidget);
+      expect(find.textContaining('another device'), findsOneWidget);
     });
   });
 

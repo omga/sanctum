@@ -5,7 +5,7 @@
       "id": "name",
       "kind": "text",
       "title": "¿Cómo te llamas?",
-      "subtitle": "Solo lo uso para hablarte. De este teléfono no sale."
+      "subtitle": "Solo lo uso para hablarte."
     },
     {
       "id": "goals",
@@ -117,7 +117,7 @@
       "id": "birth_time",
       "kind": "time",
       "title": "¿Sabes a qué hora?",
-      "subtitle": "Solo hace falta para la Luna, y la mayoría no la sabe. Se queda en este teléfono, como todo lo demás."
+      "subtitle": "Solo hace falta para la Luna, y la mayoría no la sabe."
     },
     {
       "id": "rhythm",

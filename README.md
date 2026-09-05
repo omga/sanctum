@@ -9,18 +9,25 @@ live moon phase, an oracle card, sound-bath sessions, moon rituals, and a
 journal, with a personalising onboarding quiz, a subscription paywall,
 and four languages the reader can switch between in the app.
 
-**There is no backend and no account.** Every reading — the daily
-transit, compatibility, moon phase, the oracle draw — is computed on the
-device from bundled content and orbital mechanics, and works offline.
+**There is no account.** Every reading — the daily transit,
+compatibility, moon phase, the oracle draw — is computed on the device
+from bundled content and orbital mechanics, and works offline.
 
-Network traffic is telemetry and billing, and nothing else: anonymous
+There is now one backend: a stateless proxy for the AI advisor, because
+a model API key cannot ship in a binary. It stores nothing and holds no
+user record — see `proxy/README.md`. It is written and undeployed, and
+the app makes no call to it in any current build.
+
+Everything else on the network is telemetry and billing: anonymous
 product analytics (PostHog), crash reporting (Sentry) and subscription
 status (RevenueCat, with anonymous app user IDs). None of them carries a
-name, a birth date, or journal text, and the onboarding copy promises
-exactly that. See `.claude/handoff.md` for how that promise is enforced
-in the type system — and note that it is the constraint an AI advisor
-would break, which is why `.claude/roadmap.md` gates that feature behind
-its own consent screen.
+name, a birth date, or journal text.
+
+The advisor sends computed positions — longitudes, aspects, scores — and
+the question. Never a name: `AdvisorContext` has no field that could
+hold one, `MessageRedaction` rewrites the ones a user types, and the
+proxy rejects them a third time. See `.claude/advisor.md` §1 for why
+that is three layers rather than one.
 
 ```bash
 flutter pub get
