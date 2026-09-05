@@ -47,7 +47,7 @@ class ProxyChatTransport implements ChatTransport {
     required this.endpoint,
     required this.installId,
     required this.client,
-    required this.anonKey,
+    required this.apiKey,
     this.timeout = const Duration(seconds: 45),
   });
 
@@ -57,8 +57,15 @@ class ProxyChatTransport implements ChatTransport {
   /// Identifies the installation to the rate limiter. Not a person.
   final String installId;
 
-  /// Supabase's anon key, when the function is deployed behind one.
-  final String anonKey;
+  /// Supabase's publishable key, or a legacy `anon` key.
+  ///
+  /// Not a secret in any meaningful sense: it ships in the binary and
+  /// can be read out of any build. What protects the endpoint is the
+  /// rate limiter and, once it exists, entitlement.
+  final String apiKey;
+
+  /// Whether [apiKey] is a legacy JWT rather than a publishable key.
+  bool get _isJwt => apiKey.startsWith('eyJ');
 
   /// How long to wait for the *first* byte.
   ///
@@ -96,8 +103,13 @@ class ProxyChatTransport implements ChatTransport {
         'content-type': 'application/json',
         'accept': 'text/event-stream',
         'x-sanctum-install': installId,
-        if (anonKey.isNotEmpty) 'authorization': 'Bearer $anonKey',
-        if (anonKey.isNotEmpty) 'apikey': anonKey,
+        if (apiKey.isNotEmpty) 'apikey': apiKey,
+        // `Authorization: Bearer` only for a legacy `anon` key, which is
+        // a JWT. The current publishable keys (`sb_publishable_…`) are
+        // short strings, and anything that tries to verify one *as* a
+        // JWT fails — so sending it there is wrong even where the
+        // platform still accepts it for migration compatibility.
+        if (_isJwt) 'authorization': 'Bearer $apiKey',
       })
       ..body = jsonEncode({
         'surface': context.surface,

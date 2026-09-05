@@ -112,7 +112,7 @@ Check it before pointing the app at it. This should stream frames back:
 
 ```bash
 curl -N https://<ref>.supabase.co/functions/v1/advisor \
-  -H "Authorization: Bearer <anon key>" \
+  -H "apikey: sb_publishable_..." \
   -H "x-sanctum-install: smoke-test-0001" \
   -H "content-type: application/json" \
   -d '{"surface":"today","languageCode":"en",
@@ -128,9 +128,25 @@ Then point a build at it:
 
 ```bash
 flutter run \
-  --dart-define=ADVISOR_PROXY_URL=https://<ref>.supabase.co/functions/v1/advisor \
-  --dart-define=SUPABASE_ANON_KEY=<anon key>
+  --dart-define=ADVISOR_PROXY_URL=<project url>/functions/v1/advisor \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
+
+### Which key, from where
+
+The dashboard shows three things that matter here:
+
+| Dashboard | Goes where | Notes |
+|---|---|---|
+| **Project URL** | `ADVISOR_PROXY_URL`, with `/functions/v1/advisor` appended | |
+| **Publishable key** (`sb_publishable_…`) | `SUPABASE_PUBLISHABLE_KEY` | Ships in the binary. Not a secret and never treated as one. |
+| **Secret key** (`sb_secret_…`) | **Nowhere in the app.** A Supabase secret, for the function itself, once the entitlement table exists. | |
+
+Publishable keys are short strings, **not JWTs**, so they travel on the
+`apikey` header — anything verifying one as a JWT fails.
+`ProxyChatTransport` sends `apikey` always and adds
+`Authorization: Bearer` only when the key is a legacy `anon` JWT, which
+is what makes both key systems work. There is a test per branch.
 
 With `ADVISOR_PROXY_URL` unset — which is every build today — the app
 uses the scripted transport and makes no network call.

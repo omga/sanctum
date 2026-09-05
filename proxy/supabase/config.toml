@@ -8,13 +8,17 @@
 project_id = "sanctum-advisor"
 
 [functions.advisor]
-# JWT verification stays ON.
+# The platform key check stays ON.
 #
-# The app sends the Supabase anon key as a bearer token, and an anon key
-# is a valid JWT, so this passes for a legitimate client and rejects a
-# bare curl. It is not authentication — the anon key ships in the binary
-# and anybody can read it out — it is one cheap filter in front of an
-# endpoint that costs money per request. The gates that matter are the
-# rate limiter and, once it exists, entitlement.
+# It is called `verify_jwt`, and the name is now misleading: publishable
+# keys (`sb_publishable_…`) are short strings rather than JWTs. The
+# platform check accepts them on the `apikey` header anyway, so a
+# legitimate client passes and a bare curl with no key does not.
+#
+# Passing it is **not** authentication, and Supabase's own docs say so.
+# The key ships in the binary and anybody can read it out. This is one
+# cheap filter in front of an endpoint that costs money per request; the
+# gates that matter are the rate limiter and, once it exists,
+# entitlement.
 verify_jwt = true
 entrypoint = "./functions/advisor/index.ts"

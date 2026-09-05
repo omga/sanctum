@@ -33,13 +33,17 @@ part 'advisor_view_model.g.dart';
 /// and the screen that tells the user so has not been built yet.
 const advisorProxyUrl = String.fromEnvironment('ADVISOR_PROXY_URL');
 
-/// Supabase's anon key for the function, when it is deployed behind one.
+/// Supabase's publishable key for the function.
+///
+/// `sb_publishable_…` under the current key system; a legacy `anon` JWT
+/// also works, and the transport picks the right header for each.
 ///
 /// Not a secret in any meaningful sense — it is extractable from any
 /// shipped binary, and the same reasoning `PostHogAnalyticsService`
 /// already records applies. What protects the endpoint is the rate
-/// limiter and, from step 6, an entitlement.
-const advisorProxyKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+/// limiter and, from step 6, an entitlement. The **secret** key
+/// (`sb_secret_…`) must never appear here or anywhere else in the app.
+const advisorProxyKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
 
 /// One HTTP client for the app, closed when the app is.
 @Riverpod(keepAlive: true)
@@ -66,7 +70,7 @@ Future<ChatTransport> chatTransport(Ref ref) async {
   return ProxyChatTransport(
     endpoint: Uri.parse(advisorProxyUrl),
     installId: id,
-    anonKey: advisorProxyKey,
+    apiKey: advisorProxyKey,
     client: ref.watch(httpClientProvider),
   );
 }

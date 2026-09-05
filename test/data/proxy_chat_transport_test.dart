@@ -110,7 +110,7 @@ Future<List<ChatChunk>> _collect(
 }) => ProxyChatTransport(
   endpoint: endpoint,
   installId: 'install-abcdef',
-  anonKey: 'anon-key',
+  apiKey: 'sb_publishable_abc123',
   client: client,
 ).send(
   conversation: _conversation,
@@ -244,7 +244,36 @@ void main() {
       await _collect(endpoint, client);
 
       expect(proxy.headers['x-sanctum-install'], 'install-abcdef');
-      expect(proxy.headers['authorization'], 'Bearer anon-key');
+      // A publishable key travels on `apikey`, never as a bearer token:
+      // it is not a JWT, and anything verifying it as one fails.
+      expect(proxy.headers['apikey'], 'sb_publishable_abc123');
+      expect(proxy.headers.containsKey('authorization'), isFalse);
+    });
+
+
+  });
+
+  group('a legacy anon key', () {
+    test('still travels as a bearer token, because it is a JWT', () async {
+      final proxy = _Proxy(
+        (request) => _stream(request, ['{"done":true}']),
+      );
+      final endpoint = await proxy.start();
+      addTearDown(proxy.stop);
+
+      await ProxyChatTransport(
+        endpoint: endpoint,
+        installId: 'install-abcdef',
+        apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.legacy',
+        client: client,
+      ).send(
+        conversation: _conversation,
+        history: _history,
+        context: AdvisorContext.forMatch(_match, languageCode: 'en'),
+      ).toList();
+
+      expect(proxy.headers['apikey'], startsWith('eyJ'));
+      expect(proxy.headers['authorization'], startsWith('Bearer eyJ'));
     });
   });
 
@@ -302,7 +331,7 @@ void main() {
       return ProxyChatTransport(
         endpoint: Uri.parse('http://127.0.0.1:1/advisor'),
         installId: 'install-abcdef',
-        anonKey: '',
+        apiKey: '',
         client: client,
       )
           .send(
