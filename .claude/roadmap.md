@@ -167,6 +167,19 @@ first and let it establish the norm.
 
 ## 2. The advisor — the one bet that changes the curve
 
+> **Built, 2026-09. See `.claude/advisor.md`** for the design, the
+> running order and what is left. This section is kept as the argument
+> that justified it; where the two disagree, `advisor.md` is what
+> shipped.
+>
+> Three things here were decided differently in the end:
+> **the economy is a shared message balance**, not per-conversation
+> credits — five free a week for subscribers, $2.99 for five more;
+> **there is an Ask tab**, added after seeing on a device that entry
+> points at the foot of scrolled screens are undiscoverable, though the
+> contextual cards remain the routes that convert; and **the model is
+> DeepSeek**, behind a Supabase Edge Function.
+
 **An AI astrologer you can ask questions, sold as credits, not included
 in the subscription.**
 

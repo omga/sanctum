@@ -3,10 +3,13 @@
 One Supabase Edge Function. It is the first backend Sanctum has had and
 it is deliberately the smallest one that can exist.
 
-**Not deployed.** Nothing in the app points at it: `ADVISOR_PROXY_URL` is
-empty in every build, so `chatTransport` hands back the scripted
-transport and the app makes no network call at all. See "Before this
-ships" below — there is a consent screen that must exist first.
+**Deployed and answering** as of 2026-09-05, verified by the `curl`
+below: DeepSeek streams real deltas back in our frame format.
+
+**The app is not pointed at it.** `ADVISOR_PROXY_URL` is empty in every
+build, so `chatTransport` hands back the scripted transport and the app
+makes no network call at all. That must stay true until the consent
+screen exists — see "Before this ships" below.
 
 ## Why it exists
 
@@ -195,8 +198,8 @@ rate limiter and, once it exists, entitlement.
       third party with nobody having been told.
 - [ ] Privacy policy and store data-safety declaration updated in the
       same change.
-- [ ] `README.md` no longer opens with "There is no backend and no
-      account" — half of that stops being true here.
+- [x] `README.md` no longer opens with "There is no backend and no
+      account", and the in-app privacy claims are gone.
 - [ ] **Entitlement is enforced.** Today the only gate is a rate limit
       keyed on a header the client chooses. A turn should cost a
       verified receipt (`advisor.md` §8 step 6); until then, the real

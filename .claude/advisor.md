@@ -1,6 +1,12 @@
 # The advisor — design
 
-Plan for `roadmap.md` §2. Nothing here is built yet.
+Plan for `roadmap.md` §2, and the running order for what is left.
+
+**State, 2026-09-05:** steps 1–4 and 6 are built; the proxy is deployed
+and answering; the app still makes no network call because no build
+compiles a proxy URL. What remains is step 5 (consent), entitlement on
+the server, analytics, and step 7 (triggers) — in that order, and §8 is
+the detail.
 
 The feature: **an astrologer you can ask questions, answering from your
 actual computed chart rather than your star sign**, reached from the
@@ -380,11 +386,14 @@ the shape is right.
    trimming. The migration test builds a version 1 database by hand and
    proves a journal written before the upgrade is readable after it —
    that is the only thing that actually matters here.
-4. ~~**The proxy.**~~ **Written, not deployed.** A Supabase Edge
-   Function in `proxy/`, and `ProxyChatTransport` against it. The
-   provider swaps on `ADVISOR_PROXY_URL`, which is empty in every build
-   — so the app still makes no network call at all, and must not until
-   step 5 lands. See `proxy/README.md` for the pre-ship checklist.
+4. ~~**The proxy.**~~ **Deployed 2026-09-05 and answering.** A Supabase
+   Edge Function in `proxy/`, DeepSeek behind it, and
+   `ProxyChatTransport` against it. Verified by `curl`: real deltas
+   stream back in our frame format.
+
+   **The app is still not pointed at it.** `ADVISOR_PROXY_URL` is empty
+   in every build and must stay so until step 5 lands. See
+   `proxy/README.md` for the pre-ship checklist.
 
    Supabase rather than a Worker because chat with real astrologers is
    on the roadmap and *that* is the backend worth choosing for: it needs

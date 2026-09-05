@@ -120,15 +120,23 @@ shims in transitively, so the connection is wired by hand in
 
 Most Drift tutorials online are still wrong about this.
 
-### Local-first, no backend
+### Local-first, and one backend
 
-No account, no server, no network in the core loop. The daily card is a
-deterministic hash of `(installSalt, localDate)`; the moon phase is
+No account, no server, no network **in the core loop**. The daily card
+is a deterministic hash of `(installSalt, localDate)`; the moon phase is
 computed. Both work offline and cost nothing to run.
 
 **Rejected:** Supabase/Firebase for v1, and account-creation-before-paywall
 (Nebula does this for retargeting; with no retargeting budget it is pure
 funnel friction).
+
+**The exception, added 2026-09:** the advisor has a Supabase Edge
+Function, because a model API key cannot ship in a binary. It is
+stateless — no database, no session, no user record — and the app calls
+it only when `ADVISOR_PROXY_URL` is compiled in. The second half of the
+rejection above still holds: the function takes an **install id**, not a
+Supabase user, and Sanctum still has no accounts. See §3 "The advisor"
+and `proxy/README.md`.
 
 ### Tones are a 43 KB seamless loop, not a rendered session
 
@@ -338,21 +346,104 @@ service — so events are visible in an IDE or `flutter run` console and
 It is a development aid, not a way to watch a real user's funnel. That
 is an argument for wiring a real vendor sooner rather than later.
 
-### The privacy promise, and what it now says
+### The privacy promise, and why the copy no longer makes one
 
 The app used to claim, in three places, that "nothing leaves your
-phone". Analytics, RevenueCat and any AI feature all make that false.
-The copy is now precise instead of absolute, which is still a strong
-claim and has the advantage of being true:
+phone". Analytics and RevenueCat already strained that; the advisor
+broke it outright, because it sends a chart and a question to DeepSeek.
 
-> "No account, ever. Your name, your birth date and your journal stay on
-> this phone."
+The claim was withdrawn from the product rather than reworded (commit
+"The app stops promising what it can no longer promise"). The onboarding
+body, the quiz's name and birth-time questions, `partnerBody` and half
+the advisor disclosure no longer promise locality, in all four locales.
 
-That survives event analytics carrying no PII, and it survives
-RevenueCat's anonymous app user IDs. **It does not survive AI chat** —
-that would send a user's chart and their question to a third party, and
-needs its own explicit consent gate, not a reworded sentence. Design
-that in from the start if the advisor gets built.
+**What is still said, and is still true:** narrow statements about one
+screen — a journal entry is only on this phone, which is *why* deleting
+it cannot be undone; a report is computed on the device; locale content
+is bundled rather than downloaded. The distinction worth keeping is
+between a claim about the product's posture, which changed, and a fact
+about one screen, which did not.
+
+**What replaces it:** three enforced layers rather than a sentence —
+`AdvisorContext` has no field a name could occupy, `MessageRedaction`
+rewrites the names a user types, and the proxy rejects them a third
+time. See §3 "The advisor" and `advisor.md` §1.
+
+`reportLockedNote` is a cautionary tale here. It said "It stays on this
+phone", the sweep read that as a privacy promise and cut it, and
+`report_screen_test` failed: that line is small print warning that a
+consumable **does not restore on another device**. Not every sentence
+containing "this phone" is a marketing claim.
+
+### The advisor, and the three places a name is stopped
+
+Built 2026-09 across five commits. `advisor.md` is the design document
+and the place to read first; this is what a person changing the code
+needs to know before they touch it.
+
+**The feature.** An AI astrologer answering from the pairing's computed
+positions, reached from the reading, the report, and an Ask tab. Five
+free messages a week for subscribers, shared across every conversation;
+$2.99 buys five more; non-subscribers get none free and can still buy.
+
+**A name never leaves the device, and it is enforced three times.**
+Not by review, not by a promise in copy:
+
+1. `AdvisorContext` has a private constructor and no field a name or a
+   birth date could occupy — the `AnalyticsEvent` pattern applied to
+   higher stakes. `advisor_context_test.dart` asserts a real match's
+   payload contains no substring of either person's name.
+2. `MessageRedaction` rewrites the names the app stored out of anything
+   the user types, over the *whole* history — scrubbing only the newest
+   message re-sends every earlier name on the next turn.
+3. The Edge Function re-validates with the same denied-key list, walked
+   to full depth. That is defence against our own future bug, not
+   against a hostile client.
+
+Suggested questions sidestep the problem: each has a `displayKey`
+carrying `{name}` and a `promptKey` that never does. Two written strings
+beat one string and a regex.
+
+**The transport is an interface, and both implementations stay.**
+`ScriptedChatTransport` is not scaffolding — it is what keeps the widget
+tests fast, deterministic and free, and it is what the app falls back to
+when no proxy URL is compiled in. `ProxyChatTransport` speaks a wire
+format that is *ours*, not the vendor's, so changing model is a server
+change and the client parser never learns a vendor's event names.
+
+`MessageAuthor.counterpart`, never `.advisor`: person-to-person chat
+later swaps the transport and the `ConversationKind`, and the models,
+budget, storage and their tests do not move.
+
+**Money is client-side, and that is the known hole.** `MessageBudget`
+spends from a balance in preferences. The proxy has a rate limit keyed
+on a header the client chooses and nothing else — it does not know
+whether the caller has messages left. Anybody who reads the publishable
+key out of the binary can spend the DeepSeek budget. Closing that means
+a RevenueCat webhook into a Supabase table and a check in the function,
+which is also the first infrastructure astrologer chat needs.
+
+**Things that will catch you:**
+
+* Widget tests need `SharedPreferences.setMockInitialValues` or every
+  screen renders as though the user had no messages — a plausible
+  failure with nothing to do with the code under test. Re-pumping
+  *resets* that store, so a test proving the balance is shared has to
+  pass `keepPreferences: true` or it proves nothing.
+* `pumpAndSettle` never returns on any screen showing a primary
+  `SanctumButton`; its sheen repeats forever. The out-of-messages state
+  has one. Pump frames instead — `report_screen_test` records the same
+  trade.
+* The advisor screen is pushed with an object, never routed.
+  `CompatibilityMatch.id` contains both names and birth dates, and
+  routing by it would write exactly that into breadcrumbs and OS logs.
+* Weeks are ISO-8601. A naive week number hands out a second free
+  allowance in late December every year; there is a test pinning
+  2026-W53 across the new year.
+* The database is at `schemaVersion` 2. The migration is additive and
+  `conversation_migration_test.dart` builds a version 1 database by hand
+  to prove a journal survives it. A migration that *changes* something
+  wants `drift_dev`'s schema snapshots instead of that fixture.
 
 ### The daily reading is a transit, not a random draw
 
@@ -1342,6 +1433,18 @@ the obvious-sounding choice, contains zero of the twelve.
   and setting an explicit `image/png` mime type on the `XFile` was tried
   and changed nothing.
 
+- **The advisor** (`features/advisor/`) — verified 2026-09-05 on the
+  iPhone 17 Pro simulator end to end against the *scripted* transport:
+  the entry cards on a reading and on the report, the Ask tab, the
+  suggestion row, streaming, the software keyboard, delete, and a
+  transcript surviving a cold app restart.
+- **The proxy is deployed and answering.** Verified 2026-09-05 by
+  `curl` against the Supabase Edge Function: DeepSeek streams real
+  deltas back in our own frame format. **The app has not yet been
+  pointed at it** — `ADVISOR_PROXY_URL` is empty in every build, and it
+  must stay that way until the consent screen exists (`advisor.md` §8
+  step 5).
+
 - **RevenueCat — a real subscription has been bought.** Verified
   2026-08-19 through Play internal testing on a Pixel 6, end to end:
   offering loads with live localised prices, purchase completes,
@@ -1441,6 +1544,30 @@ advisor sold as credits is the only item that changes the shape of the
 revenue curve; paywall personalisation and a price test are the cheap
 conversion work to do first; and posting twenty videos remains the
 riskiest untested assumption and costs nothing.
+
+**The advisor is mid-build.** `.claude/advisor.md` §8 is the running
+order and says exactly what is done. Steps 1–4 and 6 are built; the
+proxy is deployed and answering. What is left, in the order it should
+happen:
+
+1. **The consent screen** (§8 step 5) — the only thing between a working
+   feature and a shippable one. Nothing may compile `ADVISOR_PROXY_URL`
+   into a release build before it exists. It has to name DeepSeek as the
+   processor, which is a data-transfer question for counsel as much as a
+   copy one, and it lands with the privacy policy and the store
+   data-safety declaration in the same change.
+2. **Entitlement on the proxy.** A message is spent client-side today;
+   the function's only gate is a rate limit keyed on a header the client
+   chooses. A RevenueCat webhook into a Supabase table plus a balance
+   check closes it, and is the first infrastructure astrologer chat
+   needs anyway.
+3. **Advisor analytics.** There are currently *zero* events for the
+   feature. Add them with their call sites in the same commit —
+   `analytics.md` records six declared events that fire from nowhere,
+   and this is how that happens.
+4. **Triggers and notifications** (§8 step 7) — the "You + Alex → why
+   does he not care?" nudge. `ReminderService` and `PaywallTrigger`'s
+   backoff discipline are both there to copy.
 
 What stays here is the engineering debt that is cheaper to fix now than
 later, none of which is on the revenue path:

@@ -172,6 +172,13 @@ and open counts come from these, not from the typed taxonomy.
 
 ## 5. Known gaps — read before trusting a dashboard
 
+**The advisor emits nothing at all.** Not one event, for a feature with
+a screen, a purchase and a per-message cost. Nothing here can answer how
+many people open it, how many ask a second question, what fraction run
+out, or what a pack converts at. Adding them is on `handoff.md` §5 —
+**with their call sites in the same commit**, which is the rule the rest
+of this section exists to explain.
+
 **Six of the 22 events have no call site in `lib/`.** They are declared,
 they are listed in `_everyEvent`, and nothing fires them:
 

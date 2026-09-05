@@ -5,18 +5,21 @@ from the user's own birth chart, compatibility readings between the user
 and anyone — or between any two other people, including a catalogue of
 141 public figures — that export as a four-frame 9:16 carousel for
 TikTok and Reels, a deep "You & X" relationship report sold as a one-off,
-live moon phase, an oracle card, sound-bath sessions, moon rituals, and a
-journal, with a personalising onboarding quiz, a subscription paywall,
-and four languages the reader can switch between in the app.
+live moon phase, an oracle card, sound-bath sessions, moon rituals, a
+journal, and an AI astrologer that answers from the same computed
+positions the rest of the app is built on — with a personalising
+onboarding quiz, a subscription paywall, and four languages the reader
+can switch between in the app.
 
 **There is no account.** Every reading — the daily transit,
 compatibility, moon phase, the oracle draw — is computed on the device
 from bundled content and orbital mechanics, and works offline.
 
-There is now one backend: a stateless proxy for the AI advisor, because
-a model API key cannot ship in a binary. It stores nothing and holds no
-user record — see `proxy/README.md`. It is written and undeployed, and
-the app makes no call to it in any current build.
+There is one backend: a stateless Supabase Edge Function proxying the
+advisor to DeepSeek, because a model API key cannot ship in a binary. It
+stores nothing and holds no user record — see `proxy/README.md`. It is
+deployed, and the app does not call it in any current build: no release
+may until the consent screen exists.
 
 Everything else on the network is telemetry and billing: anonymous
 product analytics (PostHog), crash reporting (Sentry) and subscription
@@ -61,11 +64,13 @@ lib/src/
 │                    reporting, platform channels
 ├── domain/          PURE DART — models + services, zero Flutter imports
 │   ├── models/      quiz, reading, moon, transit, compatibility,
-│   │                planet, streak, subscription…
+│   │                planet, streak, subscription, conversation,
+│   │                advisor context…
 │   └── services/    ephemeris (Sun/Mercury/Venus/Mars/Jupiter/Saturn),
 │                    transits, aspects, compatibility, moon phase,
 │                    energy patterns, reminders, daily selection,
-│                    streaks, paywall trigger, reading composer
+│                    streaks, paywall trigger, reading composer,
+│                    chat transport, message budget, redaction
 ├── data/            Drift database, repositories, content catalogue,
 │                    audio handler. The only layer that knows about I/O.
 ├── design_system/   tokens → theme → effects → atoms (aurora shader,
@@ -75,6 +80,9 @@ lib/src/
 │                    both the widget tree and the asset bundle resolve
 │                    through
 └── routing/         go_router typed routes
+
+proxy/               the one backend: a Supabase Edge Function that
+                     proxies the advisor to DeepSeek. Stateless.
 ```
 
 **Patterns used throughout**
@@ -113,6 +121,16 @@ and the assertions are pinned to reality wherever reality exists:
 - **The report** against the reading it deepens: every score is copied,
   never recomputed, so the paid document can never disagree with the
   free reveal.
+- **The advisor payload** for anything that could identify anybody — a
+  denied-key list walked to full depth, a primitives-only check, and an
+  assertion that a real match's request contains no substring of either
+  person's name.
+- **The database migration** by building a version 1 database by hand
+  and proving a journal written before the upgrade still reads after it.
+- **The proxy transport** against a real HTTP server rather than a mock,
+  because what it does is parse a byte stream: a frame split across
+  packets, a Cyrillic character split down the middle, a connection that
+  dies mid-answer.
 - **Every locale** for key parity and placeholder parity with English.
   Copy falls back per key at runtime, so a missing translation degrades
   silently instead of failing — which is exactly why the gap is asserted
@@ -131,5 +149,11 @@ and the assertions are pinned to reality wherever reality exists:
   hardware: simulator coordinates, resetting onboarding, adb, and where
   the build sizes actually come from.
 - **`.claude/analytics.md`** — every event the app emits, what each one
-  answers, and the gaps: six declared events currently fire from
-  nowhere.
+  answers, and the gaps: six declared events fire from nowhere, and the
+  advisor emits nothing at all.
+- **`.claude/advisor.md`** — the AI advisor: what it sends and what it
+  refuses to, the economy, the build order, and what is left before it
+  can ship.
+- **`proxy/README.md`** — the one backend. How to deploy it, which key
+  goes where, and the checklist that must be clear before any release
+  build points at it.
