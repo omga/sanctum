@@ -27,12 +27,18 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 
 // ── Configuration ──────────────────────────────────────────────────
 //
-// The model is an environment variable rather than a constant: the
-// vendor decision is deliberately deferred (`advisor.md` §10), and
-// switching should be a redeploy rather than a code change.
+// DeepSeek, over an OpenAI-compatible endpoint. All three of these are
+// environment variables rather than constants, so switching vendor is a
+// redeploy: anything that speaks the OpenAI shape needs only a
+// different base URL and key.
+//
+// `deepseek-v4-flash` is the id in DeepSeek's own docs. If a dated
+// pin is wanted — `-0731` or similar — set ADVISOR_MODEL rather than
+// editing this line.
 
-const MODEL = Deno.env.get('ADVISOR_MODEL') ?? 'claude-sonnet-5';
-const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
+const MODEL = Deno.env.get('ADVISOR_MODEL') ?? 'deepseek-v4-flash';
+const API_KEY = Deno.env.get('DEEPSEEK_API_KEY') ?? '';
+const API_BASE = Deno.env.get('ADVISOR_API_BASE') ?? 'https://api.deepseek.com';
 const MAX_TURNS_PER_HOUR = Number(Deno.env.get('ADVISOR_RATE_LIMIT') ?? '40');
 const MAX_OUTPUT_TOKENS = Number(Deno.env.get('ADVISOR_MAX_TOKENS') ?? '700');
 
@@ -219,26 +225,33 @@ function systemPrompt(request: AdvisorRequest): string {
 
 // ── The vendor call ────────────────────────────────────────────────
 //
-// Behind one function, because the model is undecided (`advisor.md`
-// §10) and the rest of this file should not have to care.
+// DeepSeek, over its OpenAI-compatible `/chat/completions`. Behind one
+// function and two environment variables, so switching vendor is a
+// redeploy: anything speaking the OpenAI shape needs only a different
+// `ADVISOR_API_BASE` and key.
+//
+// The system prompt is a `system` *message* here rather than a
+// top-level field, which is the one shape difference from the Anthropic
+// format worth knowing about.
 
 async function callModel(request: AdvisorRequest): Promise<Response> {
-  return await fetch('https://api.anthropic.com/v1/messages', {
+  return await fetch(`${API_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
+      authorization: `Bearer ${API_KEY}`,
     },
     body: JSON.stringify({
       model: MODEL,
       max_tokens: MAX_OUTPUT_TOKENS,
       stream: true,
-      system: systemPrompt(request),
-      messages: request.messages.map((message) => ({
-        role: message.author === 'you' ? 'user' : 'assistant',
-        content: message.body,
-      })),
+      messages: [
+        { role: 'system', content: systemPrompt(request) },
+        ...request.messages.map((message) => ({
+          role: message.author === 'you' ? 'user' : 'assistant',
+          content: message.body,
+        })),
+      ],
     }),
   });
 }
@@ -341,13 +354,14 @@ serve(async (httpRequest: Request) => {
             if (payload === '' || payload === '[DONE]') continue;
 
             try {
+              // OpenAI shape: choices[0].delta.content. Translated into
+              // our own frame here so the app never learns a vendor's
+              // event names.
               const event = JSON.parse(payload);
-              if (
-                event.type === 'content_block_delta' &&
-                typeof event.delta?.text === 'string'
-              ) {
-                characters += event.delta.text.length;
-                controller.enqueue(sse({ delta: event.delta.text }));
+              const text = event.choices?.[0]?.delta?.content;
+              if (typeof text === 'string' && text.length > 0) {
+                characters += text.length;
+                controller.enqueue(sse({ delta: text }));
               }
             } catch (_error) {
               // A malformed vendor event is not worth failing a whole

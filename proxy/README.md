@@ -27,6 +27,18 @@ account-creation-before-paywall is funnel friction. That still holds and
 this does not break it: **the function takes an install id, not a
 Supabase user.** Sanctum still has no accounts.
 
+## The model
+
+DeepSeek `deepseek-v4-flash`, called at `/chat/completions` — DeepSeek's
+API is OpenAI-compatible, so the vendor is two environment variables
+rather than a code path. The system prompt travels as a `system`
+message, which is the one shape difference from the Anthropic format
+worth knowing about.
+
+The proxy translates the vendor's stream into our own frames, so the
+app never learns a vendor's event names and a change of model is a
+server-only change.
+
 ## The contract
 
 `POST /functions/v1/advisor`
@@ -71,8 +83,7 @@ data: {"error":"rate_limited"}   // rate_limited | bad_request | server
 
 ```bash
 supabase functions deploy advisor --project-ref <ref>
-supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-supabase secrets set ADVISOR_MODEL=claude-sonnet-5
+supabase secrets set DEEPSEEK_API_KEY=sk-...
 ```
 
 Then point a build at it:
@@ -85,8 +96,9 @@ flutter run \
 
 | variable | default | what it does |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — | the only real secret here |
-| `ADVISOR_MODEL` | `claude-sonnet-5` | swap models without a code change |
+| `DEEPSEEK_API_KEY` | — | the only real secret here |
+| `ADVISOR_MODEL` | `deepseek-v4-flash` | swap models without a code change |
+| `ADVISOR_API_BASE` | `https://api.deepseek.com` | any OpenAI-compatible host |
 | `ADVISOR_RATE_LIMIT` | `40` | answered turns per install per hour |
 | `ADVISOR_MAX_TOKENS` | `700` | ceiling on one answer |
 

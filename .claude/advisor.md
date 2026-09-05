@@ -416,11 +416,12 @@ it starts at step 4 with a different transport.
 
 ## 10. Open questions
 
-1. ~~**Model vendor and hosting.**~~ Hosting is Supabase. The model is
-   an environment variable (`ADVISOR_MODEL`, defaulting to
-   `claude-sonnet-5`) rather than a decision baked into code, so
-   switching is a redeploy — but the consent screen has to *name* a
-   vendor, so this becomes a real decision at step 5.
+1. ~~**Model vendor and hosting.**~~ **Decided.** Supabase Edge
+   Functions, DeepSeek `deepseek-v4-flash` over its OpenAI-compatible
+   endpoint. Both are environment variables, so a swap is a redeploy —
+   but the consent screen must *name* DeepSeek, and name it as a
+   processor outside the EU, which is a data-transfer question for
+   counsel rather than a copy question.
 2. **Turn cap.** 10 is a guess. It sets both the price and the cost
    ceiling.
 3. **Does a conversation expire?** Recommendation: the *turns* are
