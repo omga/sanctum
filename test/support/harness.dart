@@ -13,10 +13,12 @@ import 'package:sanctum/src/l10n/sanctum_locales.dart';
 ///
 /// Locale is pinned to English rather than left to the host, so a
 /// developer with a non-English machine gets the same assertions as CI.
-Widget testApp(Widget home) => MaterialApp(
+/// [locale] overrides that pin for the tests that are *about* a
+/// locale — a layout that has to survive Ukrainian, say.
+Widget testApp(Widget home, {Locale? locale}) => MaterialApp(
   theme: SanctumTheme.nocturne(),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: SanctumLocales.supported,
-  locale: SanctumLocales.fallback,
+  locale: locale ?? SanctumLocales.fallback,
   home: home,
 );

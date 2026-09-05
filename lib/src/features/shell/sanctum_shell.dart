@@ -127,7 +127,7 @@ class _SanctumShellState extends ConsumerState<SanctumShell> {
           child: navigationShell,
         ),
       ),
-      bottomNavigationBar: _SanctumNavBar(
+      bottomNavigationBar: SanctumNavBar(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) => navigationShell.goBranch(
           index,
@@ -140,10 +140,24 @@ class _SanctumShellState extends ConsumerState<SanctumShell> {
   }
 }
 
-class _SanctumNavBar extends StatelessWidget {
-  const _SanctumNavBar({required this.currentIndex, required this.onTap});
+/// The floating bar at the foot of every screen inside the shell.
+///
+/// Public only so `shell_nav_bar_test.dart` can measure it at 375pt in
+/// each locale. `label_budget_test` counts characters, which is a proxy
+/// for width and was not a tight enough one: the bar overflowed by 2.7
+/// pixels on English "Journal" with every label inside its budget.
+class SanctumNavBar extends StatelessWidget {
+  /// Creates the bar.
+  const SanctumNavBar({
+    required this.currentIndex,
+    required this.onTap,
+    super.key,
+  });
 
+  /// Which branch is showing.
   final int currentIndex;
+
+  /// Called with the branch a tap selects.
   final ValueChanged<int> onTap;
 
   /// The four destinations, in order.
@@ -175,10 +189,14 @@ class _SanctumNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
+        // `lg` rather than `xl`: at 24 a side the five pills plus the
+        // selected label did not fit a 375pt phone, and the Row
+        // overflowed. The bar is the widest thing on the screen, so it
+        // gets the narrowest gutter.
         padding: const EdgeInsets.fromLTRB(
-          SanctumSpacing.xl,
+          SanctumSpacing.lg,
           0,
-          SanctumSpacing.xl,
+          SanctumSpacing.lg,
           SanctumSpacing.md,
         ),
         child: GlassCard(
@@ -235,8 +253,14 @@ class _NavItem extends StatelessWidget {
         child: AnimatedContainer(
           duration: SanctumMotion.quick,
           curve: SanctumMotion.ease,
+          // `md` rather than `lg`, and the gutter outside is `lg` rather
+          // than `xl`: five pills at the old numbers did not fit a
+          // 375pt phone once a selected label was longer than
+          // "Journal". Every Slavic label is. The pill is tighter by
+          // four points a side and the bar now fits every locale —
+          // `shell_nav_bar_test` measures all twenty combinations.
           padding: const EdgeInsets.symmetric(
-            horizontal: SanctumSpacing.lg,
+            horizontal: SanctumSpacing.md,
             vertical: SanctumSpacing.sm + 2,
           ),
           decoration: BoxDecoration(
