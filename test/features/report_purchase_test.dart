@@ -93,6 +93,13 @@ class _Store implements SubscriptionRepository {
   }
 
   @override
+  Future<Result<ReportProduct?>> messagePackProduct() async =>
+      const Result.ok(null);
+
+  @override
+  Future<Result<bool>> purchaseMessagePack() async => const Result.ok(true);
+
+  @override
   Future<Result<bool>> restore() async => const Result.ok(false);
 }
 

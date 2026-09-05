@@ -342,6 +342,76 @@ class RevenueCatSubscriptionRepository implements BillingRepository {
     }
   }
 
+  @override
+  Future<Result<ReportProduct?>> messagePackProduct() {
+    return Result.guard(
+      () async {
+        if (!_configured) return null;
+
+        // Same reasoning as the report: fetched as a product rather
+        // than from an offering, so reorganising the paywall's
+        // offerings cannot make the pack disappear.
+        final products = await Purchases.getProducts(
+          const [SubscriptionRepository.messagePackId],
+          productCategory: ProductCategory.nonSubscription,
+        );
+        final product = products.firstOrNull;
+        if (product == null) return null;
+
+        return ReportProduct(
+          id: product.identifier,
+          // Straight from the store: already localised, already in the
+          // user's currency. Never computed here.
+          displayPrice: product.priceString,
+        );
+      },
+      onError: (error, stackTrace) => UnexpectedFailure(
+        'Could not load the message pack price',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<bool>> purchaseMessagePack() async {
+    if (!_configured) {
+      return const Result.err(
+        UnexpectedFailure('Purchases are unavailable in this build'),
+      );
+    }
+    try {
+      final products = await Purchases.getProducts(
+        const [SubscriptionRepository.messagePackId],
+        productCategory: ProductCategory.nonSubscription,
+      );
+      final product = products.firstOrNull;
+      if (product == null) {
+        return const Result.err(
+          NotFoundFailure('Messages are not available right now'),
+        );
+      }
+
+      await Purchases.purchase(PurchaseParams.storeProduct(product));
+      return const Result.ok(true);
+    } on PlatformException catch (error, stackTrace) {
+      // Cancelling returns `ok(false)`. Granting messages on anything
+      // else means handing them to somebody who backed out of the
+      // sheet.
+      if (PurchasesErrorHelper.getErrorCode(error) ==
+          PurchasesErrorCode.purchaseCancelledError) {
+        return const Result.ok(false);
+      }
+      return Result.err(
+        UnexpectedFailure(
+          'Purchase could not be completed',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
   SanctumEntitlement _entitlementFrom(CustomerInfo info) =>
       info.entitlements.active.containsKey(entitlementId)
       ? SanctumEntitlement.premium

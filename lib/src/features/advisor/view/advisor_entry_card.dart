@@ -6,7 +6,7 @@ import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
-import 'package:sanctum/src/domain/services/conversation_budget.dart';
+import 'package:sanctum/src/domain/services/message_budget.dart';
 import 'package:sanctum/src/features/advisor/view/advisor_screen.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 
@@ -23,11 +23,13 @@ import 'package:sanctum/src/l10n/l10n.dart';
 /// who has just paid for depth on one named person is the most likely
 /// user in the app to have a follow-up about that person.
 ///
-/// ## Why it states the number of questions
+/// ## Why it states the number of messages
 ///
-/// It is what is bought. An entry point that says "ask the advisor" and
-/// then meters the conversation invisibly is the shape of the thing this
-/// app's paywall documentation spends three paragraphs rejecting.
+/// The advisor is metered, and an entry point that says "ask the
+/// advisor" and then reveals that only at the moment somebody runs out
+/// is the shape of the thing this app's paywall documentation spends
+/// three paragraphs rejecting. The number quoted is the weekly
+/// allowance, because that is what a subscriber actually has.
 class AdvisorEntryCard extends StatelessWidget {
   /// Creates the card for [match].
   const AdvisorEntryCard({required this.match, super.key});
@@ -53,7 +55,7 @@ class AdvisorEntryCard extends StatelessWidget {
           ),
           const SizedBox(height: SanctumSpacing.sm),
           Text(
-            l10n.advisorEntryBody(ConversationBudget.turnsPerConversation),
+            l10n.advisorEntryBody(MessageBudget.weeklyFree),
             style: type.bodyMedium.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: SanctumSpacing.lg),

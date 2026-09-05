@@ -212,10 +212,10 @@ class Conversation {
 
   /// How many times the user has asked something and been answered.
   ///
-  /// A *turn* is one exchange, not one message: the unit the user buys
-  /// and the unit that costs money in inference are the same thing, and
-  /// counting messages would mean an answer that arrives in two parts
-  /// costs twice. See `ConversationBudget`.
+  /// A record of what this conversation consumed, not a cap on it: the
+  /// allowance is a single balance shared across every conversation —
+  /// see `MessageBudget`. Kept because "how much did this pairing cost
+  /// me" is a question worth being able to answer.
   final int turnsUsed;
 
   /// A copy with [turnsUsed] replaced.

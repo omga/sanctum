@@ -296,7 +296,6 @@
   "advisorSuggested": "МОЖНА ЗАПИТАТИ",
   "advisorTurnsLeft": "{count, plural, one{Лишилось {count} запитання} few{Лишилось {count} запитання} many{Лишилось {count} запитань} other{Лишилось {count} запитань}}",
   "advisorSpentTitle": "Це було останнє запитання",
-  "advisorSpentBody": "Розмова залишається тут — читати можна завжди.",
   "advisorThinking": "Читаю карту",
   "advisorFailedOffline": "Немає зв’язку. Твоє запитання нікуди не зникло.",
   "advisorFailedBusy": "Забагато запитань одразу. Спробуй за хвилину.",
@@ -311,5 +310,8 @@
   "advisorHubEmptyBody": "Спершу перевір когось. Радник відповідає за числами розбору, тож йому потрібен розбір.",
   "advisorDelete": "Видалити",
   "advisorDeleteTitle": "Видалити цю розмову?",
-  "advisorDeleteMessage": "Вона лише на цьому телефоні, тож повернути не вийде. Витрачені запитання не повертаються."
+  "advisorDeleteMessage": "Вона лише на цьому телефоні, тож повернути не вийде. Витрачені запитання не повертаються.",
+  "advisorSpentPremium": "У понеділок з'явиться ще п'ять. Або можна додати зараз.",
+  "advisorSpentFree": "Premium дає п'ять на тиждень. Або купи їх окремо.",
+  "advisorBuyMessages": "Додати {count} повідомлень"
 }

@@ -11,13 +11,14 @@ import 'package:sanctum/src/domain/models/conversation.dart';
 /// the context every turn, and an unbounded transcript means a request
 /// that grows quadratically over a conversation.
 ///
-/// ## Why it is bounded even though nothing is long enough to need it
+/// ## Why it is bounded
 ///
-/// `ConversationBudget.turnsPerConversation` is 10, so today every
-/// transcript already fits inside [maxMessages] and this function is a
-/// no-op. It exists anyway because the cap is explicitly a number to be
-/// tuned, and because person-to-person chat has no cap at all — and the
-/// failure it prevents is not a crash but a bill.
+/// There is no per-conversation cap any more — the allowance is a shared
+/// balance (`MessageBudget`), so one long conversation is a thing a
+/// paying user can absolutely have. Twenty messages is the point where
+/// re-sending the whole transcript every turn starts costing more than
+/// the answer is worth, and the failure this prevents is a bill rather
+/// than a crash.
 abstract final class ConversationHistory {
   /// The most messages that travel with one question.
   ///

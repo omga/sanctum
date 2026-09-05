@@ -2,18 +2,21 @@ import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/conversation_repository.dart';
+import 'package:sanctum/src/data/repositories/message_balance_repository.dart';
 import 'package:sanctum/src/data/services/advisor/proxy_chat_transport.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
 import 'package:sanctum/src/domain/models/advisor_context.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/conversation.dart';
+import 'package:sanctum/src/domain/models/message_balance.dart';
 import 'package:sanctum/src/domain/services/chat_transport.dart';
-import 'package:sanctum/src/domain/services/conversation_budget.dart';
 import 'package:sanctum/src/domain/services/conversation_history.dart';
+import 'package:sanctum/src/domain/services/message_budget.dart';
 import 'package:sanctum/src/domain/services/message_redaction.dart';
 
 part 'advisor_view_model.g.dart';
@@ -74,9 +77,13 @@ class AdvisorUiState {
   const AdvisorUiState({
     required this.conversation,
     required this.messages,
+    required this.balance,
+    required this.week,
+    required this.isPremium,
     this.streamingId,
     this.failure,
     this.lastQuestion,
+    this.isPurchasing = false,
   });
 
   /// The conversation itself, carrying the turns spent.
@@ -84,6 +91,18 @@ class AdvisorUiState {
 
   /// Every message, oldest first.
   final List<ChatMessage> messages;
+
+  /// What is left to spend, shared across every conversation.
+  final MessageBalance balance;
+
+  /// The week the free allowance is counted against.
+  final String week;
+
+  /// Whether the weekly free allowance applies at all.
+  final bool isPremium;
+
+  /// Whether a store sheet is open right now.
+  final bool isPurchasing;
 
   /// The id of the answer currently being written, if one is.
   final String? streamingId;
@@ -101,18 +120,29 @@ class AdvisorUiState {
   /// Whether an answer is arriving.
   bool get isStreaming => streamingId != null;
 
-  /// Questions left in this conversation.
-  int get turnsRemaining => ConversationBudget.turnsRemaining(conversation);
+  /// Messages left, free and bought together.
+  int get remaining => MessageBudget.remaining(
+    balance: balance,
+    week: week,
+    isPremium: isPremium,
+  );
 
-  /// Whether every question has been asked.
-  bool get isSpent => ConversationBudget.isSpent(conversation);
+  /// Whether there is nothing left to spend.
+  bool get isSpent => remaining == 0;
 
   /// Whether to show the remaining count.
-  bool get showsTurnCount =>
-      ConversationBudget.isNearlySpent(conversation);
+  ///
+  /// Always, once it is running low, and never at full — a counter on
+  /// the first message of the week makes the whole screen feel metered
+  /// when it is not yet.
+  bool get showsCount => MessageBudget.isNearlySpent(
+    balance: balance,
+    week: week,
+    isPremium: isPremium,
+  );
 
   /// Whether the composer accepts input.
-  bool get canAsk => !isStreaming && !isSpent;
+  bool get canAsk => !isStreaming && !isSpent && !isPurchasing;
 
   /// A copy with the given fields replaced.
   ///
@@ -122,12 +152,18 @@ class AdvisorUiState {
   AdvisorUiState copyWith({
     Conversation? conversation,
     List<ChatMessage>? messages,
+    MessageBalance? balance,
+    bool? isPurchasing,
     String? streamingId,
     AdvisorFailure? failure,
     String? lastQuestion,
   }) => AdvisorUiState(
     conversation: conversation ?? this.conversation,
     messages: messages ?? this.messages,
+    balance: balance ?? this.balance,
+    week: week,
+    isPremium: isPremium,
+    isPurchasing: isPurchasing ?? this.isPurchasing,
     streamingId: streamingId,
     failure: failure,
     lastQuestion: lastQuestion,
@@ -182,8 +218,19 @@ class AdvisorController extends _$AdvisorController {
             const <ChatMessage>[],
           );
 
-    return AdvisorUiState(conversation: conversation, messages: messages);
+    final balance = (await _balances.read()).getOrElse(MessageBalance.empty);
+
+    return AdvisorUiState(
+      conversation: conversation,
+      messages: messages,
+      balance: balance,
+      week: MessageBudget.weekFor(ref.read(clockProvider).now()),
+      isPremium: ref.watch(isPremiumProvider),
+    );
   }
+
+  MessageBalanceRepository get _balances =>
+      ref.read(messageBalanceRepositoryProvider);
 
   /// Writes the conversation row the first time it is needed.
   ///
@@ -259,13 +306,25 @@ class AdvisorController extends _$AdvisorController {
           _replace(answerId, (m) => m.copyWith(status: MessageStatus.sent));
           // The turn is spent here and only here. A failed send has cost
           // the user nothing, so it must cost them nothing.
-          final spent = ConversationBudget.spendTurn(_conversation);
+          final counted = _conversation.copyWith(
+            turnsUsed: _conversation.turnsUsed + 1,
+          );
+          final balance = MessageBudget.spend(
+            balance: _value.balance,
+            week: _value.week,
+            isPremium: _value.isPremium,
+          );
           state = AsyncData(
-            _value.copyWith(conversation: spent, messages: _messages),
+            _value.copyWith(
+              conversation: counted,
+              messages: _messages,
+              balance: balance,
+            ),
           );
           final answered = _messages.firstWhere((m) => m.id == answerId);
           await _store.save(answered);
-          await _store.setTurnsUsed(spent.id, spent.turnsUsed);
+          await _store.setTurnsUsed(counted.id, counted.turnsUsed);
+          await _balances.write(balance);
         case ChatFailed(:final failure):
           // The half-written answer is dropped rather than stored. A
           // fragment in the transcript is a worse artefact than the
@@ -292,6 +351,36 @@ class AdvisorController extends _$AdvisorController {
           return;
       }
     }
+  }
+
+  /// Buys another pack of messages.
+  ///
+  /// The grant is written on a `true` from the store and never on a
+  /// cancellation. `RevenueCatSubscriptionRepository.purchase` maps a
+  /// cancelled sheet to a *successful* `Result` carrying `false`, which
+  /// is exactly the shape that once let this app count a refusal as a
+  /// sale — see `analytics.md`.
+  Future<bool> buyMessages() async {
+    final current = state.value;
+    if (current == null || current.isPurchasing) return false;
+
+    state = AsyncData(current.copyWith(isPurchasing: true));
+    final result = await ref
+        .read(subscriptionRepositoryProvider)
+        .purchaseMessagePack();
+    final bought = result.getOrElse(false);
+
+    if (!bought) {
+      state = AsyncData(_value.copyWith(isPurchasing: false));
+      return false;
+    }
+
+    final granted = MessageBudget.grantPack(_value.balance);
+    await _balances.write(granted);
+    state = AsyncData(
+      _value.copyWith(balance: granted, isPurchasing: false),
+    );
+    return true;
   }
 
   /// Deletes this conversation and everything in it.

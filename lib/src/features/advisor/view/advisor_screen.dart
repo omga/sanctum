@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_dialog.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
@@ -12,6 +13,7 @@ import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/conversation.dart';
 import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/services/conversation_starters.dart';
+import 'package:sanctum/src/domain/services/message_budget.dart';
 import 'package:sanctum/src/features/advisor/view_model/advisor_view_model.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
@@ -160,20 +162,21 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
                         await _scrollToEnd();
                       },
                     ),
-                  if (state.showsTurnCount && !state.isSpent)
+                  if (state.showsCount && !state.isSpent)
                     Padding(
                       padding: const EdgeInsets.only(bottom: SanctumSpacing.xs),
                       child: Text(
-                        l10n.advisorTurnsLeft(state.turnsRemaining),
+                        l10n.advisorTurnsLeft(state.remaining),
                         style: type.caption.copyWith(
                           color: colors.textTertiary,
                         ),
                       ),
                     ),
                   if (state.isSpent)
-                    _Spent(
-                      title: l10n.advisorSpentTitle,
-                      body: l10n.advisorSpentBody,
+                    _OutOfMessages(
+                      isPremium: state.isPremium,
+                      isPurchasing: state.isPurchasing,
+                      onBuy: () => unawaited(_buy()),
                     )
                   else
                     _Composer(
@@ -187,6 +190,17 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
               ),
       ),
     );
+  }
+
+  Future<void> _buy() async {
+    final bought = await ref
+        .read(advisorControllerProvider(widget.match).notifier)
+        .buyMessages();
+    // Nothing to say when they backed out of the sheet: the screen is
+    // already showing the state they backed out to. Saying "cancelled"
+    // to somebody who just cancelled is the app narrating their own
+    // decision back at them.
+    if (bought && mounted) await _scrollToEnd();
   }
 
   /// Deleting a transcript is irreversible and unshared, so it asks.
@@ -491,33 +505,62 @@ class _Composer extends StatelessWidget {
   }
 }
 
-/// Shown where the composer was, once every question is spent.
-class _Spent extends StatelessWidget {
-  const _Spent({required this.title, required this.body});
+/// Shown where the composer was, once the balance is empty.
+///
+/// ## Why the transcript stays
+///
+/// Running out of messages takes away the *composer*, never the
+/// conversation. Somebody who paid for answers must be able to read them
+/// afterwards, and a screen that empties itself the moment the money
+/// does is a refund request.
+///
+/// ## Why a subscriber is told when, and a free user is told what
+///
+/// A subscriber's allowance comes back on Monday, so the useful sentence
+/// is that it does. A non-subscriber's does not come back at all, so the
+/// useful sentence names the thing that would change that. Neither is a
+/// countdown, and neither hides the price.
+class _OutOfMessages extends StatelessWidget {
+  const _OutOfMessages({
+    required this.isPremium,
+    required this.isPurchasing,
+    required this.onBuy,
+  });
 
-  final String title;
-  final String body;
+  final bool isPremium;
+  final bool isPurchasing;
+  final VoidCallback onBuy;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      SanctumSpacing.lg,
-      0,
-      SanctumSpacing.lg,
-      SanctumSpacing.md,
-    ),
-    child: Column(
-      children: [
-        Text(title, style: context.type.label),
-        const SizedBox(height: SanctumSpacing.xxs),
-        Text(
-          body,
-          textAlign: TextAlign.center,
-          style: context.type.caption.copyWith(
-            color: context.colors.textTertiary,
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        SanctumSpacing.lg,
+        0,
+        SanctumSpacing.lg,
+        SanctumSpacing.md,
+      ),
+      child: Column(
+        children: [
+          Text(l10n.advisorSpentTitle, style: context.type.label),
+          const SizedBox(height: SanctumSpacing.xxs),
+          Text(
+            isPremium ? l10n.advisorSpentPremium : l10n.advisorSpentFree,
+            textAlign: TextAlign.center,
+            style: context.type.caption.copyWith(
+              color: context.colors.textTertiary,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: SanctumSpacing.md),
+          SanctumButton(
+            label: l10n.advisorBuyMessages(MessageBudget.messagesPerPack),
+            icon: Icons.add,
+            expand: true,
+            onPressed: isPurchasing ? null : onBuy,
+          ),
+        ],
+      ),
+    );
+  }
 }

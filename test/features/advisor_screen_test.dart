@@ -5,6 +5,7 @@ import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/data/catalog/content_catalog.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/database/sanctum_database.dart';
+import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/domain/models/advisor_context.dart';
@@ -17,10 +18,11 @@ import 'package:sanctum/src/domain/models/ritual.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
 import 'package:sanctum/src/domain/services/chat_transport.dart';
 import 'package:sanctum/src/domain/services/compatibility_composer.dart';
-import 'package:sanctum/src/domain/services/conversation_budget.dart';
 import 'package:sanctum/src/domain/services/conversation_starters.dart';
+import 'package:sanctum/src/domain/services/message_budget.dart';
 import 'package:sanctum/src/features/advisor/view/advisor_screen.dart';
 import 'package:sanctum/src/features/advisor/view_model/advisor_view_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/copy.dart';
 import '../support/harness.dart';
@@ -41,6 +43,18 @@ final CompatibilityMatch _match = CompatibilityComposer.compose(
     birthDate: DateTime(1990, 3, 2),
     birthTime: const BirthTime(minuteOfDay: 900),
   ),
+  now: DateTime(2026, 9, 4),
+  copy: _copy,
+);
+
+/// A different pairing, for proving the allowance is shared.
+final CompatibilityMatch _other = CompatibilityComposer.compose(
+  you: MatchPerson(
+    name: 'Andrew',
+    birthDate: DateTime(1990, 1, 15),
+    birthTime: const BirthTime(minuteOfDay: 500),
+  ),
+  them: MatchPerson(name: 'Sam', birthDate: DateTime(1992, 7, 21)),
   now: DateTime(2026, 9, 4),
   copy: _copy,
 );
@@ -90,10 +104,27 @@ Future<void> _pump(
   Size size = const Size(1200, 2600),
   double pixelRatio = 1,
   SanctumDatabase? database,
+  bool isPremium = true,
+  CompatibilityMatch? match,
+  Map<String, Object>? prefs,
+  bool keepPreferences = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = pixelRatio;
   addTearDown(tester.view.reset);
+
+  // The balance lives in preferences, and a widget test has none until
+  // it says so. Left out, every `SharedPreferences.getInstance()` throws
+  // and the screen renders as though the user had no messages — which
+  // is a plausible-looking failure that has nothing to do with the code
+  // under test.
+  //
+  // `keepPreferences` matters for the tests that re-open the screen:
+  // this call *replaces* the store, so re-pumping without it would hand
+  // the user their spent messages back and quietly prove nothing.
+  if (!keepPreferences) {
+    SharedPreferences.setMockInitialValues(prefs ?? const {});
+  }
 
   // A real database, in memory: the view model reads and writes through
   // the repository, so a fake would test the fake. A test that needs the
@@ -116,16 +147,31 @@ Future<void> _pump(
             copy: _copy,
           ),
         ),
+        // The weekly allowance is what Premium buys, so a widget test
+        // of a working advisor is a test of a subscriber.
+        isPremiumProvider.overrideWithValue(isPremium),
+        // The local stub, which always reports a completed purchase.
+        // Cancellation is only reachable through a real store sheet.
+        subscriptionRepositoryProvider.overrideWithValue(
+          LocalSubscriptionRepository(),
+        ),
         chatTransportProvider.overrideWith(
           (ref) async =>
               transport ??
               const ScriptedChatTransport(delayPerChunk: Duration.zero),
         ),
       ],
-      child: testApp(AdvisorScreen(match: _match)),
+      child: testApp(AdvisorScreen(match: match ?? _match)),
     ),
   );
-  await tester.pumpAndSettle();
+  // `pump` rather than `pumpAndSettle` where the balance is empty: that
+  // state shows a primary button, and `SanctumButton` carries a sheen
+  // that repeats forever, so a settle never returns on any screen with
+  // one. Two frames is enough for the providers to resolve — the same
+  // trade `report_screen_test` records.
+  await tester.pump();
+  await tester.pump();
+  await tester.pump();
 }
 
 void main() {
@@ -286,21 +332,79 @@ void main() {
       final container = ProviderScope.containerOf(
         tester.element(find.byType(AdvisorScreen)),
       );
-      for (var i = 0; i < ConversationBudget.turnsPerConversation; i++) {
+      for (var i = 0; i < MessageBudget.weeklyFree; i++) {
         await tester.enterText(find.byType(TextField), 'Question $i');
         await tester.testTextInput.receiveAction(TextInputAction.send);
-        await tester.pumpAndSettle();
+        // Settling is safe until the last one empties the balance and
+        // puts an animated button on screen.
+        if (i < MessageBudget.weeklyFree - 1) {
+          await tester.pumpAndSettle();
+        } else {
+          for (var frame = 0; frame < 6; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+          }
+        }
       }
       expect(
         container.read(advisorControllerProvider(_match)).requireValue.isSpent,
         isTrue,
       );
-      await tester.pumpAndSettle();
 
       expect(find.byType(TextField), findsNothing);
       expect(find.text('That was the last question'), findsOneWidget);
       // The transcript is not taken away with the composer.
       expect(find.text('Question 0'), findsOneWidget);
+    });
+
+    testWidgets('the allowance is shared, not per conversation', (
+      tester,
+    ) async {
+      // The decision this economy turns on: somebody with twenty saved
+      // matches has the same five messages as somebody with one.
+      final db = SanctumDatabase.memory();
+      addTearDown(db.close);
+
+      await _pump(tester, database: db);
+      for (var i = 0; i < MessageBudget.weeklyFree; i++) {
+        await tester.enterText(find.byType(TextField), 'Question $i');
+        await tester.testTextInput.receiveAction(TextInputAction.send);
+        if (i < MessageBudget.weeklyFree - 1) {
+          await tester.pumpAndSettle();
+        } else {
+          for (var frame = 0; frame < 6; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+          }
+        }
+      }
+
+      // A different pairing entirely, over the same balance.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      await _pump(tester, database: db, match: _other, keepPreferences: true);
+
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('That was the last question'), findsOneWidget);
+    });
+
+    testWidgets('a non-subscriber has none to begin with', (tester) async {
+      await _pump(tester, isPremium: false);
+      expect(find.byType(TextField), findsNothing);
+      expect(
+        find.textContaining('Premium includes five a week'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('buying a pack reopens the composer', (tester) async {
+      await _pump(tester, isPremium: false);
+      expect(find.byType(TextField), findsNothing);
+
+      await tester.tap(find.textContaining('Add 5 messages'));
+      for (var frame = 0; frame < 6; frame++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+
+      expect(find.byType(TextField), findsOneWidget);
     });
   });
 
@@ -319,13 +423,19 @@ void main() {
       tester,
     ) async {
       await _pump(tester, size: const Size(1125, 2436), pixelRatio: 3);
-      for (var i = 0; i < ConversationBudget.turnsPerConversation; i++) {
+      for (var i = 0; i < MessageBudget.weeklyFree; i++) {
         await tester.enterText(
           find.byType(TextField),
           'A question long enough to wrap onto a second line, number $i',
         );
         await tester.testTextInput.receiveAction(TextInputAction.send);
-        await tester.pumpAndSettle();
+        if (i < MessageBudget.weeklyFree - 1) {
+          await tester.pumpAndSettle();
+        } else {
+          for (var frame = 0; frame < 6; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+          }
+        }
       }
       expect(tester.takeException(), isNull);
       expect(find.text('That was the last question'), findsOneWidget);

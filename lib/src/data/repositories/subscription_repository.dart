@@ -34,6 +34,13 @@ abstract interface class SubscriptionRepository {
   /// development stand-in for the id it sells.
   static const String reportProductId = 'sanctum.report.relationship';
 
+  /// The message pack's store id.
+  ///
+  /// A consumable, bought repeatedly. Named for what it contains rather
+  /// than for a price, because the price is per storefront and the
+  /// contents are not.
+  static const String messagePackId = 'sanctum.advisor.messages5';
+
   /// The plans on offer.
   Future<Result<List<SubscriptionPlan>>> plans();
 
@@ -62,6 +69,17 @@ abstract interface class SubscriptionRepository {
   /// and a separate method because it is a separate store call: a
   /// consumable product rather than a package from an offering.
   Future<Result<bool>> purchaseReport();
+
+  /// The message pack's price, or null where it is not on sale.
+  Future<Result<ReportProduct?>> messagePackProduct();
+
+  /// Buys a pack of advisor messages.
+  ///
+  /// Same contract as [purchaseReport]: the bool is whether they bought,
+  /// and a cancelled store sheet is a *successful* result carrying
+  /// false. Anything else has this app counting a refusal as a sale,
+  /// which `analytics.md` records it doing once already.
+  Future<Result<bool>> purchaseMessagePack();
 
   /// Restores a previous purchase. See [EntitlementRepository.restore].
   Future<Result<bool>> restore();
@@ -168,6 +186,10 @@ class LocalSubscriptionRepository implements BillingRepository {
   /// read from the store at runtime.
   static const String placeholderReportPrice = r'$3.99';
 
+  /// The message pack's placeholder price. Same caveat as above: the
+  /// only real one comes from the store.
+  static const String placeholderMessagePackPrice = r'$2.99';
+
   @override
   Future<Result<ReportProduct?>> reportProduct() async => const Result.ok(
     ReportProduct(
@@ -183,6 +205,18 @@ class LocalSubscriptionRepository implements BillingRepository {
     // path — see the interface.
     return const Result.ok(true);
   }
+
+  @override
+  Future<Result<ReportProduct?>> messagePackProduct() async =>
+      const Result.ok(
+        ReportProduct(
+          id: SubscriptionRepository.messagePackId,
+          displayPrice: placeholderMessagePackPrice,
+        ),
+      );
+
+  @override
+  Future<Result<bool>> purchaseMessagePack() async => const Result.ok(true);
 
   @override
   Future<Result<bool>> restore() {

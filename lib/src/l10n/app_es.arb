@@ -296,7 +296,6 @@
   "advisorSuggested": "PUEDES PREGUNTAR",
   "advisorTurnsLeft": "{count, plural, one{Queda {count} pregunta} other{Quedan {count} preguntas}}",
   "advisorSpentTitle": "Esa fue la última pregunta",
-  "advisorSpentBody": "La conversación se queda aquí para releerla siempre.",
   "advisorThinking": "Leyendo la carta",
   "advisorFailedOffline": "Sin conexión. Tu pregunta sigue aquí.",
   "advisorFailedBusy": "Demasiadas preguntas seguidas. Inténtalo en un minuto.",
@@ -311,5 +310,8 @@
   "advisorHubEmptyBody": "Mira a alguien primero. El asesor responde con los números de una lectura, así que necesita una.",
   "advisorDelete": "Borrar",
   "advisorDeleteTitle": "¿Borrar esta conversación?",
-  "advisorDeleteMessage": "Está solo en este teléfono, así que no se puede recuperar. Las preguntas gastadas no vuelven."
+  "advisorDeleteMessage": "Está solo en este teléfono, así que no se puede recuperar. Las preguntas gastadas no vuelven.",
+  "advisorSpentPremium": "El lunes llegan cinco más. También puedes añadir ahora.",
+  "advisorSpentFree": "Premium incluye cinco por semana. También puedes comprarlos sueltos.",
+  "advisorBuyMessages": "Añadir {count} mensajes"
 }

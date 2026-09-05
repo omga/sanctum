@@ -300,28 +300,32 @@ that argument applies to the advisor's own first release:
 > restores on a second device — and none of it answers whether anybody
 > wants to ask an astrologer anything.
 
-**Recommendation: sell a conversation, not a currency, for v1.**
+**Decided: a shared message balance.** Not a conversation, not a
+currency.
 
-- one purchase = one conversation about one subject, capped at N turns
-  (start at 10 exchanges; it is a number, tune it)
-- priced in real money, which is what `roadmap.md` §2 argues for anyway:
-  "price reports in money and chat in credits" — and there are no
-  credits yet
-- ownership is recorded exactly like a report: a subject id in a set,
-  "owned stays owned", re-opening a finished conversation to *read* it
-  is free forever. Only new turns cost
-- subscribers get one conversation a month included — the same mechanic
-  as the included report, for the same reason: it forms the habit and
-  makes the subscription drive the purchase rather than replace it
+- **five free messages a week** for subscribers, shared across every
+  conversation — somebody with twenty saved pairings has the same five
+  as somebody with one
+- **$2.99 buys five more**, a repeatable consumable, no expiry
+- **non-subscribers get no free messages** and can still buy
 
-This reuses the consumable purchase path already shipped and verified
-for the report, needs no ledger, and keeps the cost exposure bounded per
-sale, which "unlimited chat for an hour" does not.
+Free messages are spent before bought ones, because the free ones expire
+on Monday and the bought ones do not; spending the wrong one first takes
+money for nothing.
 
-Credits become the right answer the day there is a second variable-cost
-thing to spend them on. `ConversationGate` is where that decision lives,
-so switching later touches one pure file and its tests — not the UI, not
-the transport, not the storage.
+The earlier plan here — one purchase per conversation, capped at ten
+turns — was rejected: it makes the cost of a subscriber a function of
+how many pairings they have saved, and saving pairings is what the rest
+of the app is for.
+
+This is still not the credit ledger `roadmap.md` §1 rejects. Three
+integers, no packs, no expiry on what was bought, no transaction
+history, nothing to reconcile. The weekly grant is a period string and a
+counter rather than a balance that accrues: an unspent week is gone, not
+banked, which is the difference between an allowance and an economy.
+
+`MessageBudget` is where the whole policy lives — pure, and the only
+file to touch if any of these numbers move.
 
 ---
 
@@ -389,7 +393,13 @@ the shape is right.
    survives.
 5. **Consent + disclosure + policy + data-safety.** Ships with, or
    before, step 4 reaching a real user.
-6. **Purchase and gating.**
+6. ~~**Purchase and gating.**~~ **Done in the app, unverified in a
+   store.** `MessageBudget` and a preferences-backed balance, the
+   out-of-messages state, and `purchaseMessagePack` on both billing
+   implementations. The store product `sanctum.advisor.messages5` does
+   not exist yet in App Store Connect or Play, and the proxy still does
+   not check entitlement — a message is spent client-side, so the
+   server's only gate remains a rate limit.
 7. **Triggers and notifications.** Last on purpose: nudging people
    toward a feature is the wrong thing to tune before the feature is
    known to be good.
@@ -422,8 +432,10 @@ it starts at step 4 with a different transport.
    but the consent screen must *name* DeepSeek, and name it as a
    processor outside the EU, which is a data-transfer question for
    counsel rather than a copy question.
-2. **Turn cap.** 10 is a guess. It sets both the price and the cost
-   ceiling.
+2. ~~**Turn cap.**~~ Replaced by the weekly allowance: five free a
+   week, five per $2.99 pack. `MessageBudget.weeklyFree` and
+   `messagesPerPack` are the two numbers, and moving either is a
+   one-line change plus its tests.
 3. **Does a conversation expire?** Recommendation: the *turns* are
    spent, the *transcript* is permanent. No expiry, matching the report.
 4. **iOS purchase path is still unverified against the real App Store**

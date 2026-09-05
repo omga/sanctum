@@ -11,6 +11,7 @@ import 'package:sanctum/src/data/repositories/conversation_repository.dart';
 import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
 import 'package:sanctum/src/data/repositories/journal_repository.dart';
+import 'package:sanctum/src/data/repositories/message_balance_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
 import 'package:sanctum/src/data/repositories/quiz_repository.dart';
@@ -160,6 +161,14 @@ JournalRepository journalRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 ConversationRepository conversationRepository(Ref ref) =>
     DriftConversationRepository(ref.watch(sanctumDatabaseProvider));
+
+/// What the user has left to spend on advisor messages.
+///
+/// Preferences rather than the database: it is a receipt, and it has to
+/// survive a wipe of the content that a transcript does not.
+@Riverpod(keepAlive: true)
+MessageBalanceRepository messageBalanceRepository(Ref ref) =>
+    const PreferencesMessageBalanceRepository();
 
 /// Energy check-ins.
 @Riverpod(keepAlive: true)
