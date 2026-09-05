@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
+import 'package:sanctum/src/core/result/result.dart';
+import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/data/repositories/conversation_repository.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
 import 'package:sanctum/src/domain/models/advisor_context.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/conversation.dart';
 import 'package:sanctum/src/domain/services/chat_transport.dart';
 import 'package:sanctum/src/domain/services/conversation_budget.dart';
+import 'package:sanctum/src/domain/services/conversation_history.dart';
 import 'package:sanctum/src/domain/services/message_redaction.dart';
 
 part 'advisor_view_model.g.dart';
@@ -98,36 +102,70 @@ class AdvisorUiState {
 ///
 /// ## Where the transcript lives
 ///
-/// In this notifier, and nowhere else, until `advisor.md` §8 step 3 adds
-/// the Drift tables. Leaving the screen loses the conversation. That is
-/// a deliberate gap rather than an oversight: storage is a schema
-/// migration and a delete flow, and doing it before the screen exists
-/// would be guessing at what needs storing.
+/// In Drift, from the moment a first question is asked. The conversation
+/// row is written lazily rather than on open, so a screen somebody
+/// looked at and left does not become an empty entry in the Ask tab.
+///
+/// A question is stored when it is sent and an answer when it has
+/// finished arriving — never per chunk. A write per token would cost a
+/// transaction each, and a process that died mid-answer would leave a
+/// half-sentence in the transcript, which is a worse artefact than the
+/// missing answer it replaces.
 @riverpod
 class AdvisorController extends _$AdvisorController {
+  ConversationRepository get _store => ref.read(conversationRepositoryProvider);
+
   @override
-  AdvisorUiState build(CompatibilityMatch match) => AdvisorUiState(
-    conversation: Conversation(
-      id: 'advisor:${match.id}',
-      kind: ConversationKind.advisor,
-      subject: MatchSubject(match.id),
-      startedAt: DateTime.now(),
-    ),
-    messages: const [],
-  );
+  Future<AdvisorUiState> build(CompatibilityMatch match) async {
+    final subject = MatchSubject(match.id);
+    final stored = (await _store.find(subject)).getOrElse(null);
+
+    // A conversation nobody has asked anything in is not written yet —
+    // see [_ensureOpen]. So "not found" is the ordinary first visit,
+    // and the state starts from an unsaved conversation rather than an
+    // error.
+    final conversation =
+        stored ??
+        Conversation(
+          id: 'advisor:${match.id}',
+          kind: ConversationKind.advisor,
+          subject: subject,
+          startedAt: DateTime.now(),
+        );
+
+    final messages = stored == null
+        ? const <ChatMessage>[]
+        : (await _store.messages(conversation.id)).getOrElse(
+            const <ChatMessage>[],
+          );
+
+    return AdvisorUiState(conversation: conversation, messages: messages);
+  }
+
+  /// Writes the conversation row the first time it is needed.
+  ///
+  /// Lazily, so opening the screen and leaving without asking anything
+  /// does not litter the Ask tab with empty conversations.
+  Future<void> _ensureOpen(Conversation conversation) =>
+      _store.open(conversation);
 
   /// Asks [question], which is what the user typed or tapped.
   ///
   /// [question] is the *display* form and may contain names. What
   /// reaches the transport does not — see [_outbound].
   Future<void> ask(String question, {required String languageCode}) async {
+    final current = state.value;
+    if (current == null) return;
+
     final trimmed = question.trim();
-    if (trimmed.isEmpty || !state.canAsk) return;
+    if (trimmed.isEmpty || !current.canAsk) return;
+
+    await _ensureOpen(current.conversation);
 
     final now = DateTime.now();
     final asked = ChatMessage(
       id: 'q${now.microsecondsSinceEpoch}',
-      conversationId: state.conversation.id,
+      conversationId: current.conversation.id,
       author: MessageAuthor.you,
       body: trimmed,
       at: now,
@@ -135,30 +173,36 @@ class AdvisorController extends _$AdvisorController {
     final answerId = 'a${now.microsecondsSinceEpoch}';
     final answer = ChatMessage(
       id: answerId,
-      conversationId: state.conversation.id,
+      conversationId: current.conversation.id,
       author: MessageAuthor.counterpart,
       body: '',
       at: now,
       status: MessageStatus.sending,
     );
 
-    state = state.copyWith(
-      messages: [...state.messages, asked, answer],
-      streamingId: answerId,
-      lastQuestion: trimmed,
+    // The question is stored as soon as it is asked; the answer only
+    // once it is finished. Nothing is written per chunk.
+    await _store.save(asked);
+
+    state = AsyncData(
+      current.copyWith(
+        messages: [...current.messages, asked, answer],
+        streamingId: answerId,
+        lastQuestion: trimmed,
+      ),
     );
 
     // The history handed over is the redacted one, all the way back:
     // scrubbing only the newest message would send every earlier name
     // again on the next turn.
     final history = [
-      for (final message in state.messages)
+      for (final message in ConversationHistory.forSend(_messages))
         if (message.id != answerId)
           message.copyWith(body: _outbound(message.body)),
     ];
 
     final stream = ref.read(chatTransportProvider).send(
-      conversation: state.conversation,
+      conversation: _conversation,
       history: history,
       context: AdvisorContext.forMatch(match, languageCode: languageCode),
     );
@@ -171,62 +215,96 @@ class AdvisorController extends _$AdvisorController {
           _replace(answerId, (m) => m.copyWith(status: MessageStatus.sent));
           // The turn is spent here and only here. A failed send has cost
           // the user nothing, so it must cost them nothing.
-          state = state.copyWith(
-            conversation: ConversationBudget.spendTurn(state.conversation),
-            messages: state.messages,
+          final spent = ConversationBudget.spendTurn(_conversation);
+          state = AsyncData(
+            _value.copyWith(conversation: spent, messages: _messages),
           );
+          final answered = _messages.firstWhere((m) => m.id == answerId);
+          await _store.save(answered);
+          await _store.setTurnsUsed(spent.id, spent.turnsUsed);
         case ChatFailed(:final failure):
-          state = state.copyWith(
-            messages: [
-              for (final message in state.messages)
-                if (message.id != answerId)
-                  message
-                else
-                  message.copyWith(status: MessageStatus.failed),
-            ],
-            failure: failure is AdvisorFailure
-                ? failure
-                : const AdvisorFailure(
-                    'Send failed.',
-                    kind: AdvisorFailureKind.server,
-                  ),
-            lastQuestion: trimmed,
+          // The half-written answer is dropped rather than stored. A
+          // fragment in the transcript is a worse artefact than the
+          // missing answer it replaces, and the question is kept so a
+          // retry needs no retyping.
+          state = AsyncData(
+            _value.copyWith(
+              messages: [
+                for (final message in _messages)
+                  if (message.id != answerId)
+                    message
+                  else
+                    message.copyWith(status: MessageStatus.failed),
+              ],
+              failure: failure is AdvisorFailure
+                  ? failure
+                  : const AdvisorFailure(
+                      'Send failed.',
+                      kind: AdvisorFailureKind.server,
+                    ),
+              lastQuestion: trimmed,
+            ),
           );
           return;
       }
     }
   }
 
+  /// Deletes this conversation and everything in it.
+  ///
+  /// A first-class action, not a settings afterthought. The journal
+  /// already learned that a record you cannot delete from is a worse
+  /// product than one that never offered it, and a chat about a named
+  /// person is more sensitive than a journal entry, not less.
+  Future<void> deleteConversation() async {
+    await _store.delete(_conversation.id);
+    ref.invalidateSelf();
+  }
+
+  AdvisorUiState get _value => state.requireValue;
+  Conversation get _conversation => _value.conversation;
+  List<ChatMessage> get _messages => _value.messages;
+
   /// Re-sends the question that failed.
   Future<void> retry({required String languageCode}) async {
-    final question = state.lastQuestion;
+    final question = state.value?.lastQuestion;
     if (question == null) return;
 
     // Drop the failed exchange first, so a retry does not stack a second
-    // copy of the question under the first.
-    final failedIndex = state.messages.lastIndexWhere(
+    // copy of the question under the first. The stored question goes
+    // with it — `ask` writes a fresh one.
+    final failedIndex = _messages.lastIndexWhere(
       (m) => m.status == MessageStatus.failed,
     );
     if (failedIndex > 0) {
-      state = state.copyWith(
-        messages: state.messages.sublist(0, failedIndex - 1),
+      final dropped = _messages.sublist(failedIndex - 1);
+      state = AsyncData(
+        _value.copyWith(messages: _messages.sublist(0, failedIndex - 1)),
       );
+      for (final message in dropped) {
+        await _store.save(
+          message.copyWith(status: MessageStatus.failed),
+        );
+      }
     }
     await ask(question, languageCode: languageCode);
   }
 
   /// Clears the error without retrying.
-  void dismissFailure() => state = state.copyWith(messages: state.messages);
+  void dismissFailure() =>
+      state = AsyncData(_value.copyWith(messages: _messages));
 
   void _replace(String id, ChatMessage Function(ChatMessage) update) {
-    state = state.copyWith(
-      messages: [
-        for (final message in state.messages)
-          if (message.id == id) update(message) else message,
-      ],
-      streamingId: state.streamingId,
-      failure: state.failure,
-      lastQuestion: state.lastQuestion,
+    state = AsyncData(
+      _value.copyWith(
+        messages: [
+          for (final message in _messages)
+            if (message.id == id) update(message) else message,
+        ],
+        streamingId: _value.streamingId,
+        failure: _value.failure,
+        lastQuestion: _value.lastQuestion,
+      ),
     );
   }
 

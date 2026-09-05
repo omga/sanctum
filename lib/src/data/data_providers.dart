@@ -7,6 +7,7 @@ import 'package:sanctum/src/data/catalog/content_catalog.dart';
 import 'package:sanctum/src/data/catalog/content_catalog_source.dart';
 import 'package:sanctum/src/data/database/sanctum_database.dart';
 import 'package:sanctum/src/data/repositories/compatibility_repository.dart';
+import 'package:sanctum/src/data/repositories/conversation_repository.dart';
 import 'package:sanctum/src/data/repositories/energy_repository.dart';
 import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
 import 'package:sanctum/src/data/repositories/journal_repository.dart';
@@ -140,6 +141,11 @@ PracticeRepository practiceRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 JournalRepository journalRepository(Ref ref) =>
     DriftJournalRepository(ref.watch(sanctumDatabaseProvider));
+
+/// Advisor conversations and their transcripts.
+@Riverpod(keepAlive: true)
+ConversationRepository conversationRepository(Ref ref) =>
+    DriftConversationRepository(ref.watch(sanctumDatabaseProvider));
 
 /// Energy check-ins.
 @Riverpod(keepAlive: true)

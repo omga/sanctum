@@ -325,7 +325,8 @@ the transport, not the storage.
 
 ## 7. Storage
 
-Conversations and messages go in **Drift**, not `SharedPreferences`.
+**Built.** Conversations and messages go in **Drift**, not
+`SharedPreferences`.
 They are rows, they are queried by conversation, they grow without
 bound, and one of them will eventually need a cascading delete. That is
 a `schemaVersion` bump to 2 and the first real migration this database
@@ -368,7 +369,11 @@ the shape is right.
    specific but imply no problem. And the highest facet is picked
    ignoring Drama, because `report.mechanism.drama` says in as many
    words that a high one is not a compliment.
-3. **Storage.** Drift tables, migration, delete, history trimming.
+3. ~~**Storage.**~~ **Done.** Drift tables, the first real migration
+   (`schemaVersion` 1 → 2, additive), delete with a cascade, history
+   trimming. The migration test builds a version 1 database by hand and
+   proves a journal written before the upgrade is readable after it —
+   that is the only thing that actually matters here.
 4. **The proxy.** Deploy, then `ProxyChatTransport`. One provider flag
    swaps it for the scripted one; keep both forever, because the
    scripted one is how the widget tests stay fast and deterministic.

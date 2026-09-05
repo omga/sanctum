@@ -13,7 +13,7 @@ void main() {
     test('opens and reports its schema version', () async {
       // Also proves package:sqlite3 3.x loads its native library through
       // Dart build hooks, with no sqlite3_flutter_libs present.
-      expect(db.schemaVersion, 1);
+      expect(db.schemaVersion, 2);
       await db.customSelect('SELECT 1').get();
     });
 

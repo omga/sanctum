@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/design_system/atoms/sanctum_dialog.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
@@ -27,8 +28,7 @@ import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 ///
 /// ## What is not here yet
 ///
-/// No purchase gate (`advisor.md` §8 step 6) and no storage (step 3):
-/// leaving the screen loses the transcript. The transport is scripted,
+/// No purchase gate — `advisor.md` §8 step 6. The transport is scripted,
 /// so nothing said here reaches a network at all.
 class AdvisorScreen extends ConsumerStatefulWidget {
   /// Creates the screen for [match].
@@ -90,11 +90,11 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
     final l10n = context.l10n;
     final colors = context.colors;
     final type = context.type;
-    final state = ref.watch(advisorControllerProvider(widget.match));
+    final state = ref.watch(advisorControllerProvider(widget.match)).value;
 
     // Scroll as the answer grows, not only when it is finished.
     ref.listen(advisorControllerProvider(widget.match), (previous, next) {
-      if (next.isStreaming) unawaited(_scrollToEnd());
+      if (next.value?.isStreaming ?? false) unawaited(_scrollToEnd());
     });
 
     return Scaffold(
@@ -106,65 +106,103 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
           l10n.reportTitle(widget.match.them.name),
           style: type.title,
         ),
+        actions: [
+          // Only once there is something to delete. An empty
+          // conversation offering to erase itself is noise.
+          if (state != null && state.messages.isNotEmpty)
+            IconButton(
+              tooltip: l10n.advisorDelete,
+              onPressed: () => unawaited(_confirmDelete(context)),
+              icon: const Icon(Icons.delete_outline),
+            ),
+        ],
       ),
       body: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            _Disclosure(text: l10n.advisorDisclosure),
-            Expanded(
-              child: state.messages.isEmpty
-                  ? _Starters(match: widget.match, onPick: _send)
-                  : ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: SanctumSpacing.lg,
-                        vertical: SanctumSpacing.md,
-                      ),
-                      itemCount: state.messages.length,
-                      itemBuilder: (context, index) => _Bubble(
-                        message: state.messages[index],
-                        isStreaming:
-                            state.messages[index].id == state.streamingId,
+        // Nothing, rather than a spinner, while the transcript loads.
+        // It is a local SQLite read of a handful of rows, so a spinner
+        // would be a flash rather than feedback — and showing the
+        // suggestion row first would flash the wrong screen at anybody
+        // who *does* have a transcript.
+        child: state == null
+            ? const SizedBox.shrink()
+            : Column(
+                children: [
+                  _Disclosure(text: l10n.advisorDisclosure),
+                  Expanded(
+                    child: state.messages.isEmpty
+                        ? _Starters(match: widget.match, onPick: _send)
+                        : ListView.builder(
+                            controller: _scroll,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: SanctumSpacing.lg,
+                              vertical: SanctumSpacing.md,
+                            ),
+                            itemCount: state.messages.length,
+                            itemBuilder: (context, index) => _Bubble(
+                              message: state.messages[index],
+                              isStreaming:
+                                  state.messages[index].id == state.streamingId,
+                            ),
+                          ),
+                  ),
+                  if (state.failure case final failure?)
+                    _FailureBar(
+                      failure: failure,
+                      onRetry: () async {
+                        final language = Localizations.localeOf(context)
+                            .languageCode;
+                        await ref
+                            .read(
+                              advisorControllerProvider(widget.match).notifier,
+                            )
+                            .retry(languageCode: language);
+                        await _scrollToEnd();
+                      },
+                    ),
+                  if (state.showsTurnCount && !state.isSpent)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: SanctumSpacing.xs),
+                      child: Text(
+                        l10n.advisorTurnsLeft(state.turnsRemaining),
+                        style: type.caption.copyWith(
+                          color: colors.textTertiary,
+                        ),
                       ),
                     ),
-            ),
-            if (state.failure case final failure?)
-              _FailureBar(
-                failure: failure,
-                onRetry: () async {
-                  final language =
-                      Localizations.localeOf(context).languageCode;
-                  await ref
-                      .read(
-                        advisorControllerProvider(widget.match).notifier,
-                      )
-                      .retry(languageCode: language);
-                  await _scrollToEnd();
-                },
+                  if (state.isSpent)
+                    _Spent(
+                      title: l10n.advisorSpentTitle,
+                      body: l10n.advisorSpentBody,
+                    )
+                  else
+                    _Composer(
+                      controller: _composer,
+                      enabled: state.canAsk,
+                      hint: l10n.advisorComposerHint,
+                      sendLabel: l10n.advisorSend,
+                      onSend: _send,
+                    ),
+                ],
               ),
-            if (state.showsTurnCount && !state.isSpent)
-              Padding(
-                padding: const EdgeInsets.only(bottom: SanctumSpacing.xs),
-                child: Text(
-                  l10n.advisorTurnsLeft(state.turnsRemaining),
-                  style: type.caption.copyWith(color: colors.textTertiary),
-                ),
-              ),
-            if (state.isSpent)
-              _Spent(title: l10n.advisorSpentTitle, body: l10n.advisorSpentBody)
-            else
-              _Composer(
-                controller: _composer,
-                enabled: state.canAsk,
-                hint: l10n.advisorComposerHint,
-                sendLabel: l10n.advisorSend,
-                onSend: _send,
-              ),
-          ],
-        ),
       ),
     );
+  }
+
+  /// Deleting a transcript is irreversible and unshared, so it asks.
+  Future<void> _confirmDelete(BuildContext context) async {
+    final l10n = context.l10n;
+    final confirmed = await SanctumDialog.show(
+      context,
+      title: l10n.advisorDeleteTitle,
+      message: l10n.advisorDeleteMessage,
+      confirmLabel: l10n.advisorDelete,
+      cancelLabel: l10n.journalKeep,
+    );
+    if (!confirmed) return;
+    await ref
+        .read(advisorControllerProvider(widget.match).notifier)
+        .deleteConversation();
   }
 }
 
@@ -268,9 +306,7 @@ class _Starters extends ConsumerWidget {
     'name': match.them.name,
     if (starter.facet case final facet?) ...{
       'facet': facet.label(context.l10n),
-      'score': match.facets
-          .firstWhere((scored) => scored.facet == facet)
-          .score,
+      'score': match.facets.firstWhere((scored) => scored.facet == facet).score,
     },
   });
 }

@@ -10,6 +10,7 @@
 library;
 
 import 'package:drift/drift.dart';
+import 'package:sanctum/src/domain/models/conversation.dart';
 import 'package:sanctum/src/domain/models/journal_entry.dart';
 
 /// Every completed practice, one row each.
@@ -86,4 +87,78 @@ class OracleDraws extends Table {
   /// midnight but only *revealed* when tapped, and the difference is the
   /// entire ceremony of the feature.
   BoolColumn get revealed => boolean().withDefault(const Constant(false))();
+}
+
+/// One advisor conversation.
+///
+/// ## Why the subject is two columns and not one key
+///
+/// `ConversationSubject.key` is what the gate and the store care about,
+/// and it would be the obvious thing to write here. It is stored split —
+/// a kind and a reference — because the *reference* for a pairing is
+/// `CompatibilityMatch.id`, which is built from both people's names and
+/// birth dates, and a single opaque key column makes that impossible to
+/// find later. Split, it is one column to clear, one column to migrate,
+/// and one column to look at when somebody asks what this table knows
+/// about a person.
+@DataClassName('ConversationRow')
+class Conversations extends Table {
+  /// Stable id, assigned by the domain rather than the database.
+  ///
+  /// Text rather than an autoincrementing integer because the id is
+  /// derived from the subject — reopening the same pairing must find the
+  /// same conversation rather than start a second one beside it.
+  TextColumn get id => text()();
+
+  /// Who is answering: an advisor, or eventually a person.
+  TextColumn get kind => textEnum<ConversationKind>()();
+
+  /// Which sort of subject this is about.
+  TextColumn get subjectKind => text()();
+
+  /// The subject's reference — a match id, or a date, or empty.
+  TextColumn get subjectRef => text().withDefault(const Constant(''))();
+
+  /// When it was opened.
+  DateTimeColumn get startedAt => dateTime()();
+
+  /// Exchanges spent. The number the user paid for.
+  IntColumn get turnsUsed => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Every message in every conversation.
+@DataClassName('ChatMessageRow')
+class ChatMessages extends Table {
+  /// Stable id, assigned by the domain.
+  TextColumn get id => text()();
+
+  /// The conversation this belongs to.
+  ///
+  /// `onDelete: cascade` so deleting a conversation takes its messages
+  /// with it. That is enforced by SQLite rather than by remembering to
+  /// write a second delete — and it only works because `beforeOpen`
+  /// turns foreign keys on, which is off by default and the reason that
+  /// pragma exists in `sanctum_database.dart`.
+  TextColumn get conversationId =>
+      text().references(Conversations, #id, onDelete: KeyAction.cascade)();
+
+  /// Who wrote it.
+  TextColumn get author => textEnum<MessageAuthor>()();
+
+  /// The text, as the user sees it. Names included: this is the local
+  /// transcript, and the redaction happens on the way *out* to a
+  /// transport, not on the way into storage.
+  TextColumn get body => text()();
+
+  /// When it was written.
+  DateTimeColumn get at => dateTime()();
+
+  /// Sent, or failed. Nothing is stored mid-flight.
+  TextColumn get status => textEnum<MessageStatus>()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
 }

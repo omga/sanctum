@@ -308,5 +308,8 @@
   "advisorHubSubtitle": "Elige de quién va la conversación. Cada respuesta se lee de esa pareja, no de un signo.",
   "advisorHubRowHint": "Pregunta sobre esta pareja",
   "advisorHubEmptyTitle": "Todavía no hay de quién preguntar",
-  "advisorHubEmptyBody": "Mira a alguien primero. El asesor responde con los números de una lectura, así que necesita una."
+  "advisorHubEmptyBody": "Mira a alguien primero. El asesor responde con los números de una lectura, así que necesita una.",
+  "advisorDelete": "Borrar",
+  "advisorDeleteTitle": "¿Borrar esta conversación?",
+  "advisorDeleteMessage": "Está solo en este teléfono, así que no se puede recuperar. Las preguntas gastadas no vuelven."
 }

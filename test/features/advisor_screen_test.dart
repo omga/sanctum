@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/data/catalog/content_catalog.dart';
 import 'package:sanctum/src/data/data_providers.dart';
+import 'package:sanctum/src/data/database/sanctum_database.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/domain/models/advisor_context.dart';
@@ -88,14 +89,22 @@ Future<void> _pump(
   ChatTransport? transport,
   Size size = const Size(1200, 2600),
   double pixelRatio = 1,
+  SanctumDatabase? database,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = pixelRatio;
   addTearDown(tester.view.reset);
 
+  // A real database, in memory: the view model reads and writes through
+  // the repository, so a fake would test the fake. A test that needs the
+  // screen re-opened passes the same one twice.
+  final db = database ?? SanctumDatabase.memory();
+  if (database == null) addTearDown(db.close);
+
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sanctumDatabaseProvider.overrideWithValue(db),
         contentCatalogProvider.overrideWith(
           (ref) async => ContentCatalog(
             oracleCards: const [],
@@ -241,7 +250,10 @@ void main() {
       final element = tester.element(find.byType(AdvisorScreen));
       final container = ProviderScope.containerOf(element);
       expect(
-        container.read(advisorControllerProvider(_match)).conversation
+        container
+            .read(advisorControllerProvider(_match))
+            .requireValue
+            .conversation
             .turnsUsed,
         1,
       );
@@ -259,7 +271,10 @@ void main() {
         tester.element(find.byType(AdvisorScreen)),
       );
       expect(
-        container.read(advisorControllerProvider(_match)).conversation
+        container
+            .read(advisorControllerProvider(_match))
+            .requireValue
+            .conversation
             .turnsUsed,
         0,
       );
@@ -278,7 +293,7 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(
-        container.read(advisorControllerProvider(_match)).isSpent,
+        container.read(advisorControllerProvider(_match)).requireValue.isSpent,
         isTrue,
       );
       await tester.pumpAndSettle();
@@ -315,6 +330,97 @@ void main() {
       }
       expect(tester.takeException(), isNull);
       expect(find.text('That was the last question'), findsOneWidget);
+    });
+  });
+
+  group('storage', () {
+    testWidgets('a transcript survives leaving and coming back', (
+      tester,
+    ) async {
+      // The gap step 2 shipped with, closed. Every conversation used to
+      // start empty because the notifier was the only place it lived.
+      final db = SanctumDatabase.memory();
+      addTearDown(db.close);
+
+      await _pump(tester, database: db);
+      await tester.enterText(find.byType(TextField), 'Does this persist?');
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+
+      // Tear the screen down entirely, then build it again over the
+      // same database — which is what leaving the screen does.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await _pump(tester, database: db);
+
+      expect(find.text('Does this persist?'), findsOneWidget);
+      expect(find.textContaining('scripted advisor'), findsOneWidget);
+    });
+
+    testWidgets('so do the turns already spent', (tester) async {
+      // Without this, a conversation would silently refill itself on
+      // every visit and the cap would mean nothing.
+      final db = SanctumDatabase.memory();
+      addTearDown(db.close);
+
+      await _pump(tester, database: db);
+      await tester.enterText(find.byType(TextField), 'One');
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await _pump(tester, database: db);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AdvisorScreen)),
+      );
+      expect(
+        container
+            .read(advisorControllerProvider(_match))
+            .requireValue
+            .conversation
+            .turnsUsed,
+        1,
+      );
+    });
+
+    testWidgets('a screen opened and left writes nothing', (tester) async {
+      // Otherwise the Ask tab fills up with conversations nobody had.
+      final db = SanctumDatabase.memory();
+      addTearDown(db.close);
+
+      await _pump(tester, database: db);
+      expect(await db.select(db.conversations).get(), isEmpty);
+    });
+
+    testWidgets('deleting clears the transcript and offers to start over', (
+      tester,
+    ) async {
+      final db = SanctumDatabase.memory();
+      addTearDown(db.close);
+
+      await _pump(tester, database: db);
+      await tester.enterText(find.byType(TextField), 'Forget this');
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Forget this'), findsNothing);
+      // Back to the suggestion row, not a blank screen.
+      expect(find.text('SUGGESTED'), findsOneWidget);
+      expect(await db.select(db.chatMessages).get(), isEmpty);
+    });
+
+    testWidgets('there is nothing to delete before anything is said', (
+      tester,
+    ) async {
+      await _pump(tester);
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
     });
   });
 

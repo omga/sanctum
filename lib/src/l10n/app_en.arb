@@ -1477,5 +1477,17 @@
   "advisorHubEmptyBody": "Check someone first. The advisor answers from the numbers a reading computes, so it needs one to read from.",
   "@advisorHubEmptyBody": {
     "description": "Body of the empty Ask tab. Explains the dependency rather than offering a blank conversation as a consolation prize."
+  },
+  "advisorDelete": "Delete",
+  "@advisorDelete": {
+    "description": "Confirms deleting a conversation, and labels the bin icon."
+  },
+  "advisorDeleteTitle": "Delete this conversation?",
+  "@advisorDeleteTitle": {
+    "description": "Heading of the delete confirmation."
+  },
+  "advisorDeleteMessage": "It is only on this phone, so this cannot be undone. The questions it used are not returned.",
+  "@advisorDeleteMessage": {
+    "description": "Body of the delete confirmation. States both consequences: the transcript is unrecoverable, and deleting does not refund the turns that were spent — which somebody will otherwise try."
   }
 }
