@@ -1,0 +1,20 @@
+# Supabase project config for the advisor proxy.
+#
+# Minimal on purpose. This project has no database, no auth and no
+# storage — it exists to hold one Edge Function, because a model API key
+# cannot ship in a binary. Adding tables here later is how astrologer
+# chat starts; nothing about the advisor needs them.
+
+project_id = "sanctum-advisor"
+
+[functions.advisor]
+# JWT verification stays ON.
+#
+# The app sends the Supabase anon key as a bearer token, and an anon key
+# is a valid JWT, so this passes for a legitimate client and rejects a
+# bare curl. It is not authentication — the anon key ships in the binary
+# and anybody can read it out — it is one cheap filter in front of an
+# endpoint that costs money per request. The gates that matter are the
+# rate limiter and, once it exists, entitlement.
+verify_jwt = true
+entrypoint = "./functions/advisor/index.ts"

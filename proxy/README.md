@@ -81,10 +81,48 @@ data: {"error":"rate_limited"}   // rate_limited | bad_request | server
 
 ## Deploying
 
+Every command runs **from `proxy/`** — that is where `supabase/` lives,
+and the CLI resolves functions relative to the working directory.
+
 ```bash
-supabase functions deploy advisor --project-ref <ref>
-supabase secrets set DEEPSEEK_API_KEY=sk-...
+brew install supabase/tap/supabase
 ```
+
+Then, once:
+
+```bash
+cd proxy
+supabase login
+supabase link --project-ref <ref>
+```
+
+`<ref>` is the project reference from the Supabase dashboard URL. Create
+a project there first if there is not one; the advisor needs no database,
+no auth and no storage, so the free tier is the right size.
+
+Deploy, and set the one real secret:
+
+```bash
+cd proxy
+supabase secrets set DEEPSEEK_API_KEY=sk-...
+supabase functions deploy advisor
+```
+
+Check it before pointing the app at it. This should stream frames back:
+
+```bash
+curl -N https://<ref>.supabase.co/functions/v1/advisor \
+  -H "Authorization: Bearer <anon key>" \
+  -H "x-sanctum-install: smoke-test-0001" \
+  -H "content-type: application/json" \
+  -d '{"surface":"today","languageCode":"en",
+       "facts":{"quiet":true,"retrogrades":[]},
+       "messages":[{"author":"you","body":"What is today about?"}]}'
+```
+
+A `{"error":"bad_request"}` means the payload was rejected — the
+function logs the reason, and `supabase functions logs advisor` shows
+it without ever showing a prompt body.
 
 Then point a build at it:
 
@@ -93,6 +131,17 @@ flutter run \
   --dart-define=ADVISOR_PROXY_URL=https://<ref>.supabase.co/functions/v1/advisor \
   --dart-define=SUPABASE_ANON_KEY=<anon key>
 ```
+
+With `ADVISOR_PROXY_URL` unset — which is every build today — the app
+uses the scripted transport and makes no network call.
+
+### Why `verify_jwt` stays on
+
+The anon key is a valid JWT, so the app passes and a bare `curl` without
+one does not. It is **not** authentication: the key ships in the binary
+and anybody can read it out. It is one cheap filter in front of an
+endpoint that costs money per request, and the gates that matter are the
+rate limiter and, once it exists, entitlement.
 
 | variable | default | what it does |
 |---|---|---|
