@@ -29,6 +29,7 @@ sealed class AppFailure implements Exception {
     NotFoundFailure() => 'NotFoundFailure',
     ContentFailure() => 'ContentFailure',
     AudioFailure() => 'AudioFailure',
+    AdvisorFailure() => 'AdvisorFailure',
     UnexpectedFailure() => 'UnexpectedFailure',
   };
 
@@ -62,6 +63,49 @@ final class ContentFailure extends AppFailure {
 final class AudioFailure extends AppFailure {
   /// Creates an audio failure.
   const AudioFailure(super.message, {super.cause, super.stackTrace});
+}
+
+/// Why an advisor answer did not arrive.
+///
+/// One type with a `kind` rather than five subtypes, because the screen
+/// has to tell them apart — "you are offline" and "you have asked a lot
+/// in a short time" need different words and different buttons — while
+/// the rest of the app only ever wants to know that the send failed.
+enum AdvisorFailureKind {
+  /// No usable connection. Retrying later is the right advice.
+  offline,
+
+  /// The proxy is refusing to spend more inference on this install right
+  /// now. Distinct from [server] because it is not a fault and the copy
+  /// should not apologise as though it were.
+  rateLimited,
+
+  /// The model or the proxy declined to answer. Retrying identically
+  /// will not help, so the UI must not offer a bare "try again".
+  refused,
+
+  /// Anything else on the far end.
+  server,
+
+  /// Produced deliberately by the scripted transport, so the failure
+  /// path can be exercised with no network at all.
+  scripted,
+}
+
+/// An advisor request did not produce an answer.
+///
+/// A failed send **must not spend a turn** — see `chat_transport.dart`.
+final class AdvisorFailure extends AppFailure {
+  /// Creates an advisor failure.
+  const AdvisorFailure(
+    super.message, {
+    required this.kind,
+    super.cause,
+    super.stackTrace,
+  });
+
+  /// Which kind, for the copy the screen shows.
+  final AdvisorFailureKind kind;
 }
 
 /// The catch-all. Anything landing here is a bug we have not classified.
