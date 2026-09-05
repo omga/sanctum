@@ -18,6 +18,19 @@ abstract interface class SettingsRepository {
   /// it exists purely to decorrelate two installs.
   Future<Result<String>> installSalt();
 
+  /// A stable id for the advisor proxy's rate limiter.
+  ///
+  /// Deliberately *not* [installSalt]. That salt picks the daily card
+  /// and has never left the device; sending it to a server would make a
+  /// value the app treats as purely local into an outbound identifier,
+  /// and would let two things that should stay unrelated be joined.
+  ///
+  /// This one is generated the first time the advisor is used, is
+  /// meaningless anywhere else, and identifies an installation rather
+  /// than a person — Sanctum has no accounts and `handoff.md` rejects
+  /// adding one.
+  Future<Result<String>> advisorInstallId();
+
   /// Whether onboarding has been completed.
   Future<Result<bool>> hasOnboarded();
 
@@ -70,6 +83,7 @@ class PreferencesSettingsRepository implements SettingsRepository {
   static const _paywallDismissedKey = 'sanctum.paywall_dismissed_count';
   static const _paywallLastShownKey = 'sanctum.paywall_last_shown';
   static const _languageKey = 'sanctum.language';
+  static const _advisorInstallKey = 'sanctum.advisor_install_id';
 
   @override
   Future<Result<String>> installSalt() {
@@ -85,6 +99,26 @@ class PreferencesSettingsRepository implements SettingsRepository {
       },
       onError: (error, stackTrace) => StorageFailure(
         'Could not read install salt',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<String>> advisorInstallId() {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final existing = prefs.getString(_advisorInstallKey);
+        if (existing != null && existing.isNotEmpty) return existing;
+
+        final generated = _generateSalt();
+        await prefs.setString(_advisorInstallKey, generated);
+        return generated;
+      },
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not read the advisor install id',
         cause: error,
         stackTrace: stackTrace,
       ),

@@ -47,6 +47,13 @@ dependencies:
   path_provider: ^2.1.6
   shared_preferences: ^2.5.5
 
+  # ── Network ───────────────────────────────────────────────────
+  # The advisor proxy, and nothing else. `dart:io`'s HttpClient would
+  # add no dependency, but it is awkward to inject and the transport has
+  # to be testable against a local server — so one small, injectable
+  # client instead.
+  http: ^1.6.0
+
   # ── Audio ─────────────────────────────────────────────────────
   just_audio: ^0.10.6
   audio_service: ^0.18.19

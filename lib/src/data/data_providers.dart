@@ -104,6 +104,20 @@ Future<String> installSalt(Ref ref) async {
   };
 }
 
+/// A stable id for the advisor proxy's rate limiter.
+///
+/// Separate from [installSalt] on purpose — see
+/// `SettingsRepository.advisorInstallId`.
+@Riverpod(keepAlive: true)
+Future<String> advisorInstallId(Ref ref) async {
+  final result = await ref.watch(settingsRepositoryProvider)
+      .advisorInstallId();
+  return switch (result) {
+    Ok(:final value) => value,
+    Err(:final failure) => throw failure,
+  };
+}
+
 /// Schedules the daily reading notification.
 @Riverpod(keepAlive: true)
 ReminderService reminderService(Ref ref) =>

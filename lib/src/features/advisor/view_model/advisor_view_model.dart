@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/conversation_repository.dart';
+import 'package:sanctum/src/data/services/advisor/proxy_chat_transport.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
 import 'package:sanctum/src/domain/models/advisor_context.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
@@ -16,14 +18,55 @@ import 'package:sanctum/src/domain/services/message_redaction.dart';
 
 part 'advisor_view_model.g.dart';
 
+/// Where the advisor proxy lives.
+///
+/// Empty by default, and that is what ships today: with no URL there is
+/// no proxy, [chatTransport] hands back the scripted one, and the app
+/// makes no network call at all.
+///
+/// **Do not compile a URL into a release build until the consent screen
+/// exists** — `advisor.md` §8 step 5. This provider is the switch that
+/// turns a local feature into one that sends a chart to a third party,
+/// and the screen that tells the user so has not been built yet.
+const advisorProxyUrl = String.fromEnvironment('ADVISOR_PROXY_URL');
+
+/// Supabase's anon key for the function, when it is deployed behind one.
+///
+/// Not a secret in any meaningful sense — it is extractable from any
+/// shipped binary, and the same reasoning `PostHogAnalyticsService`
+/// already records applies. What protects the endpoint is the rate
+/// limiter and, from step 6, an entitlement.
+const advisorProxyKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+/// One HTTP client for the app, closed when the app is.
+@Riverpod(keepAlive: true)
+http.Client httpClient(Ref ref) {
+  final client = http.Client();
+  ref.onDispose(client.close);
+  return client;
+}
+
 /// Whatever is answering questions right now.
 ///
-/// Scripted until the proxy exists (`advisor.md` §8 step 4). Overriding
-/// this one provider is the whole swap — no widget, view model or test
-/// below it knows which implementation it is talking to, which is what
-/// the [ChatTransport] interface was for.
+/// Overriding this one provider is the whole swap — no widget, view
+/// model or test below it knows which implementation it is talking to,
+/// which is what the [ChatTransport] interface was for.
+///
+/// The scripted transport is not scaffolding to be deleted once the
+/// proxy works: it is what keeps widget tests fast, deterministic and
+/// free, and it is how this screen stays developable on a plane.
 @riverpod
-ChatTransport chatTransport(Ref ref) => const ScriptedChatTransport();
+Future<ChatTransport> chatTransport(Ref ref) async {
+  if (advisorProxyUrl.isEmpty) return const ScriptedChatTransport();
+
+  final id = await ref.watch(advisorInstallIdProvider.future);
+  return ProxyChatTransport(
+    endpoint: Uri.parse(advisorProxyUrl),
+    installId: id,
+    anonKey: advisorProxyKey,
+    client: ref.watch(httpClientProvider),
+  );
+}
 
 /// One conversation, as the screen needs it.
 class AdvisorUiState {
@@ -201,7 +244,8 @@ class AdvisorController extends _$AdvisorController {
           message.copyWith(body: _outbound(message.body)),
     ];
 
-    final stream = ref.read(chatTransportProvider).send(
+    final transport = await ref.read(chatTransportProvider.future);
+    final stream = transport.send(
       conversation: _conversation,
       history: history,
       context: AdvisorContext.forMatch(match, languageCode: languageCode),

@@ -32,6 +32,10 @@ class _Settings implements SettingsRepository {
   Future<Result<String>> installSalt() async => const Result.ok('salt');
 
   @override
+  Future<Result<String>> advisorInstallId() async =>
+      const Result.ok('advisor-install');
+
+  @override
   Future<Result<bool>> hasOnboarded() async => const Result.ok(true);
 
   @override

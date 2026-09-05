@@ -264,6 +264,8 @@ the generic wrapper this whole design exists not to be.
 
 ## 5. The proxy — the first backend this app has had
 
+**Built** (`proxy/supabase/functions/advisor/index.ts`), undeployed.
+
 Non-negotiable: the model API key cannot ship in the binary.
 
 Smallest thing that works:
@@ -374,9 +376,17 @@ the shape is right.
    trimming. The migration test builds a version 1 database by hand and
    proves a journal written before the upgrade is readable after it —
    that is the only thing that actually matters here.
-4. **The proxy.** Deploy, then `ProxyChatTransport`. One provider flag
-   swaps it for the scripted one; keep both forever, because the
-   scripted one is how the widget tests stay fast and deterministic.
+4. ~~**The proxy.**~~ **Written, not deployed.** A Supabase Edge
+   Function in `proxy/`, and `ProxyChatTransport` against it. The
+   provider swaps on `ADVISOR_PROXY_URL`, which is empty in every build
+   — so the app still makes no network call at all, and must not until
+   step 5 lands. See `proxy/README.md` for the pre-ship checklist.
+
+   Supabase rather than a Worker because chat with real astrologers is
+   on the roadmap and *that* is the backend worth choosing for: it needs
+   server-side messages, realtime and identity. The function takes an
+   install id rather than a Supabase user, so "no account, ever"
+   survives.
 5. **Consent + disclosure + policy + data-safety.** Ships with, or
    before, step 4 reaching a real user.
 6. **Purchase and gating.**
@@ -406,8 +416,11 @@ it starts at step 4 with a different transport.
 
 ## 10. Open questions
 
-1. **Model vendor and hosting.** Affects cost per turn, latency, and
-   what the consent screen names.
+1. ~~**Model vendor and hosting.**~~ Hosting is Supabase. The model is
+   an environment variable (`ADVISOR_MODEL`, defaulting to
+   `claude-sonnet-5`) rather than a decision baked into code, so
+   switching is a redeploy — but the consent screen has to *name* a
+   vendor, so this becomes a real decision at step 5.
 2. **Turn cap.** 10 is a guess. It sets both the price and the cost
    ceiling.
 3. **Does a conversation expire?** Recommendation: the *turns* are

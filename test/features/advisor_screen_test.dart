@@ -116,12 +116,11 @@ Future<void> _pump(
             copy: _copy,
           ),
         ),
-        if (transport != null)
-          chatTransportProvider.overrideWithValue(transport)
-        else
-          chatTransportProvider.overrideWithValue(
-            const ScriptedChatTransport(delayPerChunk: Duration.zero),
-          ),
+        chatTransportProvider.overrideWith(
+          (ref) async =>
+              transport ??
+              const ScriptedChatTransport(delayPerChunk: Duration.zero),
+        ),
       ],
       child: testApp(AdvisorScreen(match: _match)),
     ),
