@@ -135,6 +135,27 @@ flutter run \
 With `ADVISOR_PROXY_URL` unset — which is every build today — the app
 uses the scripted transport and makes no network call.
 
+### Project security settings
+
+Three toggles in the Supabase dashboard, and what they are set to:
+
+| Setting | Value | Why |
+|---|---|---|
+| Enable Data API | **off** | Nothing here talks to PostgREST. The app talks to this function; the function talks to DeepSeek. On, it publishes the `public` schema to anyone holding the anon key — which ships in the binary and can be read out of any APK. |
+| Automatically expose new tables | **off** | The next table created here is the entitlement balance. Auto-exposed, that is a table anybody can read and write with a key extracted from the app. |
+| Enable automatic RLS | **on** | Free insurance. Turns "somebody forgot" from a breach into a query returning no rows. |
+
+**The entitlement table, when it exists, gets RLS on and no policies at
+all** — not a permissive one, none. This function reaches it with the
+service-role key, which bypasses RLS; nothing else can touch it. That
+key is a Supabase secret and must never reach a `--dart-define`.
+
+Data API stops being off the day astrologer chat reads messages from the
+client with `supabase-js`. Realtime does not need it — `postgres_changes`,
+broadcast and presence are separate services — so even that feature's
+live half works with it off. Turn it on when a client genuinely needs to
+query tables, and write the policies in the same change.
+
 ### Why `verify_jwt` stays on
 
 The anon key is a valid JWT, so the app passes and a bare `curl` without
