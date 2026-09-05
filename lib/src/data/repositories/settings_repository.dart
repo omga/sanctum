@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
+import 'package:sanctum/src/domain/models/advisor_consent.dart';
 import 'package:sanctum/src/l10n/sanctum_locales.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,6 +31,20 @@ abstract interface class SettingsRepository {
   /// than a person — Sanctum has no accounts and `handoff.md` rejects
   /// adding one.
   Future<Result<String>> advisorInstallId();
+
+  /// Whether the user has agreed to the advisor sending anything.
+  ///
+  /// A consent granted against an older disclosure than
+  /// [AdvisorDisclosure.current] reads back as
+  /// [AdvisorConsent.unasked] — see that class for why a declined one
+  /// does not.
+  Future<Result<AdvisorConsent>> advisorConsent();
+
+  /// Records the answer given on the consent screen.
+  ///
+  /// Stamped with [AdvisorDisclosure.current], because what was agreed
+  /// to matters as much as that something was.
+  Future<Result<void>> recordAdvisorConsent({required bool granted});
 
   /// Whether onboarding has been completed.
   Future<Result<bool>> hasOnboarded();
@@ -84,6 +99,8 @@ class PreferencesSettingsRepository implements SettingsRepository {
   static const _paywallLastShownKey = 'sanctum.paywall_last_shown';
   static const _languageKey = 'sanctum.language';
   static const _advisorInstallKey = 'sanctum.advisor_install_id';
+  static const _advisorConsentKey = 'sanctum.advisor_consent';
+  static const _advisorConsentVersionKey = 'sanctum.advisor_consent_version';
 
   @override
   Future<Result<String>> installSalt() {
@@ -119,6 +136,57 @@ class PreferencesSettingsRepository implements SettingsRepository {
       },
       onError: (error, stackTrace) => StorageFailure(
         'Could not read the advisor install id',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<AdvisorConsent>> advisorConsent() {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final stored = prefs.getString(_advisorConsentKey);
+        if (stored == AdvisorConsent.declined.name) {
+          return AdvisorConsent.declined;
+        }
+        if (stored != AdvisorConsent.granted.name) {
+          return AdvisorConsent.unasked;
+        }
+
+        // A yes to an older disclosure is not a yes to this one. Read
+        // back as unasked, so the screen is shown again saying what is
+        // true now — see [AdvisorDisclosure].
+        final version = prefs.getInt(_advisorConsentVersionKey) ?? 0;
+        return version >= AdvisorDisclosure.current
+            ? AdvisorConsent.granted
+            : AdvisorConsent.unasked;
+      },
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not read your advisor choice',
+        cause: error,
+        stackTrace: stackTrace,
+      ),
+    );
+  }
+
+  @override
+  Future<Result<void>> recordAdvisorConsent({required bool granted}) {
+    return Result.guard(
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          _advisorConsentKey,
+          granted ? AdvisorConsent.granted.name : AdvisorConsent.declined.name,
+        );
+        await prefs.setInt(
+          _advisorConsentVersionKey,
+          AdvisorDisclosure.current,
+        );
+      },
+      onError: (error, stackTrace) => StorageFailure(
+        'Could not save your advisor choice',
         cause: error,
         stackTrace: stackTrace,
       ),

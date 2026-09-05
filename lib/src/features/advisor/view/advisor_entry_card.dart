@@ -5,6 +5,7 @@ import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/domain/models/advisor_topic.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/services/message_budget.dart';
 import 'package:sanctum/src/features/advisor/view/advisor_screen.dart';
@@ -64,7 +65,8 @@ class AdvisorEntryCard extends StatelessWidget {
             icon: Icons.forum_outlined,
             expand: true,
             variant: SanctumButtonVariant.ghost,
-            onPressed: () => unawaited(AdvisorScreen.open(context, match)),
+            onPressed: () =>
+                unawaited(AdvisorScreen.open(context, MatchTopic(match))),
           ),
         ],
       ),

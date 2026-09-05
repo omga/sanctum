@@ -10,8 +10,8 @@ import 'package:sanctum/src/data/repositories/conversation_repository.dart';
 import 'package:sanctum/src/data/repositories/message_balance_repository.dart';
 import 'package:sanctum/src/data/services/advisor/proxy_chat_transport.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
-import 'package:sanctum/src/domain/models/advisor_context.dart';
-import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/advisor_consent.dart';
+import 'package:sanctum/src/domain/models/advisor_topic.dart';
 import 'package:sanctum/src/domain/models/conversation.dart';
 import 'package:sanctum/src/domain/models/message_balance.dart';
 import 'package:sanctum/src/domain/services/chat_transport.dart';
@@ -27,10 +27,10 @@ part 'advisor_view_model.g.dart';
 /// no proxy, [chatTransport] hands back the scripted one, and the app
 /// makes no network call at all.
 ///
-/// **Do not compile a URL into a release build until the consent screen
-/// exists** — `advisor.md` §8 step 5. This provider is the switch that
-/// turns a local feature into one that sends a chart to a third party,
-/// and the screen that tells the user so has not been built yet.
+/// A URL alone is no longer enough to send anything. Since the consent
+/// screen landed, [chatTransport] also requires a granted
+/// [AdvisorConsent] — see [advisorEndpoint] for why that check is a
+/// second layer rather than the only one.
 const advisorProxyUrl = String.fromEnvironment('ADVISOR_PROXY_URL');
 
 /// Supabase's publishable key for the function.
@@ -53,6 +53,17 @@ http.Client httpClient(Ref ref) {
   return client;
 }
 
+/// The endpoint a build is pointed at.
+///
+/// A provider wrapping [advisorProxyUrl] rather than the constant read
+/// directly, for one reason: `String.fromEnvironment` is resolved at
+/// compile time, so a test cannot simulate a build that *does* have a
+/// proxy compiled in. The property worth testing is precisely that such
+/// a build still sends nothing until consent is given, and it is
+/// untestable without this seam.
+@Riverpod(keepAlive: true)
+String advisorEndpoint(Ref ref) => advisorProxyUrl;
+
 /// Whatever is answering questions right now.
 ///
 /// Overriding this one provider is the whole swap — no widget, view
@@ -62,13 +73,53 @@ http.Client httpClient(Ref ref) {
 /// The scripted transport is not scaffolding to be deleted once the
 /// proxy works: it is what keeps widget tests fast, deterministic and
 /// free, and it is how this screen stays developable on a plane.
-@riverpod
+///
+/// ## Why consent is checked here as well as on the screen
+///
+/// `AdvisorScreen` will not show a composer until consent is granted,
+/// so in a working app this branch is unreachable. It is here for the
+/// same reason `AdvisorContext` has no name field and the Edge Function
+/// re-validates the payload: the guarantee is worth more than one
+/// layer, and a future entry point that forgets the gate — a trigger, a
+/// deep link, a notification tap — meets a transport that cannot reach
+/// the network rather than one that quietly does.
+///
+/// Falling back to the scripted transport rather than throwing keeps
+/// the failure mode identical to a build with no URL, which is the
+/// state every build is in today.
+///
+/// ## Why `keepAlive`, and how the absence of it hid for so long
+///
+/// `AdvisorController.ask` reaches this with
+/// `ref.read(chatTransportProvider.future)`, and **`ref.read`
+/// registers no listener** — so an auto-disposing provider is collected
+/// as soon as the read returns. With no URL the build was synchronous
+/// and finished before that could matter. With a URL it awaits an
+/// install id, resumes on a disposed `Ref`, and throws
+/// `UnmountedRefException` *inside the future nobody is awaiting any
+/// more* — so `ask` never returns, the question sits under a spinner
+/// for ever, and no failure is ever shown. The first build ever pointed
+/// at the proxy is the first build that could see it.
+///
+/// `LanguageController` records the same crash from the same cause and
+/// the same fix. One transport for the app, held for its life, is also
+/// what the shape of the thing wants: it wraps a single HTTP client
+/// that is itself `keepAlive`.
+///
+/// `advisor_proxy_wiring_test.dart` is the regression, and it is a
+/// *widget* test on purpose: every layer here had tests already, and
+/// the defect was in the seam between them.
+@Riverpod(keepAlive: true)
 Future<ChatTransport> chatTransport(Ref ref) async {
-  if (advisorProxyUrl.isEmpty) return const ScriptedChatTransport();
+  final endpoint = ref.watch(advisorEndpointProvider);
+  if (endpoint.isEmpty) return const ScriptedChatTransport();
+
+  final consent = await ref.watch(advisorConsentProvider.future);
+  if (!consent.allowsSending) return const ScriptedChatTransport();
 
   final id = await ref.watch(advisorInstallIdProvider.future);
   return ProxyChatTransport(
-    endpoint: Uri.parse(advisorProxyUrl),
+    endpoint: Uri.parse(endpoint),
     installId: id,
     apiKey: advisorProxyKey,
     client: ref.watch(httpClientProvider),
@@ -174,14 +225,19 @@ class AdvisorUiState {
   );
 }
 
-/// Drives one conversation.
+/// Drives one conversation, whatever it is about.
 ///
-/// ## Why the family key is the match and not an id
+/// ## Why the family key is a topic and not an id
 ///
 /// Same reason `ReportController`'s is: `CompatibilityMatch.id` is built
 /// from both people's names and birth dates, so passing it around as a
 /// routing key puts exactly that into places — URLs, breadcrumbs, logs —
 /// that this feature exists to keep it out of.
+///
+/// [AdvisorTopic] carries the four things that differ between a
+/// conversation about a pairing and one about your own chart — the
+/// subject, the payload, the suggestions, the names to strip — so
+/// everything in this class is written once for both.
 ///
 /// ## Where the transcript lives
 ///
@@ -199,9 +255,8 @@ class AdvisorController extends _$AdvisorController {
   ConversationRepository get _store => ref.read(conversationRepositoryProvider);
 
   @override
-  Future<AdvisorUiState> build(CompatibilityMatch match) async {
-    final subject = MatchSubject(match.id);
-    final stored = (await _store.find(subject)).getOrElse(null);
+  Future<AdvisorUiState> build(AdvisorTopic topic) async {
+    final stored = (await _store.find(topic.subject)).getOrElse(null);
 
     // A conversation nobody has asked anything in is not written yet —
     // see [_ensureOpen]. So "not found" is the ordinary first visit,
@@ -210,9 +265,9 @@ class AdvisorController extends _$AdvisorController {
     final conversation =
         stored ??
         Conversation(
-          id: 'advisor:${match.id}',
+          id: topic.conversationId,
           kind: ConversationKind.advisor,
-          subject: subject,
+          subject: topic.subject,
           startedAt: DateTime.now(),
         );
 
@@ -299,7 +354,7 @@ class AdvisorController extends _$AdvisorController {
     final stream = transport.send(
       conversation: _conversation,
       history: history,
-      context: AdvisorContext.forMatch(match, languageCode: languageCode),
+      context: topic.contextFor(languageCode),
     );
 
     await for (final chunk in stream) {
@@ -447,14 +502,11 @@ class AdvisorController extends _$AdvisorController {
 
   /// The form of [text] that may leave the device.
   ///
-  /// Belt and braces over [AdvisorContext]: the context type cannot
+  /// Belt and braces over the payload type: `AdvisorContext` cannot
   /// carry a name, and this makes sure the sentence beside it cannot
-  /// either. See `message_redaction.dart`.
-  String _outbound(String text) => MessageRedaction.redact(
-    text,
-    names: {
-      match.them.name: MessageRedaction.placeholder,
-      match.you.name: MessageRedaction.selfPlaceholder,
-    },
-  );
+  /// either. Which names to strip is the topic's business — a self
+  /// conversation has no "them" to map anybody onto. See
+  /// `message_redaction.dart`.
+  String _outbound(String text) =>
+      MessageRedaction.redact(text, names: topic.outboundNames);
 }

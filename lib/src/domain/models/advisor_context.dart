@@ -108,10 +108,8 @@ final class AdvisorContext {
         'moon': {
           'your_sign': moon.yourSign.name,
           'their_sign': moon.theirSign.name,
-          if (moon.aspect case final aspect?)
-            'aspect': aspect.aspect.name,
-          if (moon.aspect case final aspect?)
-            'orb': _round(aspect.orb),
+          if (moon.aspect case final aspect?) 'aspect': aspect.aspect.name,
+          if (moon.aspect case final aspect?) 'orb': _round(aspect.orb),
         },
     }, languageCode: languageCode);
   }
@@ -125,7 +123,37 @@ final class AdvisorContext {
   factory AdvisorContext.forToday(
     DailyTransitReading reading, {
     required String languageCode,
-  }) => AdvisorContext._('today', {
+  }) => AdvisorContext._('today', _sky(reading), languageCode: languageCode);
+
+  /// A question about the user's own chart.
+  ///
+  /// The only surface with one set of positions rather than two, and
+  /// the reason it exists: everything else the advisor answers is about
+  /// a pairing, and "what am I actually like" is the question the app
+  /// has the data for and was refusing to take.
+  ///
+  /// Carries today's sky as well when there is one, because a natal
+  /// chart alone invites the timeless horoscope-filler answer this
+  /// prompt spends three rules forbidding — the transit is the concrete
+  /// thing there is to say something about today.
+  ///
+  /// Same rule as everywhere else in this file: [_positions] is
+  /// longitudes and a sign, and the birth date that produced them is
+  /// not here and cannot be.
+  factory AdvisorContext.forSelf({
+    required MatchPerson you,
+    required String languageCode,
+    DailyTransitReading? today,
+  }) => AdvisorContext._('self', {
+    'you': _positions(you),
+    if (today case final reading?) ..._sky(reading),
+  }, languageCode: languageCode);
+
+  /// What one day's sky looks like as facts.
+  ///
+  /// Shared by [AdvisorContext.forToday] and [AdvisorContext.forSelf] so
+  /// the two surfaces can never describe the same day differently.
+  static Map<String, Object> _sky(DailyTransitReading reading) => {
     'quiet': reading.transit == null,
     if (reading.transit case final transit?)
       'transit': {
@@ -138,7 +166,7 @@ final class AdvisorContext {
     'retrogrades': [
       for (final planet in reading.retrogrades) planet.name,
     ],
-  }, languageCode: languageCode);
+  };
 
   /// Which screen the question was asked from.
   ///

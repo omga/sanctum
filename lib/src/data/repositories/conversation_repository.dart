@@ -189,9 +189,9 @@ class DriftConversationRepository implements ConversationRepository {
       () async {
         // The messages go with it, by foreign key rather than by a
         // second statement somebody has to remember.
-        await (_db.delete(_db.conversations)
-              ..where((t) => t.id.equals(conversationId)))
-            .go();
+        await (_db.delete(
+          _db.conversations,
+        )..where((t) => t.id.equals(conversationId))).go();
       },
       onError: (error, stackTrace) => StorageFailure(
         'Could not delete the conversation',
@@ -213,6 +213,7 @@ class DriftConversationRepository implements ConversationRepository {
     MatchSubject() => 'match',
     ReportSubject() => 'report',
     DaySubject() => 'day',
+    SelfSubject() => 'self',
     OpenSubject() => 'open',
   };
 
@@ -220,6 +221,9 @@ class DriftConversationRepository implements ConversationRepository {
     MatchSubject(:final matchId) => matchId,
     ReportSubject(:final matchId) => matchId,
     DaySubject(:final date) => '${date.year}-${date.month}-${date.day}',
+    // One conversation, no discriminator. See [SelfSubject] for why it
+    // is not keyed by the day the way the transit one is.
+    SelfSubject() => '',
     OpenSubject() => '',
   };
 
@@ -228,6 +232,7 @@ class DriftConversationRepository implements ConversationRepository {
         'match' => MatchSubject(ref),
         'report' => ReportSubject(ref),
         'day' => DaySubject(_parseDate(ref)),
+        'self' => const SelfSubject(),
         // Anything unrecognised is a row written by a newer build than
         // this one. Falling back beats throwing on somebody's history.
         _ => const OpenSubject(),

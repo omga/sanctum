@@ -257,5 +257,9 @@
   "transit.verb.opposition": "tira en contra de",
   "transit.verb.sextile": "le abre paso a",
   "transit.verb.square": "presiona",
-  "transit.verb.trine": "fluye con"
+  "transit.verb.trine": "fluye con",
+  "advisor.starter.selfChart": "¿Qué dice mi carta realmente sobre mí?",
+  "advisor.prompt.selfChart": "¿Qué dice esta carta realmente sobre la persona a quien pertenece?",
+  "advisor.starter.selfAnything": "¿Qué debería saber de mí que no he preguntado?",
+  "advisor.prompt.selfAnything": "¿Qué debería saber de esta carta que no he preguntado?"
 }

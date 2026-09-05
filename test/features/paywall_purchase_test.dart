@@ -8,6 +8,7 @@ import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
+import 'package:sanctum/src/domain/models/advisor_consent.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
 import 'package:sanctum/src/domain/models/report_product.dart';
 import 'package:sanctum/src/domain/models/subscription_plan.dart';
@@ -47,8 +48,7 @@ class _Store implements SubscriptionRepository {
   }
 
   @override
-  Future<Result<ReportProduct?>> reportProduct() async =>
-      const Result.ok(null);
+  Future<Result<ReportProduct?>> reportProduct() async => const Result.ok(null);
 
   @override
   Future<Result<bool>> purchaseReport() async => const Result.ok(true);
@@ -89,14 +89,21 @@ class _Settings implements SettingsRepository {
       const Result.ok('advisor-install');
 
   @override
+  Future<Result<AdvisorConsent>> advisorConsent() async =>
+      const Result.ok(AdvisorConsent.granted);
+
+  @override
+  Future<Result<void>> recordAdvisorConsent({required bool granted}) async =>
+      const Result.ok(null);
+
+  @override
   Future<Result<bool>> hasOnboarded() async => const Result.ok(true);
 
   @override
   Future<Result<void>> setOnboarded() async => const Result.ok(null);
 
   @override
-  Future<Result<DateTime>> installDate() async =>
-      Result.ok(DateTime(2026));
+  Future<Result<DateTime>> installDate() async => Result.ok(DateTime(2026));
 
   @override
   Future<Result<({int dismissed, DateTime? lastShown, int shown})>>
@@ -104,21 +111,20 @@ class _Settings implements SettingsRepository {
       const Result.ok((shown: 0, dismissed: 0, lastShown: null));
 
   @override
-  Future<Result<String?>> preferredLanguage() async =>
-      const Result.ok(null);
+  Future<Result<String?>> preferredLanguage() async => const Result.ok(null);
 
   @override
   Future<Result<void>> setPreferredLanguage(String? code) async =>
       const Result.ok(null);
 }
 
-({RecordingAnalyticsService analytics, _Settings settings, _Store store})
-_deps(Result<bool> outcome) =>
-    (
-      analytics: RecordingAnalyticsService(),
-      settings: _Settings(),
-      store: _Store(outcome),
-    );
+({RecordingAnalyticsService analytics, _Settings settings, _Store store}) _deps(
+  Result<bool> outcome,
+) => (
+  analytics: RecordingAnalyticsService(),
+  settings: _Settings(),
+  store: _Store(outcome),
+);
 
 Future<void> _pump(
   WidgetTester tester,

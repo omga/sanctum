@@ -257,5 +257,9 @@
   "transit.verb.opposition": "випробовує",
   "transit.verb.sextile": "відкриває",
   "transit.verb.square": "тисне на",
-  "transit.verb.trine": "підтримує"
+  "transit.verb.trine": "підтримує",
+  "advisor.starter.selfChart": "Що моя карта насправді каже про мене?",
+  "advisor.prompt.selfChart": "Що ця карта насправді каже про людину, якій вона належить?",
+  "advisor.starter.selfAnything": "Чого мені варто про себе знати, про що я не запитала?",
+  "advisor.prompt.selfAnything": "Що варто знати з цієї карти, про що я не запитала?"
 }

@@ -65,6 +65,11 @@ void main() {
     'forMatch': AdvisorContext.forMatch(match, languageCode: 'en'),
     'forReport': AdvisorContext.forReport(report, languageCode: 'uk'),
     'forToday': AdvisorContext.forToday(reading, languageCode: 'es'),
+    'forSelf': AdvisorContext.forSelf(
+      you: you,
+      today: reading,
+      languageCode: 'en',
+    ),
   };
 
   /// Every string and number anywhere in a payload, flattened.
@@ -198,6 +203,45 @@ void main() {
     });
   });
 
+  group('a conversation about yourself', () {
+    test('sends one set of positions and no second person', () {
+      // The whole difference between this surface and every other one.
+      // A stray `them` here would be a pairing the user never asked
+      // about, assembled out of whatever was lying around.
+      final facts = everyContext['forSelf']!.facts;
+      expect(facts.keys, contains('you'));
+      expect(facts.keys, isNot(contains('them')));
+      expect(facts.keys, isNot(contains('facets')));
+    });
+
+    test('carries the day it was asked on', () {
+      // Without it the model has a birth chart and no present tense,
+      // which is the horoscope-filler answer the prompt forbids.
+      final facts = everyContext['forSelf']!.facts;
+      expect(facts['quiet'], isFalse);
+      expect(facts['transit'], isA<Map<String, Object>>());
+    });
+
+    test('works with no birth date to read a transit against', () {
+      // Reachable: the transit needs a birth date, the app can be used
+      // without one, and the natal questions still stand.
+      final chartOnly = AdvisorContext.forSelf(you: you, languageCode: 'en');
+      expect(chartOnly.facts.keys, contains('you'));
+      expect(chartOnly.facts.keys, isNot(contains('transit')));
+      expect(chartOnly.facts.keys, isNot(contains('quiet')));
+    });
+
+    test('describes the same sky as the today surface', () {
+      // Two constructors, one day. If they ever diverge, the advisor
+      // contradicts the panel the question was asked next to.
+      final self = everyContext['forSelf']!.facts;
+      final today = everyContext['forToday']!.facts;
+      expect(self['transit'], today['transit']);
+      expect(self['retrogrades'], today['retrogrades']);
+      expect(self['quiet'], today['quiet']);
+    });
+  });
+
   group('the payload carries what the advisor actually needs', () {
     test('a match sends the scores the user is looking at', () {
       final facts = everyContext['forMatch']!.facts;
@@ -254,6 +298,7 @@ void main() {
       expect(everyContext['forMatch']!.surface, 'match');
       expect(everyContext['forReport']!.surface, 'report');
       expect(everyContext['forToday']!.surface, 'today');
+      expect(everyContext['forSelf']!.surface, 'self');
     });
   });
 }

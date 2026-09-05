@@ -39,6 +39,16 @@ enum StarterKind {
   /// the chart, and the question people actually have.
   reassurance,
 
+  /// What the user's own chart is like. The self conversation's
+  /// equivalent of [ordinaryDay]: specific, answerable, and implying no
+  /// problem.
+  selfChart,
+
+  /// No angle in particular, asked about oneself. Worded separately
+  /// from [anything], which says "this pairing" and would be nonsense
+  /// on a screen with no pairing behind it.
+  selfAnything,
+
   /// No angle in particular. The last resort.
   anything,
 }
@@ -186,8 +196,9 @@ abstract final class ConversationStarters {
     final scored = match.facets
         .where((facet) => facet.facet != CompatibilityFacet.drama)
         .toList();
-    final strongest = (scored.isEmpty ? match.facets : scored)
-        .reduce((a, b) => b.score > a.score ? b : a);
+    final strongest = (scored.isEmpty ? match.facets : scored).reduce(
+      (a, b) => b.score > a.score ? b : a,
+    );
     return [
       ConversationStarter(
         StarterKind.strongestFacet,
@@ -213,6 +224,25 @@ abstract final class ConversationStarters {
     else
       const ConversationStarter(StarterKind.quietDay),
     const ConversationStarter(StarterKind.anything),
+  ];
+
+  /// Starters for a conversation about the user's own chart.
+  ///
+  /// Today's sky leads when there is one, for the same reason the entry
+  /// cards lead with a low facet: a question the user already has beats
+  /// one they have to invent. [StarterKind.selfChart] and
+  /// [StarterKind.selfAnything] are the floor, so the row is never
+  /// empty on a day with nothing in it.
+  ///
+  /// [today] is nullable because the transit needs a birth date and the
+  /// app can be reached without one — the chart questions still work.
+  static List<ConversationStarter> forSelf(DailyTransitReading? today) => [
+    if (today?.transit != null)
+      const ConversationStarter(StarterKind.transitToday)
+    else if (today != null)
+      const ConversationStarter(StarterKind.quietDay),
+    const ConversationStarter(StarterKind.selfChart),
+    const ConversationStarter(StarterKind.selfAnything),
   ];
 
   /// Whether a split is lopsided enough to be the most specific true

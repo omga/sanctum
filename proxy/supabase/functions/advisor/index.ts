@@ -63,8 +63,13 @@ const MAX_FACT_LENGTH = 24;
 
 type Message = { author: 'you' | 'counterpart'; body: string };
 
+/** The screens a question can be asked from. */
+const SURFACES = ['match', 'report', 'today', 'self'] as const;
+
+type Surface = (typeof SURFACES)[number];
+
 type AdvisorRequest = {
-  surface: 'match' | 'report' | 'today';
+  surface: Surface;
   languageCode: string;
   facts: Record<string, unknown>;
   messages: Message[];
@@ -118,7 +123,10 @@ function parseRequest(body: unknown): AdvisorRequest {
   const raw = body as Record<string, unknown>;
 
   const surface = raw.surface;
-  if (surface !== 'match' && surface !== 'report' && surface !== 'today') {
+  if (
+    typeof surface !== 'string' ||
+    !(SURFACES as readonly string[]).includes(surface)
+  ) {
     throw new BadRequest('unknown surface');
   }
 
@@ -156,7 +164,12 @@ function parseRequest(body: unknown): AdvisorRequest {
     return { author, body: text };
   });
 
-  return { surface, languageCode, facts, messages: parsed };
+  return {
+    surface: surface as Surface,
+    languageCode,
+    facts,
+    messages: parsed,
+  };
 }
 
 // ── Rate limiting ──────────────────────────────────────────────────
@@ -202,8 +215,8 @@ function rateLimited(installId: string): boolean {
 function systemPrompt(request: AdvisorRequest): string {
   return [
     'You are an astrologer inside Sanctum, a quiet astrology app.',
-    'You are given real computed positions for one pairing, or for one',
-    'day. Answer only from those numbers.',
+    'You are given real computed positions — for one pairing, for one',
+    'person, or for one day. Answer only from those numbers.',
     '',
     'Rules:',
     '- Never invent a placement, an aspect or a score that is not in the',
@@ -214,6 +227,13 @@ function systemPrompt(request: AdvisorRequest): string {
     '  must not guess. The other person is "them".',
     '- Do not claim to know what another person thinks or feels. You are',
     '  reading a chart, not a mind.',
+    ...(request.surface === 'self'
+      ? [
+        '- This chart is the reader\'s own, and there is no second',
+        '  person in it. Do not invent one, and do not answer as though',
+        '  a relationship were being described.',
+      ]
+      : []),
     '- Be warm, specific and short: three or four sentences unless asked',
     '  for more. No horoscope filler, no cosmic vocabulary.',
     `- Write in the language with code "${request.languageCode}".`,

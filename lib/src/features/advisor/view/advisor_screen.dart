@@ -9,11 +9,12 @@ import 'package:sanctum/src/design_system/atoms/sanctum_dialog.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
-import 'package:sanctum/src/domain/models/compatibility.dart';
+import 'package:sanctum/src/domain/models/advisor_topic.dart';
 import 'package:sanctum/src/domain/models/conversation.dart';
 import 'package:sanctum/src/domain/models/copy_book.dart';
 import 'package:sanctum/src/domain/services/conversation_starters.dart';
 import 'package:sanctum/src/domain/services/message_budget.dart';
+import 'package:sanctum/src/features/advisor/view/advisor_consent_screen.dart';
 import 'package:sanctum/src/features/advisor/view_model/advisor_view_model.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
@@ -28,23 +29,27 @@ import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 /// A feature whose entire point is that the name stays on the device
 /// must not be the one that writes it into a route.
 ///
-/// ## What is not here yet
+/// ## Consent comes first
 ///
-/// No purchase gate — `advisor.md` §8 step 6. The transport is scripted,
-/// so nothing said here reaches a network at all.
+/// Until it is granted this screen shows [AdvisorConsentView] and
+/// nothing else — no suggestions, no composer, no send path. It is the
+/// first of two gates: `chatTransport` will not build a proxy transport
+/// either, so an entry point added later that forgets this one still
+/// cannot reach the network.
 class AdvisorScreen extends ConsumerStatefulWidget {
-  /// Creates the screen for [match].
-  const AdvisorScreen({required this.match, super.key});
+  /// Creates the screen for [topic].
+  const AdvisorScreen({required this.topic, super.key});
 
-  /// Opens a conversation about [match].
-  static Future<void> open(BuildContext context, CompatibilityMatch match) {
+  /// Opens a conversation about [topic].
+  static Future<void> open(BuildContext context, AdvisorTopic topic) {
     return Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => AdvisorScreen(match: match)),
+      MaterialPageRoute<void>(builder: (_) => AdvisorScreen(topic: topic)),
     );
   }
 
-  /// The pairing being discussed.
-  final CompatibilityMatch match;
+  /// What the conversation is about — a pairing, or the user's own
+  /// chart.
+  final AdvisorTopic topic;
 
   @override
   ConsumerState<AdvisorScreen> createState() => _AdvisorScreenState();
@@ -64,7 +69,7 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
   Future<void> _send(String question) async {
     _composer.clear();
     final controller = ref.read(
-      advisorControllerProvider(widget.match).notifier,
+      advisorControllerProvider(widget.topic).notifier,
     );
     // The locale the answer should be written in. Read here rather than
     // in the notifier because it is a UI concern that the domain payload
@@ -92,10 +97,14 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
     final l10n = context.l10n;
     final colors = context.colors;
     final type = context.type;
-    final state = ref.watch(advisorControllerProvider(widget.match)).value;
+    final state = ref.watch(advisorControllerProvider(widget.topic)).value;
+
+    // Watched rather than read once, so agreeing rebuilds straight into
+    // the conversation the user was trying to open.
+    final consent = ref.watch(advisorConsentProvider).value;
 
     // Scroll as the answer grows, not only when it is finished.
-    ref.listen(advisorControllerProvider(widget.match), (previous, next) {
+    ref.listen(advisorControllerProvider(widget.topic), (previous, next) {
       if (next.value?.isStreaming ?? false) unawaited(_scrollToEnd());
     });
 
@@ -105,13 +114,21 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          l10n.reportTitle(widget.match.them.name),
+          // The other person's name, rendered locally and never sent —
+          // or "You", when there is no other person. `AdvisorContext`
+          // has no field either could travel in.
+          switch (widget.topic) {
+            MatchTopic(:final match) => l10n.reportTitle(match.them.name),
+            SelfTopic() => l10n.advisorSelfTitle,
+          },
           style: type.title,
         ),
         actions: [
           // Only once there is something to delete. An empty
           // conversation offering to erase itself is noise.
-          if (state != null && state.messages.isNotEmpty)
+          if (state != null &&
+              state.messages.isNotEmpty &&
+              (consent?.allowsSending ?? false))
             IconButton(
               tooltip: l10n.advisorDelete,
               onPressed: () => unawaited(_confirmDelete(context)),
@@ -121,80 +138,95 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
       ),
       body: SafeArea(
         top: false,
-        // Nothing, rather than a spinner, while the transcript loads.
-        // It is a local SQLite read of a handful of rows, so a spinner
-        // would be a flash rather than feedback — and showing the
-        // suggestion row first would flash the wrong screen at anybody
-        // who *does* have a transcript.
-        child: state == null
-            ? const SizedBox.shrink()
-            : Column(
-                children: [
-                  _Disclosure(text: l10n.advisorDisclosure),
-                  Expanded(
-                    child: state.messages.isEmpty
-                        ? _Starters(match: widget.match, onPick: _send)
-                        : ListView.builder(
-                            controller: _scroll,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: SanctumSpacing.lg,
-                              vertical: SanctumSpacing.md,
-                            ),
-                            itemCount: state.messages.length,
-                            itemBuilder: (context, index) => _Bubble(
-                              message: state.messages[index],
-                              isStreaming:
-                                  state.messages[index].id == state.streamingId,
+        // The disclosure stands in for the whole screen until it is
+        // answered — not a banner above the conversation and not a
+        // sheet over it. An explanation of what sending does, shown
+        // beside a composer, is an explanation somebody taps past.
+        child: switch (consent) {
+          null => const SizedBox.shrink(),
+          final answered when !answered.allowsSending => AdvisorConsentView(
+            onClose: () => Navigator.of(context).maybePop(),
+          ),
+          // Nothing, rather than a spinner, while the transcript loads.
+          // It is a local SQLite read of a handful of rows, so a spinner
+          // would be a flash rather than feedback — and showing the
+          // suggestion row first would flash the wrong screen at anybody
+          // who *does* have a transcript.
+          _ =>
+            state == null
+                ? const SizedBox.shrink()
+                : Column(
+                    children: [
+                      _Disclosure(text: l10n.advisorDisclosure),
+                      Expanded(
+                        child: state.messages.isEmpty
+                            ? _Starters(topic: widget.topic, onPick: _send)
+                            : ListView.builder(
+                                controller: _scroll,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: SanctumSpacing.lg,
+                                  vertical: SanctumSpacing.md,
+                                ),
+                                itemCount: state.messages.length,
+                                itemBuilder: (context, index) => _Bubble(
+                                  message: state.messages[index],
+                                  isStreaming:
+                                      state.messages[index].id ==
+                                      state.streamingId,
+                                ),
+                              ),
+                      ),
+                      if (state.failure case final failure?)
+                        _FailureBar(
+                          failure: failure,
+                          onRetry: () async {
+                            final language = Localizations.localeOf(context)
+                                .languageCode;
+                            await ref
+                                .read(
+                                  advisorControllerProvider(widget.topic)
+                                      .notifier,
+                                )
+                                .retry(languageCode: language);
+                            await _scrollToEnd();
+                          },
+                        ),
+                      if (state.showsCount && !state.isSpent)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: SanctumSpacing.xs,
+                          ),
+                          child: Text(
+                            l10n.advisorTurnsLeft(state.remaining),
+                            style: type.caption.copyWith(
+                              color: colors.textTertiary,
                             ),
                           ),
-                  ),
-                  if (state.failure case final failure?)
-                    _FailureBar(
-                      failure: failure,
-                      onRetry: () async {
-                        final language = Localizations.localeOf(context)
-                            .languageCode;
-                        await ref
-                            .read(
-                              advisorControllerProvider(widget.match).notifier,
-                            )
-                            .retry(languageCode: language);
-                        await _scrollToEnd();
-                      },
-                    ),
-                  if (state.showsCount && !state.isSpent)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: SanctumSpacing.xs),
-                      child: Text(
-                        l10n.advisorTurnsLeft(state.remaining),
-                        style: type.caption.copyWith(
-                          color: colors.textTertiary,
                         ),
-                      ),
-                    ),
-                  if (state.isSpent)
-                    _OutOfMessages(
-                      isPremium: state.isPremium,
-                      isPurchasing: state.isPurchasing,
-                      onBuy: () => unawaited(_buy()),
-                    )
-                  else
-                    _Composer(
-                      controller: _composer,
-                      enabled: state.canAsk,
-                      hint: l10n.advisorComposerHint,
-                      sendLabel: l10n.advisorSend,
-                      onSend: _send,
-                    ),
-                ],
-              ),
+                      if (state.isSpent)
+                        _OutOfMessages(
+                          isPremium: state.isPremium,
+                          isPurchasing: state.isPurchasing,
+                          onBuy: () => unawaited(_buy()),
+                        )
+                      else
+                        _Composer(
+                          controller: _composer,
+                          enabled: state.canAsk,
+                          hint: l10n.advisorComposerHint,
+                          sendLabel: l10n.advisorSend,
+                          onSend: _send,
+                        ),
+                    ],
+                  ),
+        },
       ),
     );
   }
 
   Future<void> _buy() async {
     final bought = await ref
-        .read(advisorControllerProvider(widget.match).notifier)
+        .read(advisorControllerProvider(widget.topic).notifier)
         .buyMessages();
     // Nothing to say when they backed out of the sheet: the screen is
     // already showing the state they backed out to. Saying "cancelled"
@@ -215,7 +247,7 @@ class _AdvisorScreenState extends ConsumerState<AdvisorScreen> {
     );
     if (!confirmed) return;
     await ref
-        .read(advisorControllerProvider(widget.match).notifier)
+        .read(advisorControllerProvider(widget.topic).notifier)
         .deleteConversation();
   }
 }
@@ -263,9 +295,9 @@ class _Disclosure extends StatelessWidget {
 
 /// The questions the app already knows the user has.
 class _Starters extends ConsumerWidget {
-  const _Starters({required this.match, required this.onPick});
+  const _Starters({required this.topic, required this.onPick});
 
-  final CompatibilityMatch match;
+  final AdvisorTopic topic;
   final void Function(String) onPick;
 
   @override
@@ -276,7 +308,7 @@ class _Starters extends ConsumerWidget {
     final catalog = ref.watch(contentCatalogProvider).value;
     if (catalog == null) return const SizedBox.shrink();
 
-    final starters = ConversationStarters.forMatch(match);
+    final starters = topic.starters;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(SanctumSpacing.lg),
@@ -317,10 +349,19 @@ class _Starters extends ConsumerWidget {
     BuildContext context, {
     required bool named,
   }) => copy.format(named ? starter.displayKey : starter.promptKey, {
-    'name': match.them.name,
-    if (starter.facet case final facet?) ...{
-      'facet': facet.label(context.l10n),
-      'score': match.facets.firstWhere((scored) => scored.facet == facet).score,
+    // A self conversation has no second person and no facets, so it
+    // fills no slots — and its copy carries none. `CopyBook.format`
+    // leaves an unfilled slot alone rather than blanking it, which is
+    // how a missing key here would show up as `{name}` on screen
+    // instead of silently reading as a sentence about nobody.
+    if (topic case MatchTopic(:final match)) ...{
+      'name': match.them.name,
+      if (starter.facet case final facet?) ...{
+        'facet': facet.label(context.l10n),
+        'score': match.facets
+            .firstWhere((scored) => scored.facet == facet)
+            .score,
+      },
     },
   });
 }

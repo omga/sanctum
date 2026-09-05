@@ -21,6 +21,7 @@ import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
 import 'package:sanctum/src/data/services/reminders/reminder_service.dart';
+import 'package:sanctum/src/domain/models/advisor_consent.dart';
 import 'package:sanctum/src/l10n/sanctum_locales.dart';
 
 part 'data_providers.g.dart';
@@ -40,7 +41,8 @@ SanctumDatabase sanctumDatabase(Ref ref) {
 /// language and then swaps to another.
 @Riverpod(keepAlive: true)
 Future<String?> languagePreference(Ref ref) async {
-  final result = await ref.watch(settingsRepositoryProvider)
+  final result = await ref
+      .watch(settingsRepositoryProvider)
       .preferredLanguage();
   // A preference we cannot read is the same as not having one: follow
   // the device, which is what an unconfigured install does anyway.
@@ -63,9 +65,7 @@ Future<String?> languagePreference(Ref ref) async {
 Locale contentLocale(Ref ref) {
   final chosen = ref.watch(languagePreferenceProvider).value;
   return SanctumLocales.resolve(
-    chosen == null
-        ? PlatformDispatcher.instance.locales
-        : [Locale(chosen)],
+    chosen == null ? PlatformDispatcher.instance.locales : [Locale(chosen)],
   );
 }
 
@@ -111,11 +111,29 @@ Future<String> installSalt(Ref ref) async {
 /// `SettingsRepository.advisorInstallId`.
 @Riverpod(keepAlive: true)
 Future<String> advisorInstallId(Ref ref) async {
-  final result = await ref.watch(settingsRepositoryProvider)
-      .advisorInstallId();
+  final result = await ref.watch(settingsRepositoryProvider).advisorInstallId();
   return switch (result) {
     Ok(:final value) => value,
     Err(:final failure) => throw failure,
+  };
+}
+
+/// Whether the advisor may send anything yet.
+///
+/// Read before the conversation screen shows a composer and again
+/// before a proxy transport is built, so the consent screen is not the
+/// only thing standing between a chart and a third party. See
+/// `advisor_consent.dart`.
+@Riverpod(keepAlive: true)
+Future<AdvisorConsent> advisorConsent(Ref ref) async {
+  final result = await ref.watch(settingsRepositoryProvider).advisorConsent();
+  return switch (result) {
+    Ok(:final value) => value,
+    // Storage failed, so nothing is known about what the user agreed
+    // to. The safe reading of "unknown" is "not yet" — it shows the
+    // screen again rather than sending on the strength of a value that
+    // could not be read.
+    Err() => AdvisorConsent.unasked,
   };
 }
 

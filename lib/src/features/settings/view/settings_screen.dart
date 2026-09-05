@@ -8,12 +8,14 @@ import 'package:sanctum/src/design_system/effects/glass_card.dart';
 import 'package:sanctum/src/design_system/effects/starfield.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
+import 'package:sanctum/src/features/advisor/view/advisor_consent_screen.dart';
 import 'package:sanctum/src/features/settings/view_model/settings_view_model.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/l10n/sanctum_lexicon.dart';
 import 'package:sanctum/src/l10n/sanctum_locales.dart';
 
-/// Settings. Currently: the language the app is read in.
+/// Settings: the language the app is read in, and what the advisor
+/// is allowed to send.
 ///
 /// ## Why a language picker exists at all
 ///
@@ -88,6 +90,17 @@ class SettingsScreen extends ConsumerWidget {
           ],
           const SizedBox(height: SanctumSpacing.lg),
           Text(l10n.settingsLanguageNote, style: type.caption),
+
+          const SizedBox(height: SanctumSpacing.xxl),
+          Text(
+            l10n.settingsAdvisor,
+            style: type.caption.copyWith(
+              color: colors.textTertiary,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: SanctumSpacing.md),
+          const _AdvisorConsentRow(),
         ],
       ),
     );
@@ -135,8 +148,54 @@ class _Choice extends StatelessWidget {
               ),
             ),
           ),
-          if (selected)
-            Icon(Icons.check, size: 20, color: colors.gold),
+          if (selected) Icon(Icons.check, size: 20, color: colors.gold),
+        ],
+      ),
+    );
+  }
+}
+
+/// The one place consent can be read back and taken away.
+///
+/// It opens the same screen the user first answered rather than
+/// paraphrasing it here. A settings page that summarises a disclosure
+/// in its own words is a second disclosure to keep in step with the
+/// first, and the two drift.
+class _AdvisorConsentRow extends ConsumerWidget {
+  const _AdvisorConsentRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final type = context.type;
+    final colors = context.colors;
+    final consent = ref.watch(advisorConsentProvider).value;
+
+    return GlassCard.flat(
+      onTap: () => unawaited(AdvisorConsentScreen.open(context)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: SanctumSpacing.lg,
+        vertical: SanctumSpacing.md,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(l10n.settingsAdvisorRow, style: type.bodyLarge),
+          ),
+          Text(
+            // Unresolved reads as off, because nothing may be sent
+            // until it resolves to granted either.
+            (consent?.allowsSending ?? false)
+                ? l10n.settingsAdvisorOn
+                : l10n.settingsAdvisorOff,
+            style: type.bodyMedium.copyWith(color: colors.textTertiary),
+          ),
+          const SizedBox(width: SanctumSpacing.sm),
+          Icon(
+            Icons.chevron_right,
+            size: 18,
+            color: colors.textTertiary,
+          ),
         ],
       ),
     );

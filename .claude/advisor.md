@@ -2,11 +2,19 @@
 
 Plan for `roadmap.md` §2, and the running order for what is left.
 
-**State, 2026-09-05:** steps 1–4 and 6 are built; the proxy is deployed
-and answering; the app still makes no network call because no build
-compiles a proxy URL. What remains is step 5 (consent), entitlement on
-the server, analytics, and step 7 (triggers) — in that order, and §8 is
-the detail.
+**State, 2026-09-05:** steps 1–6 are built, and the advisor now answers
+about the reader's own chart as well as about a pairing — see §11. The proxy is deployed and
+answering; the app still makes no network call, now for two reasons —
+no build compiles a proxy URL, and consent is required before a proxy
+transport is built at all. What remains is entitlement on the server,
+advisor analytics, and step 7 (triggers) — in that order, and §8 is the
+detail.
+
+The consent screen exists. The privacy policy and the two store
+data-safety declarations that ship with it are **drafts** in `docs/`,
+accurate about what the code does and deliberately unfinished: DeepSeek
+processes in China, which is a transfer question for counsel rather than
+a copy one.
 
 The feature: **an astrologer you can ask questions, answering from your
 actual computed chart rather than your star sign**, reached from the
@@ -95,6 +103,29 @@ question the user reads and the question that is sent are two written
 strings rather than one string and a regex.
 
 ### Consent is a screen, not a checkbox
+
+**Built.** `AdvisorConsentView` in `features/advisor/view/`, stored as a
+tri-state in `SettingsRepository` and read through
+`advisorConsentProvider`. Enforced twice: `AdvisorScreen` shows the
+disclosure *instead of* the conversation until it is answered, and
+`chatTransport` refuses to build a `ProxyChatTransport` without a
+granted consent — so an entry point added later that forgets the first
+gate meets the second.
+
+Three details that took the argument rather than the code:
+
+* **Leaving is not an answer.** The back arrow records nothing; only
+  "Not now" writes `declined`. That is why the stored value is a
+  tri-state and not a boolean — the triggers in §4 must never nudge
+  somebody who said no, and must be free to offer the feature to
+  somebody who merely walked away.
+* **Consent carries the disclosure version it was given against.**
+  `AdvisorDisclosure.current`. A yes to an older disclosure reads back
+  as unasked, because agreement was to a *specific* set of facts and
+  changing the recipient changes them. A no stays a no on a version
+  bump: somebody who declined does not want to be asked once a release.
+* **Withdrawal lives in Settings** and opens the same screen rather than
+  paraphrasing it. Two copies of a disclosure drift.
 
 First open of any advisor surface, before a single byte moves:
 
@@ -400,8 +431,30 @@ the shape is right.
    server-side messages, realtime and identity. The function takes an
    install id rather than a Supabase user, so "no account, ever"
    survives.
-5. **Consent + disclosure + policy + data-safety.** Ships with, or
-   before, step 4 reaching a real user.
+5. ~~**Consent + disclosure + policy + data-safety.**~~ **Screen done;
+   the paperwork is drafted, not filed.** The screen names DeepSeek,
+   states what is sent, what is not, who receives it and how long it is
+   kept, and carries the Article 50 disclosure in full — the one-line
+   version at the head of a conversation arrives too late for somebody
+   deciding whether to have one. Copy in all four locales. Sixteen tests
+   in `advisor_consent_test.dart`, of which the one that matters is
+   that a build *with* a URL compiled in still gets the scripted
+   transport until consent is granted.
+
+   Verified on an iPhone 17 Pro simulator: the disclosure stands in
+   front of a conversation reached from the Ask tab, agreeing rebuilds
+   straight into the suggestions, the settings row reads it back, and
+   withdrawing flips the same screen back to the offer. One thing only
+   running it caught — the list's bottom padding was a fixed 32 and the
+   floating nav bar draws over it, so it uses `navBarClearance` like
+   every other screen that learned this.
+
+   `docs/privacy-policy.md` and `docs/store-data-safety.md` are written
+   from what the code does and are honest about being unfinished:
+   counsel on the DeepSeek transfer, the publisher's placeholders, and a
+   hosted URL. **Do not compile a URL into a release build until those
+   three are done** — the screen makes the feature honest, the policy
+   makes it lawful, and they are not the same job.
 6. ~~**Purchase and gating.**~~ **Done in the app, unverified in a
    store.** `MessageBudget` and a preferences-backed balance, the
    out-of-messages state, and `purchaseMessagePack` on both billing
@@ -420,16 +473,21 @@ it starts at step 4 with a different transport.
 
 ## 9. What must be true before it ships
 
-- `advisor_context_test.dart` is exhaustive and passing
-- a test asserts the outbound payload for a real match contains no
-  substring of the person's name — belt and braces over the type system
-- the proxy refuses an over-long or unknown-field payload
-- the AI disclosure is visible in the conversation UI, not only in
-  onboarding
-- privacy policy, store data-safety, `README.md` and the onboarding
-  copy all updated in the same change
-- `analytics.md` gains its events, **with call sites in the same
-  commit** — six declared events already fire from nowhere
+- [x] `advisor_context_test.dart` is exhaustive and passing
+- [x] a test asserts the outbound payload for a real match contains no
+      substring of the person's name — belt and braces over the type
+      system
+- [x] the proxy refuses an over-long or unknown-field payload
+- [x] the AI disclosure is visible in the conversation UI, not only in
+      onboarding — and, since the consent screen, before the first
+      question rather than above it
+- [ ] privacy policy and store data-safety **published and filed**.
+      `README.md` and the onboarding copy are done; the two documents
+      are drafts in `docs/` waiting on counsel and a URL
+- [ ] `analytics.md` gains its events, **with call sites in the same
+      commit** — six declared events already fire from nowhere, and the
+      consent screen has just added the two most worth measuring:
+      offered, and answered which way
 
 ---
 
@@ -452,3 +510,46 @@ it starts at step 4 with a different transport.
    included.
 5. **Language.** The advisor must answer in the user's chosen locale;
    that is a system-prompt instruction plus an eval, not a code path.
+
+---
+
+## 11. Conversations that are not about a pairing
+
+Added after the first build pointed at the live proxy. Every
+conversation needed two people, which left the one chart the app
+certainly has — the reader's own — as the only thing the advisor would
+not discuss.
+
+**`AdvisorTopic` is the seam.** A sealed type carrying the four things
+that actually differ between kinds of conversation: the storage
+subject, the payload, the suggested questions, and the names to strip
+on the way out. Everything downstream — transcript, budget, streaming,
+failure handling, delete — is written once and never learns which kind
+it has. `AdvisorController`'s family key is a topic rather than a
+`CompatibilityMatch`, and equality is `ConversationSubject.key`, which
+is the identity storage already uses.
+
+**`SelfSubject` is not date-keyed, and `DaySubject` is.** The two look
+interchangeable and are not: a conversation about Tuesday should end
+with Tuesday, and a conversation about yourself should not start over
+every midnight and leave a dead row in the Ask tab per day. Today's sky
+still travels inside the self payload — a natal chart with no present
+tense is exactly the timeless horoscope filler the system prompt spends
+three rules forbidding — but as a fact, not as identity.
+
+**The proxy had to learn the surface.** `SURFACES` in the Edge Function
+is now a list rather than three inline comparisons, and the system
+prompt gains one rule for `self`: this chart is the reader's own, there
+is no second person in it, do not invent one. **A build sending
+`surface: "self"` to a proxy deployed before this change gets
+`bad_request`** — deploy the function and the app together.
+
+**The You row is first in the Ask tab and does not wait for a saved
+reading.** It also means the tab is no longer empty for somebody who
+has finished onboarding and never checked a pairing, which is who it
+was empty for.
+
+What is *not* here: no entry card on the Today screen. The transit
+panel is the obvious place for one and it is `advisor.md` §4's
+"explicit intent" surface, but it belongs with the triggers work rather
+than ahead of it.

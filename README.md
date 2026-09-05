@@ -18,8 +18,15 @@ from bundled content and orbital mechanics, and works offline.
 There is one backend: a stateless Supabase Edge Function proxying the
 advisor to DeepSeek, because a model API key cannot ship in a binary. It
 stores nothing and holds no user record — see `proxy/README.md`. It is
-deployed, and the app does not call it in any current build: no release
-may until the consent screen exists.
+deployed, and the app does not call it in any current build: no build
+compiles `ADVISOR_PROXY_URL`.
+
+**The advisor sends nothing until the user agrees to a screen that says
+what it sends**, who receives it and how long it is kept. That gate is
+enforced twice — the conversation screen shows the disclosure instead of
+a composer, and the transport provider will not build a proxy transport
+without a granted consent — and the drafts of the privacy policy and the
+two store data-safety declarations are in `docs/`.
 
 Everything else on the network is telemetry and billing: anonymous
 product analytics (PostHog), crash reporting (Sentry) and subscription
@@ -157,3 +164,10 @@ and the assertions are pinned to reality wherever reality exists:
 - **`proxy/README.md`** — the one backend. How to deploy it, which key
   goes where, and the checklist that must be clear before any release
   build points at it.
+- **`docs/privacy-policy.md`** — a pointer to where the published policy
+  actually lives (the `morphostudio` repository), and the list of four
+  things that have to change together when what leaves the device does.
+- **`docs/store-data-safety.md`** — what to enter in both stores' data
+  forms and why. It ships with the release that first points a build at
+  the proxy, and it has to agree with the published policy and the
+  consent screen.

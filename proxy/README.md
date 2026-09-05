@@ -8,8 +8,14 @@ below: DeepSeek streams real deltas back in our frame format.
 
 **The app is not pointed at it.** `ADVISOR_PROXY_URL` is empty in every
 build, so `chatTransport` hands back the scripted transport and the app
-makes no network call at all. That must stay true until the consent
-screen exists — see "Before this ships" below.
+makes no network call at all.
+
+Since the consent screen landed, a URL is no longer sufficient on its
+own: `chatTransport` also requires a granted consent, so the first build
+that compiles a URL still sends nothing until a user has read the
+disclosure and agreed. What remains before pointing a *release* build at
+this is the policy work and entitlement — see "Before this ships"
+below.
 
 ## Why it exists
 
@@ -48,7 +54,7 @@ server-only change.
 
 ```jsonc
 {
-  "surface": "match",        // match | report | today
+  "surface": "match",        // match | report | today | self
   "languageCode": "uk",      // answer in this language
   "facts": { /* AdvisorContext.facts — numbers and enum names */ },
   "messages": [{ "author": "you", "body": "Why is it like this?" }]
@@ -127,6 +133,11 @@ A `{"error":"bad_request"}` means the payload was rejected — the
 function logs the reason, and `supabase functions logs advisor` shows
 it without ever showing a prompt body.
 
+**`self` is newer than the first deployment.** A build asking about the
+reader's own chart sends `surface: "self"`, and a function deployed
+before that surface existed rejects it as an unknown surface. Redeploy
+before testing the You row in the Ask tab.
+
 Then point a build at it:
 
 ```bash
@@ -193,11 +204,23 @@ rate limiter and, once it exists, entitlement.
 
 ## Before this ships to anyone
 
-- [ ] **The consent screen exists** (`advisor.md` §8 step 5). Compiling
-      a URL into a release build without it means a chart reaches a
-      third party with nobody having been told.
-- [ ] Privacy policy and store data-safety declaration updated in the
-      same change.
+- [x] **The consent screen exists** (`advisor.md` §8 step 5). It names
+      DeepSeek, and a granted consent is required in two places — the
+      screen shows the disclosure instead of a composer, and
+      `chatTransport` will not build a `ProxyChatTransport` without one.
+      `test/features/advisor_consent_test.dart` pins both, including the
+      case that matters here: a build *with* a URL compiled in still
+      gets the scripted transport until the answer is yes.
+- [x] **Privacy policy and terms published.** They live in the
+      `morphostudio` repository, not this one — `docs/privacy-policy.md`
+      has the path and the list of four things that change together.
+      Both name DeepSeek, state the transfer to China, and state
+      explicit consent as the mechanism.
+- [ ] **Store data-safety forms submitted**, and agreeing with the
+      published policy line for line. Play's Data safety and Apple's App
+      Privacy both need the advisor rows added — `docs/store-data-safety.md`
+      has the answers and the reasoning. A review that finds the forms
+      and the policy disagreeing treats it as a misrepresentation.
 - [x] `README.md` no longer opens with "There is no backend and no
       account", and the in-app privacy claims are gone.
 - [ ] **Entitlement is enforced.** Today the only gate is a rate limit

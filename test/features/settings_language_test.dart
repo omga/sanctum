@@ -6,6 +6,7 @@ import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/settings_repository.dart';
+import 'package:sanctum/src/domain/models/advisor_consent.dart';
 import 'package:sanctum/src/features/settings/view_model/settings_view_model.dart';
 import 'package:sanctum/src/l10n/sanctum_locales.dart';
 
@@ -36,6 +37,14 @@ class _Settings implements SettingsRepository {
       const Result.ok('advisor-install');
 
   @override
+  Future<Result<AdvisorConsent>> advisorConsent() async =>
+      const Result.ok(AdvisorConsent.granted);
+
+  @override
+  Future<Result<void>> recordAdvisorConsent({required bool granted}) async =>
+      const Result.ok(null);
+
+  @override
   Future<Result<bool>> hasOnboarded() async => const Result.ok(true);
 
   @override
@@ -54,8 +63,7 @@ class _Settings implements SettingsRepository {
       const Result.ok(null);
 
   @override
-  Future<Result<void>> recordPaywallDismissed() async =>
-      const Result.ok(null);
+  Future<Result<void>> recordPaywallDismissed() async => const Result.ok(null);
 }
 
 ProviderContainer _container(_Settings settings) {
@@ -124,9 +132,7 @@ void main() {
       final container = _container(settings);
       await container.read(languagePreferenceProvider.future);
 
-      await container
-          .read(languageControllerProvider.notifier)
-          .choose(null);
+      await container.read(languageControllerProvider.notifier).choose(null);
 
       expect(settings.language, isNull);
       expect(await container.read(languagePreferenceProvider.future), isNull);

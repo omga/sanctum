@@ -369,6 +369,13 @@ about one screen, which did not.
 rewrites the names a user types, and the proxy rejects them a third
 time. See §3 "The advisor" and `advisor.md` §1.
 
+**And a screen that states the exception.** The advisor's consent screen
+is now where "what leaves this phone" is answered, in full and before
+anything does — which is why the general claim could be withdrawn from
+onboarding without the product becoming vaguer about it. A narrow,
+verifiable statement on the one screen it applies to beats a broad one
+on the first screen of the app.
+
 `reportLockedNote` is a cautionary tale here. It said "It stays on this
 phone", the sweep read that as a privacy promise and cut it, and
 `report_screen_test` failed: that line is small print warning that a
@@ -423,6 +430,48 @@ key out of the binary can spend the DeepSeek budget. Closing that means
 a RevenueCat webhook into a Supabase table and a check in the function,
 which is also the first infrastructure astrologer chat needs.
 
+**Consent is a screen, and it gates the feature twice.** Built
+2026-09-05. `AdvisorScreen` shows `AdvisorConsentView` instead of a
+conversation until it is answered, and `chatTransport` will not build a
+`ProxyChatTransport` without a granted consent — so a build that *does*
+compile a URL still sends nothing until a user has read what leaves the
+device and agreed. The screen names DeepSeek; an unnamed "AI provider"
+is not disclosure, and a test fails if the name disappears.
+
+The stored answer is a tri-state, not a boolean, and the reason is worth
+keeping: the back arrow records nothing and only "Not now" writes
+`declined`, so a decision can be told from a screen somebody walked away
+from. It also carries `AdvisorDisclosure.current` — a yes to an older
+disclosure reads back as unasked, because consent was to a specific set
+of facts and changing the recipient changes them. A no survives a
+version bump. `docs/` holds the privacy policy and store data-safety
+drafts that have to be finished before a release build points at the
+proxy.
+
+**A conversation need not be about a pairing.** `AdvisorTopic` is a
+sealed type — `MatchTopic` and `SelfTopic` — carrying the subject, the
+payload, the suggestions and the names to redact. It is the controller's
+family key, and equality is the subject key. The Ask tab leads with a
+"You" row that does not wait for a saved reading. `advisor.md` §11 has
+the reasoning, including why `SelfSubject` is not date-keyed the way
+`DaySubject` is, and the fact that **a `self` surface needs the Edge
+Function redeployed** — an older deployment answers `bad_request`.
+
+**The first build ever pointed at the proxy found a real defect, and it
+is worth knowing the shape of it.** `AdvisorController.ask` reaches the
+transport with `ref.read(chatTransportProvider.future)`, and `ref.read`
+registers no listener — so an auto-disposing provider is collected the
+moment the read returns. With no URL compiled in, `chatTransport` built
+synchronously and finished first; with a URL it awaits an install id,
+resumes on a disposed `Ref`, throws `UnmountedRefException` inside a
+future nobody is awaiting, and `ask` never returns. The symptom is a
+question sitting under a spinner for ever with no error — indistinguish-
+able, from the outside, from a dead proxy. `chatTransportProvider` is
+`keepAlive` now, which is the same fix `LanguageController` records for
+the same cause. `advisor_proxy_wiring_test.dart` is the regression, and
+it is a *widget* test because every layer had tests already and the
+defect was in the seam between them.
+
 **Things that will catch you:**
 
 * Widget tests need `SharedPreferences.setMockInitialValues` or every
@@ -430,6 +479,12 @@ which is also the first infrastructure astrologer chat needs.
   failure with nothing to do with the code under test. Re-pumping
   *resets* that store, so a test proving the balance is shared has to
   pass `keepPreferences: true` or it proves nothing.
+* A widget test of the *conversation* also has to grant consent, or the
+  screen renders the disclosure and every assertion about a composer
+  fails. `advisor_screen_test` overrides `advisorConsentProvider` rather
+  than writing preference keys, so that file does not have to know how
+  consent is stored; `advisor_consent_test` deliberately does not
+  override it, because the storage is what it is testing.
 * `pumpAndSettle` never returns on any screen showing a primary
   `SanctumButton`; its sheen repeats forever. The out-of-messages state
   has one. Pump frames instead — `report_screen_test` records the same
@@ -437,6 +492,12 @@ which is also the first infrastructure astrologer chat needs.
 * The advisor screen is pushed with an object, never routed.
   `CompatibilityMatch.id` contains both names and birth dates, and
   routing by it would write exactly that into breadcrumbs and OS logs.
+* `flutter_test` draws every glyph as a square box unless the real font
+  is loaded, so any test asserting that something *fits* is measuring a
+  font the user will never see. `test/support/fonts.dart` loads Inter;
+  `shell_nav_bar_test` is the one that needs it. The nav bar overflowed
+  on English "Journal" for months with `label_budget_test` passing
+  throughout — it counts characters, and what overflows is width.
 * Weeks are ISO-8601. A naive week number hands out a second free
   allowance in late December every year; there is a test pinning
   2026-W53 across the new year.
@@ -1546,28 +1607,36 @@ conversion work to do first; and posting twenty videos remains the
 riskiest untested assumption and costs nothing.
 
 **The advisor is mid-build.** `.claude/advisor.md` §8 is the running
-order and says exactly what is done. Steps 1–4 and 6 are built; the
-proxy is deployed and answering. What is left, in the order it should
-happen:
+order and says exactly what is done. Steps 1–6 are built; the proxy is
+deployed and answering; the consent screen exists and gates the feature
+twice. What is left, in the order it should happen:
 
-1. **The consent screen** (§8 step 5) — the only thing between a working
-   feature and a shippable one. Nothing may compile `ADVISOR_PROXY_URL`
-   into a release build before it exists. It has to name DeepSeek as the
-   processor, which is a data-transfer question for counsel as much as a
-   copy one, and it lands with the privacy policy and the store
-   data-safety declaration in the same change.
+1. **Finish the paperwork the consent screen ships with.**
+   `docs/privacy-policy.md` and `docs/store-data-safety.md` are written
+   from what the code does and are three things short of publishable:
+   counsel on the DeepSeek transfer — the vendor processes in China, so
+   an EU user's request is an international transfer needing a
+   mechanism — the publisher's placeholders, and a hosted URL. **No
+   release build may compile `ADVISOR_PROXY_URL` until they are done.**
+   The screen makes the feature honest; the policy makes it lawful, and
+   they are not the same job.
 2. **Entitlement on the proxy.** A message is spent client-side today;
    the function's only gate is a rate limit keyed on a header the client
    chooses. A RevenueCat webhook into a Supabase table plus a balance
    check closes it, and is the first infrastructure astrologer chat
    needs anyway.
 3. **Advisor analytics.** There are currently *zero* events for the
-   feature. Add them with their call sites in the same commit —
-   `analytics.md` records six declared events that fire from nowhere,
-   and this is how that happens.
+   feature, and the consent screen has just added the two most worth
+   having: it was offered, and it was answered which way. Add them with
+   their call sites in the same commit — `analytics.md` records six
+   declared events that fire from nowhere, and this is how that
+   happens.
 4. **Triggers and notifications** (§8 step 7) — the "You + Alex → why
    does he not care?" nudge. `ReminderService` and `PaywallTrigger`'s
-   backoff discipline are both there to copy.
+   backoff discipline are both there to copy. Note that a trigger must
+   read `advisorConsentProvider` before it fires: nudging somebody who
+   declined toward the feature they declined is the worst version of
+   this mechanic.
 
 What stays here is the engineering debt that is cheaper to fix now than
 later, none of which is on the revenue path:

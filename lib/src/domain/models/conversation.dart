@@ -106,6 +106,28 @@ final class ReportSubject extends ConversationSubject {
   String get key => 'report:$matchId';
 }
 
+/// A conversation about the user's own chart.
+///
+/// ## Why it is not a [DaySubject]
+///
+/// [DaySubject] exists and is date-keyed, which is right for "what is
+/// today about" and wrong for this. A conversation about yourself is
+/// not a conversation about Tuesday: keying it by day would start a
+/// fresh empty transcript every midnight and fill the Ask tab with one
+/// dead row per day. The natal chart does not change, so neither does
+/// the key.
+///
+/// Today's transit still travels *inside* it — the sky is the concrete
+/// thing there is to ask about — but as a fact about the conversation
+/// rather than as its identity.
+final class SelfSubject extends ConversationSubject {
+  /// Creates the subject.
+  const SelfSubject();
+
+  @override
+  String get key => 'self';
+}
+
 /// A conversation about one day's transit.
 final class DaySubject extends ConversationSubject {
   /// Creates a subject for [date].
@@ -115,8 +137,7 @@ final class DaySubject extends ConversationSubject {
   final DateTime date;
 
   @override
-  String get key =>
-      'day:${date.year}-${date.month}-${date.day}';
+  String get key => 'day:${date.year}-${date.month}-${date.day}';
 }
 
 /// A conversation about nothing in particular.

@@ -8,14 +8,18 @@ import 'package:sanctum/src/data/database/sanctum_database.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/advisor/scripted_chat_transport.dart';
 import 'package:sanctum/src/design_system/effects/glass_card.dart';
+import 'package:sanctum/src/domain/models/advisor_consent.dart';
 import 'package:sanctum/src/domain/models/advisor_context.dart';
+import 'package:sanctum/src/domain/models/advisor_topic.dart';
 import 'package:sanctum/src/domain/models/birth_time.dart';
 import 'package:sanctum/src/domain/models/celebrity.dart';
 import 'package:sanctum/src/domain/models/compatibility.dart';
 import 'package:sanctum/src/domain/models/conversation.dart';
 import 'package:sanctum/src/domain/models/copy_book.dart';
+import 'package:sanctum/src/domain/models/planet.dart';
 import 'package:sanctum/src/domain/models/ritual.dart';
 import 'package:sanctum/src/domain/models/sound_session.dart';
+import 'package:sanctum/src/domain/models/transit.dart';
 import 'package:sanctum/src/domain/services/chat_transport.dart';
 import 'package:sanctum/src/domain/services/compatibility_composer.dart';
 import 'package:sanctum/src/domain/services/conversation_starters.dart';
@@ -106,8 +110,10 @@ Future<void> _pump(
   SanctumDatabase? database,
   bool isPremium = true,
   CompatibilityMatch? match,
+  AdvisorTopic? topic,
   Map<String, Object>? prefs,
   bool keepPreferences = false,
+  AdvisorConsent consent = AdvisorConsent.granted,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = pixelRatio;
@@ -155,13 +161,21 @@ Future<void> _pump(
         subscriptionRepositoryProvider.overrideWithValue(
           LocalSubscriptionRepository(),
         ),
+        // Every test in this file is about a conversation, and the
+        // consent screen now stands in front of one. Granted by
+        // default, and overridden by the gate's own tests — as a
+        // provider rather than as preference keys, so this file does
+        // not have to know how consent is stored.
+        advisorConsentProvider.overrideWith((ref) async => consent),
         chatTransportProvider.overrideWith(
           (ref) async =>
               transport ??
               const ScriptedChatTransport(delayPerChunk: Duration.zero),
         ),
       ],
-      child: testApp(AdvisorScreen(match: match ?? _match)),
+      child: testApp(
+        AdvisorScreen(topic: topic ?? MatchTopic(match ?? _match)),
+      ),
     ),
   );
   // `pump` rather than `pumpAndSettle` where the balance is empty: that
@@ -173,6 +187,26 @@ Future<void> _pump(
   await tester.pump();
   await tester.pump();
 }
+
+/// The user, as the app already computes them for a pairing.
+final MatchPerson _you = MatchPerson(
+  name: 'Andrew',
+  birthDate: DateTime(1990, 1, 15),
+  birthTime: const BirthTime(minuteOfDay: 500),
+);
+
+const _sky = DailyTransitReading(
+  transit: Transit(
+    transiting: Planet.saturn,
+    natal: Planet.venus,
+    aspect: TransitAspect.square,
+    orb: 1.4,
+    retrograde: true,
+  ),
+  line: 'prose, which never travels',
+  headline: 'nor this',
+  retrogrades: [Planet.mercury],
+);
 
 void main() {
   group('opening a conversation', () {
@@ -219,6 +253,70 @@ void main() {
         find.textContaining('further into this than I am'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('a conversation about yourself', () {
+    testWidgets('opens without a second person', (tester) async {
+      // The gap this closed: every conversation in the app needed a
+      // pairing, so the one chart the app definitely has was the only
+      // thing it would not discuss.
+      await _pump(
+        tester,
+        topic: SelfTopic(you: _you, today: _sky),
+      );
+
+      expect(find.text('You'), findsOneWidget);
+      expect(find.text('SUGGESTED'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('suggests questions about the chart and the day', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        topic: SelfTopic(you: _you, today: _sky),
+      );
+
+      for (final starter in ConversationStarters.forSelf(_sky)) {
+        final rendered = _copy.format(starter.displayKey, const {});
+        expect(find.text(rendered), findsOneWidget, reason: rendered);
+        // A pairing slot left unfilled would reach the screen as the
+        // literal `{name}` — the failure that would otherwise show up
+        // in a screenshot rather than a test.
+        expect(rendered, isNot(contains('{')));
+      }
+    });
+
+    testWidgets('sends the chart and no name', (tester) async {
+      final recording = _Recording();
+      await _pump(
+        tester,
+        topic: SelfTopic(you: _you, today: _sky),
+        transport: recording,
+      );
+
+      await tester.enterText(
+        find.byType(TextField),
+        'What is Andrew actually like?',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+
+      final sent = recording.sent.single.map((m) => m.body).join(' ');
+      expect(sent, isNot(contains('Andrew')));
+      // Rewritten to "me" rather than "them": there is no second person
+      // here for "them" to refer to.
+      expect(sent, contains('me'));
+    });
+
+    testWidgets('still works with no birth date behind it', (tester) async {
+      // `today` is null when onboarding never got a birth date. The
+      // natal questions do not need one.
+      await _pump(tester, topic: SelfTopic(you: _you));
+      expect(find.text('SUGGESTED'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
     });
   });
 
@@ -296,7 +394,7 @@ void main() {
       final container = ProviderScope.containerOf(element);
       expect(
         container
-            .read(advisorControllerProvider(_match))
+            .read(advisorControllerProvider(MatchTopic(_match)))
             .requireValue
             .conversation
             .turnsUsed,
@@ -317,7 +415,7 @@ void main() {
       );
       expect(
         container
-            .read(advisorControllerProvider(_match))
+            .read(advisorControllerProvider(MatchTopic(_match)))
             .requireValue
             .conversation
             .turnsUsed,
@@ -346,7 +444,10 @@ void main() {
         }
       }
       expect(
-        container.read(advisorControllerProvider(_match)).requireValue.isSpent,
+        container
+            .read(advisorControllerProvider(MatchTopic(_match)))
+            .requireValue
+            .isSpent,
         isTrue,
       );
 
@@ -486,7 +587,7 @@ void main() {
       );
       expect(
         container
-            .read(advisorControllerProvider(_match))
+            .read(advisorControllerProvider(MatchTopic(_match)))
             .requireValue
             .conversation
             .turnsUsed,

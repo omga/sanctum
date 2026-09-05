@@ -257,5 +257,9 @@
   "transit.verb.opposition": "pulls against",
   "transit.verb.sextile": "opens with",
   "transit.verb.square": "presses on",
-  "transit.verb.trine": "flows with"
+  "transit.verb.trine": "flows with",
+  "advisor.starter.selfChart": "What does my chart actually say about me?",
+  "advisor.prompt.selfChart": "What does this chart actually say about the person whose it is?",
+  "advisor.starter.selfAnything": "What should I know about myself that I have not asked?",
+  "advisor.prompt.selfAnything": "What should I know from this chart that I have not asked?"
 }

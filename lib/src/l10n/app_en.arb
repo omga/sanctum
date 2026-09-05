@@ -45,7 +45,7 @@
   },
   "onboardingBody": "A quiet room that is only yours.\n\nOne card, one tone, one honest sentence a day, computed from your own chart.",
   "@onboardingBody": {
-    "description": "Welcome copy. The second half is a privacy promise the product is differentiated on — it must stay literally true, so translate the claim exactly rather than loosening it."
+    "description": "Welcome copy. It used to end on a promise that nothing left the phone; that came out when the advisor made it untrue, and what is left is a claim about the reading rather than about storage. Do not put a locality promise back — the app makes none, and the advisor consent screen is where what leaves the device is stated."
   },
   "onboardingEnter": "Enter",
   "@onboardingEnter": {
@@ -1458,7 +1458,7 @@
   "@advisorHubTitle": {
     "description": "Heading of the Ask tab."
   },
-  "advisorHubSubtitle": "Pick who the conversation is about. Every answer is read from that pairing rather than from a star sign.",
+  "advisorHubSubtitle": "Pick who the conversation is about. Every answer is read from real positions rather than from a star sign.",
   "@advisorHubSubtitle": {
     "description": "Under the Ask heading. States what makes this different from a generic chat, which is the whole reason the tab is a list of people rather than a text box."
   },
@@ -1466,9 +1466,9 @@
   "@advisorHubRowHint": {
     "description": "Secondary line on a row in the Ask tab, under the name."
   },
-  "advisorHubEmptyTitle": "Nobody to ask about yet",
+  "advisorHubEmptyTitle": "No pairings yet",
   "@advisorHubEmptyTitle": {
-    "description": "Heading when the Ask tab has no saved readings."
+    "description": "Heading over the empty state in the Ask tab. It says *pairings* rather than \"nobody\" because the You row sits directly above it — the tab is never empty any more."
   },
   "advisorHubEmptyBody": "Check someone first. The advisor answers from the numbers a reading computes, so it needs one to read from.",
   "@advisorHubEmptyBody": {
@@ -1502,5 +1502,117 @@
         "type": "int"
       }
     }
+  },
+  "advisorConsentTitle": "Before you ask",
+  "@advisorConsentTitle": {
+    "description": "Heading of the consent screen, shown once before the advisor can send anything."
+  },
+  "advisorConsentIntro": "The advisor is the one part of Sanctum that leaves this phone. This is exactly what goes.",
+  "@advisorConsentIntro": {
+    "description": "Opening line of the consent screen. States the exception rather than softening it — the rest of the app is computed on the device and this is the part that is not."
+  },
+  "advisorConsentSentTitle": "WHAT IS SENT",
+  "@advisorConsentSentTitle": {
+    "description": "Section label on the consent screen. Caps, like the other section labels."
+  },
+  "advisorConsentSentPositions": "The numbers this reading is built from — positions, aspects, and the scores already on your screen.",
+  "@advisorConsentSentPositions": {
+    "description": "First item under WHAT IS SENT. Names the computed data, and points out the user has already seen it."
+  },
+  "advisorConsentSentQuestion": "Your question, with names taken out of it first.",
+  "@advisorConsentSentQuestion": {
+    "description": "Second item under WHAT IS SENT. The redaction pass is stated here rather than left to be discovered."
+  },
+  "advisorConsentSentLanguage": "The language you want the answer written in.",
+  "@advisorConsentSentLanguage": {
+    "description": "Third item under WHAT IS SENT."
+  },
+  "advisorConsentHeldTitle": "WHAT IS NOT",
+  "@advisorConsentHeldTitle": {
+    "description": "Section label on the consent screen, for the things that never leave the device."
+  },
+  "advisorConsentHeldNames": "No names. Not yours, not theirs — the name you read on screen stays on this phone.",
+  "@advisorConsentHeldNames": {
+    "description": "First item under WHAT IS NOT. Must stay literally true: it is enforced by AdvisorContext, MessageRedaction and the proxy. Do not extend it into a claim that the answer comes back with names restored — nothing does that."
+  },
+  "advisorConsentHeldBirth": "No birth date, and no birth time.",
+  "@advisorConsentHeldBirth": {
+    "description": "Second item under WHAT IS NOT."
+  },
+  "advisorConsentHeldElse": "Nothing from your journal, and nothing from any other screen.",
+  "@advisorConsentHeldElse": {
+    "description": "Third item under WHAT IS NOT."
+  },
+  "advisorConsentWhoTitle": "WHO RECEIVES IT",
+  "@advisorConsentWhoTitle": {
+    "description": "Section label on the consent screen."
+  },
+  "advisorConsentWhoBody": "A Sanctum server, which passes it to DeepSeek — the AI that writes the answer. Nobody else.",
+  "@advisorConsentWhoBody": {
+    "description": "Names the processor. The vendor is named deliberately and must stay named: an unnamed \"AI provider\" is not disclosure. If the vendor changes, this line and AdvisorDisclosure.current both change."
+  },
+  "advisorConsentKeptTitle": "HOW LONG IT IS KEPT",
+  "@advisorConsentKeptTitle": {
+    "description": "Section label on the consent screen."
+  },
+  "advisorConsentKeptBody": "It is not. The server stores nothing once it has answered. The conversation is saved here, on this phone, and deleting it deletes it.",
+  "@advisorConsentKeptBody": {
+    "description": "Retention. True by construction rather than by policy — the Edge Function holds no database. The last clause is the same fact the delete confirmation states."
+  },
+  "advisorConsentAiNote": "Answers are written by an AI. It reads the chart, not your mind, and it can be wrong.",
+  "@advisorConsentAiNote": {
+    "description": "EU AI Act Article 50 disclosure, in full on the consent screen. The shorter advisorDisclosure repeats it at the head of every conversation — both are required, one is not a substitute for the other."
+  },
+  "advisorConsentAccept": "Agree and continue",
+  "@advisorConsentAccept": {
+    "description": "The affirmative action on the consent screen. It must read as agreement to what is above it, not as a way past a screen."
+  },
+  "advisorConsentDecline": "Not now",
+  "@advisorConsentDecline": {
+    "description": "The refusal on the consent screen. It records a decision — leaving by the back arrow does not — so the wording is soft on purpose: the offer stays open and the entry points are still there."
+  },
+  "advisorConsentReviewIntro": "The advisor is on. This is what it sends whenever you ask it something.",
+  "@advisorConsentReviewIntro": {
+    "description": "Replaces advisorConsentIntro when the same screen is opened from settings by somebody who has already agreed."
+  },
+  "advisorConsentWithdraw": "Stop sending",
+  "@advisorConsentWithdraw": {
+    "description": "Withdraws a consent already given. Reached from settings."
+  },
+  "advisorConsentDone": "Done",
+  "@advisorConsentDone": {
+    "description": "Closes the consent screen when it is being read rather than answered."
+  },
+  "advisorConsentWithdrawTitle": "Stop sending?",
+  "@advisorConsentWithdrawTitle": {
+    "description": "Heading of the confirmation for withdrawing consent."
+  },
+  "advisorConsentWithdrawMessage": "The advisor stops answering until you agree again. Conversations you have already had stay on this phone until you delete them.",
+  "@advisorConsentWithdrawMessage": {
+    "description": "Body of the withdrawal confirmation. States both consequences, including the one people assume the opposite of: withdrawing does not erase the transcripts."
+  },
+  "settingsAdvisor": "AI ASTROLOGER",
+  "@settingsAdvisor": {
+    "description": "Settings section label above the advisor consent row."
+  },
+  "settingsAdvisorRow": "What the advisor sends",
+  "@settingsAdvisorRow": {
+    "description": "Settings row that opens the consent screen for review. Named for what it discloses rather than for the setting, because reading it is the common reason to tap it."
+  },
+  "settingsAdvisorOn": "On",
+  "@settingsAdvisorOn": {
+    "description": "Trailing value on the advisor settings row when consent has been given."
+  },
+  "settingsAdvisorOff": "Off",
+  "@settingsAdvisorOff": {
+    "description": "Trailing value on the advisor settings row when consent has not been given, or was withdrawn."
+  },
+  "advisorSelfTitle": "You",
+  "@advisorSelfTitle": {
+    "description": "Names the conversation about the reader's own chart — the app bar title, and the row in the Ask tab that opens it. Deliberately the same word the pairing title starts with (\"You & Alex\"), so the two read as one family."
+  },
+  "advisorSelfHint": "Ask about your own chart",
+  "@advisorSelfHint": {
+    "description": "Secondary line under the You row in the Ask tab."
   }
 }

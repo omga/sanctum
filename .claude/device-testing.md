@@ -252,6 +252,45 @@ significant.
 alarms people — it carries every ABI. Play delivers only the matching
 split, so a Pixel 6 downloads approximately the arm64 figure above.
 
+### Building the release AAB
+
+Signing needs no flags: `android/key.properties` is read by
+`android/app/build.gradle.kts`, or the four `SANCTUM_*` environment
+variables when it is absent, which is what CI uses. If neither is
+present the build **silently falls back to the debug keystore** and
+prints a warning — that bundle looks fine and is rejected at upload.
+
+Three defines are required, and forgetting any of them produces a build
+that runs:
+
+```bash
+flutter build appbundle --release \
+  --dart-define=ADVISOR_PROXY_URL=https://<ref>.supabase.co/functions/v1/advisor \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_... \
+  --dart-define=REVENUECAT_KEY=goog_...
+```
+
+| define | omitting it |
+|---|---|
+| `ADVISOR_PROXY_URL` | The advisor answers from `ScriptedChatTransport`. Canned text, no network, no cost, and nothing on screen says so. |
+| `SUPABASE_PUBLISHABLE_KEY` | Every request is rejected by the platform key check and the user sees "That did not get through". |
+| `REVENUECAT_KEY` | The Test Store key is the compiled-in default, and `RevenueCatSubscriptionRepository.configure` **disables billing entirely in release** rather than transacting against nothing. The app works; nothing can be bought. |
+
+`REVENUECAT_ENTITLEMENT` defaults to `Sanctum Pro` and only needs
+passing if the dashboard identifier differs — a mismatch fails silently,
+with `entitlements.active` simply always empty. `SENTRY_DSN` and
+`POSTHOG_KEY` carry the real project values as defaults; pass them only
+to point a build at a different project.
+
+Never pass `SANCTUM_LOCAL_BILLING` — it swaps in the stub that reports
+every purchase as successful.
+
+Bump `version:` in `pubspec.yaml` first. The number after `+` is the
+Android `versionCode`, and Play rejects an upload that does not exceed
+every code already on the track.
+
+The bundle lands at `build/app/outputs/bundle/release/app-release.aab`.
+
 **A Gradle failure with a full disk lies to you.** A build that ran out
 of space reported `Starting AGP 9+, only the new DSL interface will be
 read` — a Flutter Fix box pattern-matched onto unrelated output.
