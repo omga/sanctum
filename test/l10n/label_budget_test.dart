@@ -37,11 +37,14 @@ void main() {
     'energySteady': 12,
     'energyOpen': 12,
     'energyRadiant': 12,
-    // Four in a glass pill, only one of them labelled at a time.
+    // Five in a glass pill now, only one of them labelled at a time.
+    // The advisor tab made the row tighter for everybody, which is the
+    // cost of the tab and worth stating where the numbers are.
     'navToday': 12,
     'navMatch': 12,
     'navSound': 12,
     'navJournal': 12,
+    'navAsk': 12,
     // Axis labels on the hexagon, which has no room to grow.
     'facetSpark': 12,
     'facetVibe': 12,

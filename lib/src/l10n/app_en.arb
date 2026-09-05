@@ -1453,5 +1453,29 @@
   "advisorRetry": "Try again",
   "@advisorRetry": {
     "description": "Re-sends the question that failed."
+  },
+  "navAsk": "Ask",
+  "@navAsk": {
+    "description": "Bottom navigation label for the advisor tab. Budgeted like the other four — five across one row on the narrowest phone, so this one is tighter than it looks."
+  },
+  "advisorHubTitle": "Ask",
+  "@advisorHubTitle": {
+    "description": "Heading of the Ask tab."
+  },
+  "advisorHubSubtitle": "Pick who the conversation is about. Every answer is read from that pairing rather than from a star sign.",
+  "@advisorHubSubtitle": {
+    "description": "Under the Ask heading. States what makes this different from a generic chat, which is the whole reason the tab is a list of people rather than a text box."
+  },
+  "advisorHubRowHint": "Ask about this pairing",
+  "@advisorHubRowHint": {
+    "description": "Secondary line on a row in the Ask tab, under the name."
+  },
+  "advisorHubEmptyTitle": "Nobody to ask about yet",
+  "@advisorHubEmptyTitle": {
+    "description": "Heading when the Ask tab has no saved readings."
+  },
+  "advisorHubEmptyBody": "Check someone first. The advisor answers from the numbers a reading computes, so it needs one to read from.",
+  "@advisorHubEmptyBody": {
+    "description": "Body of the empty Ask tab. Explains the dependency rather than offering a blank conversation as a consolation prize."
   }
 }

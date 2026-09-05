@@ -18,7 +18,7 @@ import 'package:sanctum/src/design_system/tokens/sanctum_spacing.dart';
 import 'package:sanctum/src/features/today/view_model/reminder_view_model.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 
-/// The persistent frame around the four main sections.
+/// The persistent frame around the five main sections.
 ///
 /// The aurora and starfield live *here*, not inside each screen. Two
 /// reasons, and the second is the important one:
@@ -149,7 +149,7 @@ class _SanctumNavBar extends StatelessWidget {
   /// The four destinations, in order.
   ///
   /// No longer `const`: the labels are localised, so the list is built
-  /// per frame against the context. Four records is nothing next to the
+  /// per frame against the context. Five records is nothing next to the
   /// shader already running behind this bar.
   static List<({IconData icon, String label})> _itemsFor(
     BuildContext context,
@@ -158,6 +158,11 @@ class _SanctumNavBar extends StatelessWidget {
     return [
       (icon: Icons.wb_twilight, label: l10n.navToday),
       (icon: Icons.favorite_outline, label: l10n.navMatch),
+      // A speech bubble with a spark, rather than the bare sparkle:
+      // sparkles alone read as "magic" in an app that is already
+      // full of them — the daily card and the disclosure line both
+      // use one — and this tab is a conversation.
+      (icon: Icons.assistant_outlined, label: l10n.navAsk),
       (icon: Icons.graphic_eq, label: l10n.navSound),
       (icon: Icons.auto_stories_outlined, label: l10n.navJournal),
     ];

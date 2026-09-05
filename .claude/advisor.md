@@ -248,8 +248,17 @@ worth stating — a nudge naming a person must be composed on-device
 
 Entry points, in descending order of how well they convert per
 `roadmap.md` §2: the report footer, the compatibility result screen, the
-transit panel. **There is no generic chat tab.** A question the user
-already has beats a blank box.
+transit panel. A question the user already has beats a blank box.
+
+**There is also an Ask tab**, added after seeing the feature on a device
+— the contextual cards are at the foot of screens a user has to scroll
+to, so nobody who has not already found them learns the feature exists.
+It is discovery, not the primary route in, and it is deliberately *not*
+a blank chat: the tab is a list of pairings, every route out of it is
+attached to one, and there is no composer until a subject is chosen. The
+empty state sends people to the compatibility tab rather than offering a
+subjectless conversation, because a reading with no pairing behind it is
+the generic wrapper this whole design exists not to be.
 
 ---
 
@@ -348,8 +357,17 @@ the shape is right.
 2. ~~**The UI.**~~ **Done.** Conversation screen, streaming render,
    suggestion row, failure and retry, spent state, entry cards on the
    reading and the report. Runs entirely on the scripted transport.
-   Copy shipped in all four locales. **Not yet seen on a device** — the
-   guard is a widget test at 375pt rather than a screenshot.
+   Copy shipped in all four locales. Verified on an iPhone 17 Pro
+   simulator, including the software keyboard, which is what the widget
+   tests cannot see.
+
+   Two things that only running it revealed, both fixed: the suggestion
+   row showed a single generic chip on an ordinary pairing, because
+   every diagnostic threshold was correctly declining to fire — so
+   `ConversationStarters` now tops the row up with questions that are
+   specific but imply no problem. And the highest facet is picked
+   ignoring Drama, because `report.mechanism.drama` says in as many
+   words that a high one is not a compliment.
 3. **Storage.** Drift tables, migration, delete, history trimming.
 4. **The proxy.** Deploy, then `ProxyChatTransport`. One provider flag
    swaps it for the scripted one; keep both forever, because the

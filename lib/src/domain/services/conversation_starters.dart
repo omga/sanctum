@@ -28,7 +28,18 @@ enum StarterKind {
   /// Today's sky is quiet, and the app said so.
   quietDay,
 
-  /// No angle in particular. Always offered last.
+  /// The pairing's best number, named. Specific without implying a
+  /// problem — see `ConversationStarters._fillers`.
+  strongestFacet,
+
+  /// What the pairing is like when nothing in particular is happening.
+  ordinaryDay,
+
+  /// Who needs more reassurance. True of every pairing, answerable from
+  /// the chart, and the question people actually have.
+  reassurance,
+
+  /// No angle in particular. The last resort.
   anything,
 }
 
@@ -103,6 +114,12 @@ abstract final class ConversationStarters {
   static const int lowFacetThreshold = 55;
 
   /// Starters for a compatibility reading.
+  ///
+  /// Diagnostics first, when the reading actually raised one, then
+  /// [_fillers] until the row is full. Seen on a device, the
+  /// diagnostics-only version left an ordinary 77% pairing with one
+  /// vague chip on an empty screen — which is the common case, not an
+  /// edge case, and it undersold the whole feature.
   static List<ConversationStarter> forMatch(CompatibilityMatch match) {
     final starters = <ConversationStarter>[];
 
@@ -134,8 +151,54 @@ abstract final class ConversationStarters {
       );
     }
 
-    starters.add(const ConversationStarter(StarterKind.anything));
+    for (final filler in _fillers(match)) {
+      if (starters.length >= limit) break;
+      starters.add(filler);
+    }
     return starters.take(limit).toList();
+  }
+
+  /// Questions worth asking about any pairing.
+  ///
+  /// ## Why these and not "the lowest facet, always"
+  ///
+  /// The obvious way to fill the row is to drop [lowFacetThreshold] and
+  /// name the weakest number whatever it is. That trades the honesty
+  /// rule for a full screen: on a strong pairing it manufactures a worry
+  /// the reading never raised, which is the same mistake as claiming
+  /// every Tuesday is significant.
+  ///
+  /// These are specific to the pairing and imply nothing is wrong. Each
+  /// is answerable from what the app already computed — the highest
+  /// facet by name and number, the aspect behind an ordinary day, and
+  /// the Moons behind who needs reassuring — so the answer is still
+  /// about *this* chart rather than about star signs.
+  ///
+  /// Ordered most-concrete-first, and deterministic.
+  static List<ConversationStarter> _fillers(CompatibilityMatch match) {
+    // Drama is excluded from "highest", because a high one is not a
+    // strength and the app says so itself: `report.mechanism.drama`
+    // reads "It is volatility, not virtue: a high number here is not a
+    // compliment." Offering "Drama is the highest here at 98, what does
+    // that give us?" would have the suggestion row contradict the
+    // document — which is exactly how every number in the app starts
+    // looking invented.
+    final scored = match.facets
+        .where((facet) => facet.facet != CompatibilityFacet.drama)
+        .toList();
+    final strongest = (scored.isEmpty ? match.facets : scored)
+        .reduce((a, b) => b.score > a.score ? b : a);
+    return [
+      ConversationStarter(
+        StarterKind.strongestFacet,
+        facet: strongest.facet,
+      ),
+      const ConversationStarter(StarterKind.ordinaryDay),
+      const ConversationStarter(StarterKind.reassurance),
+      // Never reached while three fillers exist. Kept as the floor, so
+      // that shortening this list can never produce an empty row.
+      const ConversationStarter(StarterKind.anything),
+    ];
   }
 
   /// Starters for today's reading.

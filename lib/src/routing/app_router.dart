@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sanctum/src/domain/models/paywall.dart';
+import 'package:sanctum/src/features/advisor/view/advisor_hub_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/compatibility_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/match_result_screen.dart';
 import 'package:sanctum/src/features/compatibility/view/partner_entry_screen.dart';
@@ -50,6 +51,12 @@ part 'app_router.g.dart';
           ],
         ),
       ],
+    ),
+    // Third of five, so it sits in the middle of the bar. The tab is
+    // discovery; the entry points on a reading and on the report are
+    // still the routes that convert, and they are still there.
+    TypedStatefulShellBranch<AdvisorBranch>(
+      routes: [TypedGoRoute<AdvisorRoute>(path: '/ask')],
     ),
     TypedStatefulShellBranch<SessionsBranch>(
       routes: [
@@ -107,6 +114,12 @@ class MatchBranch extends StatefulShellBranchData {
   const MatchBranch();
 }
 
+/// The Ask tab.
+class AdvisorBranch extends StatefulShellBranchData {
+  /// Creates the branch.
+  const AdvisorBranch();
+}
+
 /// The Sound tab.
 class SessionsBranch extends StatefulShellBranchData {
   /// Creates the branch.
@@ -141,6 +154,16 @@ class RitualRoute extends GoRouteData with $RitualRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const RitualScreen();
+}
+
+/// Ask: pick who a conversation is about.
+class AdvisorRoute extends GoRouteData with $AdvisorRoute {
+  /// Creates the route.
+  const AdvisorRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const AdvisorHubScreen();
 }
 
 /// Compatibility: pick someone to be read against.

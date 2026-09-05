@@ -62,6 +62,32 @@ void main() {
         isNot(contains(StarterKind.lowFacet)),
       );
     });
+
+    test('never offers drama as a strength', () {
+      // The app's own report says a high drama score is "volatility, not
+      // virtue… not a compliment". A suggestion presenting it as the
+      // best thing about a pairing would contradict the document the
+      // same user can buy. Found by reading it on a device.
+      final starters = ConversationStarters.forMatch(
+        _match(facetScores: [70, 70, 70, 99, 70, 70]),
+      );
+      final strongest = starters.firstWhere(
+        (s) => s.kind == StarterKind.strongestFacet,
+      );
+      expect(strongest.facet, isNot(CompatibilityFacet.drama));
+    });
+
+    test('the highest one is offered instead, without a diagnosis', () {
+      // What fills the row on a pairing with nothing wrong. Named and
+      // numbered like the low one, and about a strength.
+      final starters = ConversationStarters.forMatch(
+        _match(facetScores: [88, 90, 84, 79, 92, 86]),
+      );
+      final strongest = starters.firstWhere(
+        (s) => s.kind == StarterKind.strongestFacet,
+      );
+      expect(strongest.facet, CompatibilityFacet.values[4]);
+    });
   });
 
   group('a lopsided split', () {
@@ -110,16 +136,16 @@ void main() {
   });
 
   group('ordering and limit', () {
-    test('is most-specific-first', () {
+    test('is diagnostics first, then the rest', () {
       // Specificity is the difference between this and a generic
-      // wrapper, so the named number leads and "anything" trails.
+      // wrapper, so what the reading actually raised leads.
       final kinds = _kinds(
         _match(facetScores: [80, 30, 80, 80, 80, 80], pullShare: 20),
       );
       expect(kinds, [
         StarterKind.lowFacet,
         StarterKind.pullThem,
-        StarterKind.anything,
+        StarterKind.strongestFacet,
       ]);
     });
 
@@ -131,13 +157,30 @@ void main() {
       expect(crowded, hasLength(ConversationStarters.limit));
     });
 
-    test('always offers a way out of the suggestions', () {
-      // A user whose question is not on the list must still be able to
-      // ask it, and the row is where they look first.
-      expect(
-        _kinds(_match(facetScores: [88, 90, 84, 79, 92, 86])),
-        contains(StarterKind.anything),
-      );
+    test('fills the row even when nothing is wrong', () {
+      // The bug this exists for, found by running it: an ordinary 77%
+      // pairing raised no diagnostic at all and rendered one vague chip
+      // on an empty screen. Three, always, and none of them generic.
+      final kinds = _kinds(_match(facetScores: [88, 90, 84, 79, 92, 86]));
+      expect(kinds, hasLength(ConversationStarters.limit));
+      expect(kinds, isNot(contains(StarterKind.anything)));
+      expect(kinds, contains(StarterKind.strongestFacet));
+    });
+
+    test('offers three on every pairing, lopsided or not', () {
+      for (final scores in [
+        [88, 90, 84, 79, 92, 86],
+        [30, 30, 30, 30, 30, 30],
+        [55, 60, 55, 60, 55, 60],
+      ]) {
+        for (final pull in [20, 50, 80]) {
+          expect(
+            _kinds(_match(facetScores: scores, pullShare: pull)),
+            hasLength(ConversationStarters.limit),
+            reason: '$scores / $pull',
+          );
+        }
+      }
     });
 
     test('is deterministic', () {
