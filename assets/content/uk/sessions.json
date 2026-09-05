@@ -6,7 +6,7 @@
       "title": "Заземлення",
       "frequencyHz": 174.0,
       "frequencyLabel": "174 Гц",
-      "intention": "Занурення в тіло та підлогу під ним.",
+      "intention": "Повернутися в тіло і відчути опору під собою.",
       "durationSeconds": 600,
       "chakra": "root"
     },
@@ -15,7 +15,7 @@
       "title": "Відпускання",
       "frequencyHz": 396.0,
       "frequencyLabel": "396 Гц",
-      "intention": "Відпустити те, від чого ти весь час трималася напруженою.",
+      "intention": "Відпустити те, від чого ти давно тримаєш оборону.",
       "durationSeconds": 900,
       "chakra": "root"
     },
@@ -24,7 +24,7 @@
       "title": "Зміна",
       "frequencyHz": 417.0,
       "frequencyLabel": "417 Гц",
-      "intention": "Зустріти перехід, не тримаючись за стару форму.",
+      "intention": "Пройти через зміни, не чіпляючись за старе.",
       "durationSeconds": 900,
       "chakra": "sacral"
     },
@@ -33,7 +33,7 @@
       "title": "Тон серця",
       "frequencyHz": 528.0,
       "frequencyLabel": "528 Гц",
-      "intention": "М'якшання до себе. Той, до якого повертається більшість людей.",
+      "intention": "Стати м'якшою до себе. До цього тону повертаються найчастіше.",
       "durationSeconds": 1200,
       "chakra": "heart"
     },
@@ -42,7 +42,7 @@
       "title": "Зв'язок",
       "frequencyHz": 639.0,
       "frequencyLabel": "639 Гц",
-      "intention": "Відновлення, тепло і люди, яких хочеться ближче.",
+      "intention": "Тепло, примирення і ті, кого хочеться ближче.",
       "durationSeconds": 900,
       "chakra": "heart"
     },
@@ -51,7 +51,7 @@
       "title": "Інтуїція",
       "frequencyHz": 741.0,
       "frequencyLabel": "741 Гц",
-      "intention": "Прибрати шум, щоб знову почути власний голос.",
+      "intention": "Прибрати шум, щоб знову почути свій голос.",
       "durationSeconds": 900,
       "chakra": "throat"
     },
@@ -60,7 +60,7 @@
       "title": "Ясність",
       "frequencyHz": 852.0,
       "frequencyLabel": "852 Гц",
-      "intention": "Бачити ситуацію такою, якою вона є, а не якою була.",
+      "intention": "Побачити ситуацію такою, яка вона є, а не якою була.",
       "durationSeconds": 900,
       "chakra": "thirdEye"
     },
@@ -69,7 +69,7 @@
       "title": "Простір",
       "frequencyHz": 963.0,
       "frequencyLabel": "963 Гц",
-      "intention": "Просторість. Найкраще використовувати наприкінці практики.",
+      "intention": "Багато повітря. Найкраще — у самому кінці практики.",
       "durationSeconds": 1200,
       "chakra": "crown"
     },
@@ -78,7 +78,7 @@
       "title": "Нічний тон",
       "frequencyHz": 136.1,
       "frequencyLabel": "136.1 Гц",
-      "intention": "Низький, повільний тон для завершення дня.",
+      "intention": "Низький повільний тон, щоб закрити день.",
       "durationSeconds": 1800,
       "chakra": "crown"
     }

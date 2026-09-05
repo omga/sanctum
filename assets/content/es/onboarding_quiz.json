@@ -44,7 +44,7 @@
       "id": "echo",
       "kind": "interstitial",
       "title": "Entonces trabajamos en eso.",
-      "subtitle": "Tu carta diaria, tus rituales y tus lecturas se van a armar alrededor de esto."
+      "subtitle": "Tu carta diaria, tus rituales y tus lecturas se van a ajustar a esto."
     },
     {
       "id": "love_status",
@@ -59,7 +59,7 @@
       "options": [
         {
           "id": "single",
-          "label": "Sola"
+          "label": "Por mi cuenta"
         },
         {
           "id": "talking",
@@ -79,11 +79,11 @@
       "id": "weight",
       "kind": "multi",
       "title": "¿Qué es lo que más pesa ahora?",
-      "subtitle": "Sé honesta. Esto lo ves solo tú.",
+      "subtitle": "Sin filtros. Esto lo ves solo tú.",
       "options": [
         {
           "id": "mixed_signals",
-          "label": "No consigo leer a alguien"
+          "label": "Hay alguien a quien no consigo leer"
         },
         {
           "id": "repeating",
@@ -127,17 +127,17 @@
       "options": [
         {
           "id": "morning",
-          "label": "En la mañana",
+          "label": "Por la mañana",
           "detail": "Antes de que empiece el día"
         },
         {
           "id": "midday",
           "label": "Al mediodía",
-          "detail": "Cuando se pone ruidoso"
+          "detail": "Cuando el día se pone ruidoso"
         },
         {
           "id": "evening",
-          "label": "En la noche",
+          "label": "Por la noche",
           "detail": "Para soltar el día"
         }
       ]

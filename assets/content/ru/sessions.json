@@ -6,7 +6,7 @@
       "title": "Заземление",
       "frequencyHz": 174.0,
       "frequencyLabel": "174 Гц",
-      "intention": "Погружение в тело и пол под ним.",
+      "intention": "Вернуться в тело и почувствовать опору под собой.",
       "durationSeconds": 600,
       "chakra": "root"
     },
@@ -15,7 +15,7 @@
       "title": "Отпускание",
       "frequencyHz": 396.0,
       "frequencyLabel": "396 Гц",
-      "intention": "Отпустить то, от чего ты всё время держалась в напряжении.",
+      "intention": "Отпустить то, от чего ты давно держишь оборону.",
       "durationSeconds": 900,
       "chakra": "root"
     },
@@ -24,7 +24,7 @@
       "title": "Перемена",
       "frequencyHz": 417.0,
       "frequencyLabel": "417 Гц",
-      "intention": "Встретить переход, не цепляясь за старую форму.",
+      "intention": "Пройти через перемены, не цепляясь за старое.",
       "durationSeconds": 900,
       "chakra": "sacral"
     },
@@ -33,7 +33,7 @@
       "title": "Тон сердца",
       "frequencyHz": 528.0,
       "frequencyLabel": "528 Гц",
-      "intention": "Смягчение к себе. Тот, к которому возвращается большинство людей.",
+      "intention": "Стать мягче к себе. К этому тону возвращаются чаще всего.",
       "durationSeconds": 1200,
       "chakra": "heart"
     },
@@ -42,7 +42,7 @@
       "title": "Связь",
       "frequencyHz": 639.0,
       "frequencyLabel": "639 Гц",
-      "intention": "Восстановление, тепло и люди, которых хочется ближе.",
+      "intention": "Тепло, примирение и те, кого хочется ближе.",
       "durationSeconds": 900,
       "chakra": "heart"
     },
@@ -51,7 +51,7 @@
       "title": "Интуиция",
       "frequencyHz": 741.0,
       "frequencyLabel": "741 Гц",
-      "intention": "Убрать шум, чтобы снова услышать собственный голос.",
+      "intention": "Убрать шум, чтобы снова услышать свой голос.",
       "durationSeconds": 900,
       "chakra": "throat"
     },
@@ -60,7 +60,7 @@
       "title": "Ясность",
       "frequencyHz": 852.0,
       "frequencyLabel": "852 Гц",
-      "intention": "Видеть ситуацию такой, какая она есть, а не какой была.",
+      "intention": "Увидеть ситуацию такой, какая она есть, а не какой была.",
       "durationSeconds": 900,
       "chakra": "thirdEye"
     },
@@ -69,7 +69,7 @@
       "title": "Простор",
       "frequencyHz": 963.0,
       "frequencyLabel": "963 Гц",
-      "intention": "Просторность. Лучше всего использовать в конце практики.",
+      "intention": "Много воздуха. Лучше всего — в самом конце практики.",
       "durationSeconds": 1200,
       "chakra": "crown"
     },
@@ -78,7 +78,7 @@
       "title": "Ночной тон",
       "frequencyHz": 136.1,
       "frequencyLabel": "136.1 Гц",
-      "intention": "Низкий, медленный тон для завершения дня.",
+      "intention": "Низкий медленный тон, чтобы закрыть день.",
       "durationSeconds": 1800,
       "chakra": "crown"
     }

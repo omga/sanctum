@@ -10,7 +10,7 @@
       "steps": [
         "Siéntate donde nadie te vaya a interrumpir durante diez minutos.",
         "Escribe una cosa que quieras, en presente, como si ya fuera verdad.",
-        "Debajo, escribe la acción más pequeña que la haría un poco más verdad.",
+        "Debajo, escribe la acción más pequeña que la acercaría un poco.",
         "Haz esa acción antes de 48 horas. Ese es el ritual entero."
       ]
     },
@@ -21,7 +21,7 @@
       "phase": "fullMoon",
       "opening": "Está todo iluminado, incluido lo que preferirías no mirar.",
       "steps": [
-        "Nombra una cosa que estés lista para dejar de cargar.",
+        "Nombra una cosa que ya puedas dejar de cargar.",
         "Escríbela entera. No la suavices por educación.",
         "Léela en voz alta una vez, para ti.",
         "Rompe la hoja. Guardarla también vale — lo que importaba era nombrarlo."
@@ -36,7 +36,7 @@
       "steps": [
         "Nombra lo que se puso más difícil de lo que esperabas.",
         "Pregúntate si es difícil o solo desconocido.",
-        "Elige una cosa que puedas hacer un 10% más fácil, y cámbiala hoy."
+        "Elige una cosa que puedas hacer un 10 % más fácil y cámbiala hoy."
       ]
     },
     {
@@ -44,7 +44,7 @@
       "moon": "Cuarto menguante",
       "title": "Revisión honesta",
       "phase": "lastQuarter",
-      "opening": "Antes de la oscuridad, una cuenta. Sin castigo.",
+      "opening": "Antes de la oscuridad, un balance. Sin castigo.",
       "steps": [
         "Enumera tres cosas que pasaron este ciclo. Tres cualesquiera.",
         "Marca cuáles repetirías.",
@@ -59,7 +59,7 @@
       "opening": "Todavía no empezó nada. Esa es la ventaja.",
       "steps": [
         "Acuérdate de algo que empezaste una vez y dejaste.",
-        "Escribe qué lo detuvo — el motivo real, no el ordenado.",
+        "Escribe qué lo detuvo — el motivo real, no el que queda bien.",
         "Decide si ese motivo sigue siendo cierto.",
         "Si no lo es, empieza otra vez esta semana. Si lo es, suéltalo a propósito y no por inercia."
       ]
@@ -85,7 +85,7 @@
       "steps": [
         "Nombra una cosa que esté yendo bien. Dilo sin peros.",
         "Escribe quién ayudó, si ayudó alguien.",
-        "Díselo. Con una frase alcanza."
+        "Díselo. Con una frase basta."
       ]
     },
     {
@@ -110,19 +110,19 @@
       "steps": [
         "Nombra lo que empezaste en la luna nueva.",
         "Di con honestidad hasta dónde llegó de verdad.",
-        "Haz hoy el pedazo siguiente más pequeño, aunque salga mal."
+        "Haz hoy el paso siguiente más pequeño, aunque salga mal."
       ]
     },
     {
       "id": "first-quarter-cost",
       "moon": "Cuarto creciente",
-      "title": "El costo",
+      "title": "El precio",
       "phase": "firstQuarter",
       "opening": "Algo te está pidiendo más de lo que calculabas.",
       "steps": [
         "Nombra lo que te está costando: tiempo, dinero, atención, sueño.",
-        "Decide si sigues dispuesta a pagarlo.",
-        "Si lo estás, dilo claro. Si no, deja de pagarlo en vez de guardarle rencor."
+        "Decide si quieres seguir pagándolo.",
+        "Si quieres, dilo claro. Si no, deja de pagarlo en vez de guardarle rencor."
       ]
     },
     {

@@ -4,7 +4,7 @@
     {
       "id": "the-threshold",
       "name": "El umbral",
-      "message": "Estás parada al borde de un cuarto en el que todavía no entras.",
+      "message": "Estás justo al borde de un cuarto en el que todavía no has entrado.",
       "guidance": "No todas las puertas piden que las entiendas antes de cruzarlas. Fíjate más bien en esto: de quién estás esperando permiso para empezar."
     },
     {
@@ -17,13 +17,13 @@
       "id": "the-ember",
       "name": "La brasa",
       "message": "Algo pequeño en ti sigue encendido.",
-      "guidance": "No necesita ser una fogata para ser real. Tápalo del viento antes de intentar avivarlo."
+      "guidance": "No necesita ser una fogata para ser real. Protégelo del viento antes de intentar avivarlo."
     },
     {
       "id": "open-hands",
       "name": "Manos abiertas",
       "message": "Con el puño cerrado no se recibe nada.",
-      "guidance": "Piensa qué estás agarrando. Una parte ni siquiera es tuya."
+      "guidance": "Fíjate en lo que estás agarrando. Una parte ni siquiera es tuya."
     },
     {
       "id": "the-long-root",
@@ -52,14 +52,14 @@
     {
       "id": "borrowed-weight",
       "name": "Peso prestado",
-      "message": "Estás cargando algo que no empacaste tú.",
+      "message": "Estás cargando algo que no metiste tú en la maleta.",
       "guidance": "Bájalo y mira de quién era. Puede que nadie venga a reclamarlo."
     },
     {
       "id": "first-light",
       "name": "Primera luz",
       "message": "El comienzo no se anuncia.",
-      "guidance": "Mientras pasa, casi nunca se siente como un comienzo. Busca los silenciosos."
+      "guidance": "Mientras pasa, casi nunca se siente como un comienzo. Busca los que llegan en silencio."
     },
     {
       "id": "the-unsent-letter",
@@ -69,13 +69,13 @@
     },
     {
       "id": "the-narrow-path",
-      "name": "El camino angosto",
+      "name": "El camino estrecho",
       "message": "Menos opciones no es lo mismo que menos elección.",
-      "guidance": "Cuando el camino se angosta, normalmente está señalando. Recórrelo antes de volver a ensancharlo."
+      "guidance": "Cuando el camino se estrecha, casi siempre está señalando algo. Recórrelo antes de volver a ensancharlo."
     },
     {
       "id": "soft-animal",
-      "name": "Animal blando",
+      "name": "El cuerpo sabe",
       "message": "Tu cuerpo te viene pidiendo algo.",
       "guidance": "Probablemente lleva rato pidiéndolo. Respóndele hoy, antes de que tenga que gritar."
     },
@@ -83,7 +83,7 @@
       "id": "the-old-story",
       "name": "La historia vieja",
       "message": "La sigues contando como si estuviera pasando.",
-      "guidance": "Revisa si el peligro está presente o recordado. Piden cosas distintas."
+      "guidance": "Mira si el peligro es de ahora o es un recuerdo. No piden lo mismo."
     },
     {
       "id": "wild-honey",
@@ -101,7 +101,7 @@
       "id": "the-crossing",
       "name": "El cruce",
       "message": "Estás más adelante de lo que dice el miedo.",
-      "guidance": "Mira atrás. Eso que estabas segura de no poder sobrevivir ya quedó ahí."
+      "guidance": "Mira atrás. Eso que creías que no ibas a poder soportar ya quedó atrás."
     },
     {
       "id": "north",
@@ -113,24 +113,24 @@
       "id": "the-guest",
       "name": "La visita",
       "message": "Este sentimiento vino de visita, no se mudó.",
-      "guidance": "Dale un té. No le des tu cuarto. Se va cuando lo reciben."
+      "guidance": "Dale un té. No le des tu cuarto. Se va cuando lo recibes."
     },
     {
       "id": "bare-branch",
       "name": "Rama desnuda",
       "message": "Lo que soltaste no fue una pérdida.",
-      "guidance": "Un árbol en invierno no está fallando en ser árbol. A ti también te toca una temporada de menos."
+      "guidance": "Un árbol en invierno no deja de ser un árbol. A ti también te toca una temporada de menos."
     },
     {
       "id": "the-second-key",
       "name": "La segunda llave",
       "message": "Hay otra forma de entrar.",
-      "guidance": "Puede que esa puerta que empujas simplemente no sea la entrada. Camina el perímetro."
+      "guidance": "Puede que esa puerta que empujas simplemente no sea la entrada. Da la vuelta al edificio."
     },
     {
       "id": "held",
-      "name": "Sostenida",
-      "message": "No tienes que cargar esto tú sola.",
+      "name": "Apoyo",
+      "message": "Esto no tienes que cargarlo tú en solitario.",
       "guidance": "Nombra a una persona. Pide una cosa concreta. Esa es toda la práctica de hoy."
     }
   ]
