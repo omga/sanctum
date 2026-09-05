@@ -64,6 +64,9 @@ lib/src/
 ├── design_system/   tokens → theme → effects → atoms (aurora shader,
 │                    starfield, glass). No hard-coded colours anywhere.
 ├── features/        one folder per feature: view/ + view_model/
+├── l10n/            ARB files, context.l10n, and the one locale list
+│                    both the widget tree and the asset bundle resolve
+│                    through
 └── routing/         go_router typed routes
 ```
 
@@ -92,7 +95,7 @@ and the assertions are pinned to reality wherever reality exists:
 - **Moon phases** against US Naval Observatory timestamps.
 - **The ephemeris** against documented events — Saturn at the 2020 great
   conjunction lands 0.03° from 0°29′ Aquarius, Venus' greatest
-  elongation within 0.1°, the December solstice exactly on 0° Capricorn
+  elongation within 0.11°, the December solstice exactly on 0° Capricorn
   — plus agreement with the hand-written sun-sign table on every
   non-cusp day across seven decades.
 - **The paywall trigger** across a simulated two-year user journey.
