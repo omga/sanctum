@@ -28,6 +28,11 @@
          08:00 is indistinguishable to the user. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Required by flutter_local_notifications to reschedule the queue
+         after a reboot. Without it a device that restarts loses every
+         pending reading until the app is next opened. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- PostHog is configured from Dart (see analytics_service.dart),
          not from meta-data here. One place for the project token, and
          `debug` can follow kDebugMode instead of being a hardcoded
@@ -79,6 +84,40 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- flutter_local_notifications' alarm receivers.
+             **Without these, scheduled notifications never appear, and
+             nothing anywhere reports a failure.** `zonedSchedule` sets
+             an AlarmManager alarm whose PendingIntent targets
+             ScheduledNotificationReceiver; if that receiver is not
+             declared, the alarm fires, the broadcast resolves to no
+             component, and the notification is simply never posted. The
+             scheduling call itself succeeds, so no Result fails, no log
+             line appears, and the only symptom is silence.
+
+             This is easy to miss because the plugin used to declare
+             them itself. Since version 16 its own manifest carries only
+             POST_NOTIFICATIONS and VIBRATE, and every app is expected
+             to declare the rest — so an upgrade past 16 breaks
+             notifications in a way that looks like a device problem.
+             See the plugin README, "AndroidManifest.xml setup".
+
+             ActionBroadcastReceiver is deliberately absent: it is only
+             needed for notification actions, and these notifications
+             have none. -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
         <!-- audio_service's playback service. Its absence is what
              produced the "Unable to start service ... AudioService: not
              found" warning in logcat: the plugin was present and trying
