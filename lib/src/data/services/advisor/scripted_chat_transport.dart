@@ -77,8 +77,8 @@ class ScriptedChatTransport implements ChatTransport {
 
     // Deterministic: the same conversation at the same turn always gets
     // the same answer, so a widget test can assert on it.
-    final answer = _script[(turn - 1).clamp(0, _script.length - 1)];
-
+    // final answer = _script[(turn - 1).clamp(0, _script.length - 1)];
+    final answer = _script[turn.clamp(0, _script.length - 1)];
     for (final word in answer.split(' ')) {
       if (delayPerChunk > Duration.zero) {
         await Future<void>.delayed(delayPerChunk);
@@ -87,20 +87,23 @@ class ScriptedChatTransport implements ChatTransport {
     }
     yield const ChatCompleted();
   }
-
-  static const String _first =
-      'This is the scripted advisor. It has no model behind it, so it '
-      'cannot answer your question — it exists so the screen you are '
-      'looking at can be built and tested without a network.';
+  static const String _first = '''
+Liam is a Gemini. That's the explanation. That's the whole reading.\n
+You've asked me this four times this week. My answer hasn't changed. Neither has Liam.\n
+I pulled his chart three times hoping for a different result.''';
 
   static const String _second =
-      'Still scripted. The real advisor reads the positions the app '
-      'computed for this pairing; this one reads a list of sentences.';
+      'Your Venus is in Pisces. You fall in love with potential. Liam has enormous potential. Liam is also 26 and lives with his mother.';
 
   static const String _third =
-      'Third scripted reply. Ask again and this rotation repeats, which '
-      'is the point: a test needs the same answer every run.';
+      'You won\'t. But "seen 9:42 pm" will outlive us all.';
+  static const String _fourth =
+      "Anywhere Liam isn't. I've run the numbers twice.";
+  static const String _fifth =
+      "Nothing. That's the reading. Nothing is going to happen, and you're going to be fine.";
+  static const String _six =
+      "You already asked me this. I told you the truth. Would you like a lie instead?";
 
   /// The rotation. Written to be obviously placeholder text.
-  static const List<String> _script = [_first, _second, _third];
+  static const List<String> _script = [_first, _second, _third, _fourth,  _fifth, _six];
 }
