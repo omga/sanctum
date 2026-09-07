@@ -1,6 +1,7 @@
 # Sanctum — the palm scan
 
-Written 2026-09-07. A plan, not a decision. Nothing here is built.
+Written 2026-09-07. Partly built 2026-09-08 on branch `palm-scan` —
+see §10 for what exists and what does not.
 
 **The feature.** Point the camera at your palm; the app finds the hand,
 draws your principal lines onto it with an animation worth filming, and
@@ -386,3 +387,69 @@ never are, and it gives the viewer something to do rather than read.
 So: build it. But run phase 0 and the twenty carousel posts **in the same
 week**, so that if the channel is the problem, three weeks of camera work
 is not how we find out.
+
+
+---
+
+## 10. What is built, as of 2026-09-08
+
+Branch `palm-scan`, three commits, ~92 tests. **Nothing has run on a
+device**, because nothing that needs one exists yet.
+
+### Built and tested
+
+| | where |
+|---|---|
+| Landmarks, curves, readiness | `domain/models/palm.dart` |
+| The affine warp and the frame checks | `domain/services/palm_geometry.dart` |
+| The authored line set | `domain/services/palm_line_template.dart` |
+| Crease snapping and line support | `domain/services/palm_crease_snapper.dart` |
+| Rectify → snap → place, and what a hand may be told | `domain/services/palm_composer.dart` |
+| Who pays for a reading | `domain/services/palm_gate.dart` |
+| The beat sheet | `features/palm/view/palm_reveal_timeline.dart` |
+| The painter | `features/palm/view/widgets/palm_reveal_painter.dart` |
+| The scan's state machine | `features/palm/view_model/palm_scan_view_model.dart` |
+
+All of `domain/` is pure Dart and runs in milliseconds. The painter is
+tested by rasterising and counting pixels, which is the only way to
+assert that a line lands on the hand rather than near it.
+
+### Seams cut, implementations missing
+
+`PalmCamera`, `PalmDetector` and `PalmRidgeExtractor` are interfaces in
+`domain/services/` with no implementation. Their providers throw, in the
+manner `audioServiceProvider` already does, and are meant to be
+overridden once there is something real to override them with. The
+ridge extractor is nullable on purpose: with none, a scan still
+completes and draws the bare template — a worse product, but a working
+one, and the right thing to ship on the first device build while S3 is
+open.
+
+### Not built at all
+
+- **The three spikes.** Still the gate. S1 in particular — the encoder
+  on a real iPhone — decides whether phase 2 is a package or a platform
+  channel, and it has not run.
+- **The camera adapter**, the `hand_detection` adapter, the ridge
+  fragment shader, the offscreen renderer and the exporter.
+- **The screens, the routing and the copy.** No ARB keys, no locales, no
+  entry point. The feature is not reachable from the app.
+- **`NSCameraUsageDescription`** is still absent from
+  `ios/Runner/Info.plist`, and the Android permission is undeclared.
+- **The consent screen, the privacy paragraph, and the store data-safety
+  entries** in §7. None of them exist, and the feature must not ship
+  without them.
+
+### Numbers that moved on contact with arithmetic
+
+Both were guesses in this document and are now pinned by tests:
+
+- An open flat hand computes to **1.70** openness, not the 2.2 first
+  assumed, so the threshold sits at 1.55.
+- Least squares spreads one cupped knuckle across all five anchors well
+  enough that a 14 %-of-palm-length displacement only reaches a 0.046
+  residual — so the limit came down from 0.06 to **0.035**, with
+  landmark jitter pinned below it as the other end of the gap.
+
+Everything in §4's tier list, §5's beat sheet and §6's gate survived
+implementation unchanged.
