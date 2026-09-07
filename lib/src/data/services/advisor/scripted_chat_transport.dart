@@ -103,6 +103,13 @@ I pulled his chart three times hoping for a different result.''';
       "Nothing. That's the reading. Nothing is going to happen, and you're going to be fine.";
   static const String _six =
       "You already asked me this. I told you the truth. Would you like a lie instead?";
+  static const String _seven =
+      "Mercury went direct on Tuesday and you mistook that for a personality change in Liam. "
+      "Venus is retrograde. So is your judgment. These are related. "
+      "Immortality is not in your chart. This situationship, however, appears to be eternal."
+      "Your 12th house. Liam is in your 8th. Different addresses. Please stop visiting. "
+      "He will watch your story. He will not reply. Saturday, approximately 11 pm.";
+
 
   /// The rotation. Written to be obviously placeholder text.
   static const List<String> _script = [_first, _second, _third, _fourth,  _fifth, _six];
