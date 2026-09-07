@@ -27,13 +27,29 @@ Account creation: **no**. Sanctum has no accounts.
 | Crash logs | Yes | No | Crash reporting | No |
 | Diagnostics | Yes | No | Crash reporting, analytics | No |
 | Purchase history | Yes | No | App functionality | No |
-| Other user-generated content (a question asked of the advisor) | Yes | Yes | App functionality | **Yes** — the advisor is off until the user agrees |
+| **Messages → Other in-app messages** (a question asked of the advisor) | Yes | Yes | App functionality | **Yes** — the advisor is off until the user agrees |
 | Other info (computed astrological positions) | Yes | Yes | App functionality | **Yes** — as above |
 
 Declared as **collected** rather than "processed ephemerally" for the
 advisor rows: the request does leave the device, and the ephemerality is
 on our server, not on the vendor's. The conservative answer is the one
 to give.
+
+**Why Messages and not "App activity → Other user-generated content".**
+Both could be argued. Google defines "Other in-app messages" as "any
+other types of messages… for example, instant messages or chat
+content", and that is what this is: the user types into a message box,
+the app stores a transcript of authored messages, and a reviewer who
+opens the feature sees a chat. Declaring the vaguer bucket for
+something that is visibly chat content is the kind of under-declaration
+that gets an app pulled rather than emailed about, and the taxonomy asks
+for the most specific type that fits.
+
+The cost is real and worth knowing before you file it: the store listing
+will summarise this as "This app may collect: Messages", which reads
+heavier than the feature is. It is mitigated by the row being marked
+optional, which is only honest because consent actually gates the
+feature. Do not soften the declaration to improve the listing.
 
 **Not** declared, because the app does not send them anywhere: name,
 date of birth, contacts, location, photos, files, messages, health data,

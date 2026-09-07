@@ -492,6 +492,15 @@ defect was in the seam between them.
 * The advisor screen is pushed with an object, never routed.
   `CompatibilityMatch.id` contains both names and birth dates, and
   routing by it would write exactly that into breadcrumbs and OS logs.
+* **Missing Android manifest entries fail silently, and nothing in Dart
+  can see it.** Three components have been missing at different times —
+  `audio_service`'s service, its media-button receiver, and both
+  notification receivers — and every time the platform swallowed it and
+  the feature simply did nothing. Check the *merged* manifest rather
+  than the source one:
+  `build/app/intermediates/merged_manifest/*/process*MainManifest/AndroidManifest.xml`.
+  A plugin that used to declare something can stop doing so, and a
+  version upgrade is when that happens.
 * `flutter_test` draws every glyph as a square box unless the real font
   is loaded, so any test asserting that something *fits* is measuring a
   font the user will never see. `test/support/fonts.dart` loads Inter;
@@ -563,6 +572,23 @@ Scheduled instants are converted to absolute UTC rather than a named
 zone, avoiding a timezone-name dependency. The trade: someone who
 crosses a DST boundary without opening the app drifts by an hour until
 the next launch rewrites the queue.
+
+**None of it worked on Android until 2026-09-06.**
+`flutter_local_notifications` stopped declaring its own receivers at
+version 16 — its manifest now carries `POST_NOTIFICATIONS` and `VIBRATE`
+and nothing else — so the app must declare
+`ScheduledNotificationReceiver` and `ScheduledNotificationBootReceiver`
+itself. It did not. `zonedSchedule` therefore set an alarm whose
+PendingIntent targeted a component that did not exist: the call
+succeeded, no `Result` failed, nothing was logged, the alarm fired, the
+broadcast resolved to nothing, and no notification was ever posted.
+
+The symptom on a device is silence, which is indistinguishable from a
+denied permission or an OEM battery policy — and it is invisible to
+every test in the Dart layer, which is how the feature shipped with unit
+tests and never once worked. `android_manifest_test.dart` now asserts
+the strings are present. It is a crude test and it is the only detector
+that exists.
 
 ### Rituals rotate per lunation, and the catalogue is twelve
 

@@ -298,6 +298,42 @@ read` — a Flutter Fix box pattern-matched onto unrelated output.
 `df -h /` before believing that message; iOS and Android build outputs
 together run to several GB and `build/` is safe to delete.
 
+### Verifying notifications actually arrive
+
+Notifications are the one feature whose failure mode is *nothing
+happening*, so "I did not see one" is not evidence of a bug and seeing
+one is the only evidence of correctness. Three checks, cheapest first,
+all against a connected device:
+
+```bash
+adb shell dumpsys package com.soulheals.sanctum | grep -A 1 POST_NOTIFICATIONS
+```
+
+`granted=true` means the payoff screen's prompt was answered yes. If it
+is false, nothing else below will show anything and there is no bug to
+find.
+
+```bash
+adb shell dumpsys alarm | grep -B 2 -A 6 soulheals
+```
+
+This is the check that would have caught the missing receivers years
+earlier than a user did. Seven pending alarms means the queue was
+written. An alarm whose intent names a component the manifest does not
+declare fires into nothing, silently — see `handoff.md`.
+
+```bash
+adb shell dumpsys notification --noredact | grep -A 5 soulheals
+```
+
+After one has fired, this shows the posted notification and its channel.
+
+**Do not wait until 08:00 to test.** Set the device clock forward past
+the next slot (Settings › System › Date & time, turn off automatic) and
+watch it arrive. Changing `SANCTUM_FAKE_DATE` does nothing here — the
+alarm is held by the OS against the real clock, and the app is not
+running when it fires.
+
 ### Release-only failures
 
 Two things differ enough from debug to hide bugs, and both bit this
