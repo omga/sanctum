@@ -6,6 +6,7 @@ import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/services/palm/camera_palm_camera.dart';
+import 'package:sanctum/src/data/services/palm/canvas_palm_ridge_extractor.dart';
 import 'package:sanctum/src/data/services/palm/hand_detection_palm_detector.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_camera.dart';
@@ -163,15 +164,16 @@ PalmDetector palmDetector(Ref ref) {
   return detector;
 }
 
-/// The crease filter. Overridden once a real one exists.
+/// The crease filter.
 ///
-/// Optional in a way the other two are not: with no extractor the scan
-/// still completes and draws the bare template. That is a worse product
-/// — see `PalmCreaseSnapper` on why — but it is a working one, and it is
-/// what the first build on a device will do while spike S3 is still
-/// open.
+/// Still nullable, and the null path still works: with no extractor the
+/// scan completes and draws the bare template. That is the difference
+/// between a demo and a product — see `PalmCreaseSnapper` — but it is a
+/// working demo, and keeping the seam nullable is what let the feature
+/// ship on a device before this existed.
 @riverpod
-PalmRidgeExtractor? palmRidgeExtractor(Ref ref) => null;
+PalmRidgeExtractor? palmRidgeExtractor(Ref ref) =>
+    const CanvasPalmRidgeExtractor();
 
 /// Drives one scan, from opening the camera to a finished reading.
 ///

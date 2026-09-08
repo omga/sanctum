@@ -393,9 +393,10 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, nine commits, ~140 tests. **Run twice on a Pixel 6**
-— see below. The first run crashed; the second detected nothing. Both
-causes are fixed, and neither was visible from a test. **Nothing has run on a
+Branch `palm-scan`, eleven commits, ~154 tests. **Run three times on a
+Pixel 6** — see below. The first crashed, the second detected nothing,
+the third detected well and drew in the wrong place. Every cause is
+fixed; none was visible from a test until one was written for it. **Nothing has run on a
 device**, because nothing that needs one exists yet.
 
 ### Built and tested
@@ -426,8 +427,8 @@ assert that a line lands on the hand rather than near it.
 
 ### Seams cut, implementations missing
 
-`PalmRidgeExtractor` is the last interface with no implementation, and
-it is nullable on purpose: with none, a scan still completes and draws the bare template —
+Every seam is implemented. `PalmRidgeExtractor` stays nullable on
+purpose: with none, a scan still completes and draws the bare template —
 a worse product, but a working one, and the right thing to ship on the
 first device build while S3 is open.
 
@@ -558,6 +559,46 @@ A debug-only readout in the corner names the readiness the checks land
 on, because `noHand` and `backOfHand` need telling apart from outside
 and the loop for finding out is build, install, hold a hand up.
 
+### Tier 2 is built: the lines are pulled onto real creases
+
+`CanvasPalmRidgeExtractor` rectifies the captured still into a 256-pixel
+canonical square, and `PalmRidgeFilter` measures how crease-like every
+pixel in it is. `PalmCreaseSnapper` — written weeks before anything
+could feed it — now has a field to search.
+
+**Rectify first, then filter.** The filter's probe widths are pixel
+distances, so on a raw photograph they would measure a different
+fraction of a hand on every scan. After the warp they are a fixed
+fraction of a palm, and the field is already in the space the snapper
+searches, with no second transform between the two to get wrong.
+
+**A crease is not an edge.** An edge is bright on one side and dark on
+the other; a crease is dark with bright on *both* sides, a few pixels
+across, running in an unknown direction. So the test is "darker than its
+two flanks", at four orientations and two widths, keeping the best
+answer.
+
+**Dart, not a fragment shader.** §4 called for a shader on the
+assumption this ran per preview frame. It does not — it runs once, on
+the still, while the reveal's first beat plays. At that budget the
+filter is free in Dart, and it can be tested against images the test
+builds itself rather than against whatever the GPU did.
+
+**The contrast floor is the part that matters.** Responses are scaled so
+the strongest crease reaches 1, which on a well-lit palm is right and on
+a blank wall would stretch sensor noise to look identical.
+`PalmRidgeFilter.minimumContrast` stops the divisor shrinking below
+seven grey levels, so a featureless image stays near zero and
+`PalmProfile.isThin` keeps meaning something.
+
+Two tests carry the weight. One draws creases offset from the template
+into a synthetic palm, runs the real filter over the real pixels, and
+asserts the snapper more than halves the distance to them. The other
+draws creases *through* the warp into a 480 × 640 photograph and reads
+them back *through* its inverse — which is the only way to tell a
+correct rectification from a plausible one, and the matrix that composes
+three transforms is the piece most likely to be silently wrong.
+
 ### The handedness flip, and why it is the riskiest line in the feature
 
 MediaPipe's landmark model emits handedness **assuming its input is
@@ -605,9 +646,9 @@ and declaring a purpose string for a device the app never opens puts
 - **The three spikes.** Still the gate. S1 in particular — the encoder
   on a real iPhone — decides whether phase 2 is a package or a platform
   channel, and it has not run.
-- **The ridge fragment shader**, the offscreen renderer and the
-  exporter. Without the shader a scan still completes and draws the
-  bare template — tier 1 of §4, which is a demo rather than a product.
+- **The offscreen renderer and the exporter** — spike S1, still the
+  gate on §4.2. The reveal plays on screen and shares as a still; there
+  is no video yet.
 - **The consent screen, the privacy paragraph, and the store data-safety
   entries** in §7. None of them exist, and the feature must not ship
   without them.
