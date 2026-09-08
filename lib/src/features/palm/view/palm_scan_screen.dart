@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -218,6 +219,25 @@ class _Viewfinder extends ConsumerWidget {
             isReady: state.readiness.isReady,
           ),
         ),
+        // Debug builds only. The loop for anything wrong on this screen
+        // is build, install, hold a hand up, read a log — and the one
+        // fact that shortens it is which readiness the checks are
+        // landing on. `noHand` means the detector returned nothing
+        // usable; `backOfHand` means it did and
+        // `HandDetectionPalmDetector.assumesMirroredInput` is the wrong
+        // way round. Those need telling apart from the outside.
+        if (kDebugMode)
+          Positioned(
+            left: SanctumSpacing.md,
+            bottom: SanctumSpacing.md,
+            child: Text(
+              '${state.readiness.name} · ${state.steadyFrames}'
+              '/${PalmScanViewModel.steadyFramesRequired}',
+              style: context.type.caption.copyWith(
+                color: context.colors.textTertiary,
+              ),
+            ),
+          ),
         Align(
           alignment: const Alignment(0, 0.62),
           child: Padding(

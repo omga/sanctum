@@ -6,8 +6,12 @@ import 'package:sanctum/src/domain/services/palm_crease_snapper.dart';
 
 /// How a frame's bytes are laid out.
 enum PalmImageFormat {
-  /// Android's camera stream format.
-  nv21,
+  /// Android's camera stream format: three planes, Y then U then V.
+  ///
+  /// Not `nv21`, which the plugin also offers and which arrives as a
+  /// single tightly packed plane. That shape is the one a detector
+  /// cannot take apart — see the note in `CameraPalmCamera`.
+  yuv420,
 
   /// iOS's camera stream format.
   bgra8888,

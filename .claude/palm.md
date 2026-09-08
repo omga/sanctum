@@ -393,8 +393,9 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, eight commits, ~136 tests. **Run once on a Pixel 6**
-— see below; it crashed, and the cause is fixed. **Nothing has run on a
+Branch `palm-scan`, nine commits, ~140 tests. **Run twice on a Pixel 6**
+— see below. The first run crashed; the second detected nothing. Both
+causes are fixed, and neither was visible from a test. **Nothing has run on a
 device**, because nothing that needs one exists yet.
 
 ### Built and tested
@@ -515,6 +516,47 @@ app bar, the back arrow and the instruction are all white over whatever
 the lens is pointing at, and against a bright wall none of them is
 visible. A viewfinder with nothing readable on it reads as an app that
 failed to load. There is a scrim behind them now.
+
+### Second run: no detection at all, and a guide shaped like a blob
+
+Ran 2026-09-08, after the crash fix. No lag, models loaded once, and the
+viewfinder said "hold your palm up to the camera" for ever with a palm
+held up to the camera.
+
+**The stream was configured as `ImageFormatGroup.nv21`.** The detector's
+frame preparation takes a single plane only when it is packed four-byte
+colour; everything else must arrive as two planes or three. `nv21` is
+one tightly packed plane, so every frame was rejected *before*
+inference: an empty list back, no error, no log line, and a model that
+had loaded perfectly and never once saw an image. `yuv420` gives three
+planes and is what the package's own README asks for. It also stops
+Android falling back to JPEG frames.
+
+Two more found while looking:
+
+- **Palm-only detections were winning the size comparison.** With
+  tracking on, the package can return a box with no landmarks and no
+  handedness alongside a full detection. Picking the largest before
+  filtering meant the box won and a perfectly good hand reported as no
+  hand. Filter first, then pick.
+- **iOS frames would have been read as RGBA.** The package defaults
+  `isBgra` to `Platform.isMacOS`, which is false on an iPhone, so an
+  iOS frame — which really is BGRA — would go in with red and blue
+  swapped. The model still finds hands in a colour-shifted image, just
+  less well, which is the kind of degradation nobody traces. Passed
+  explicitly now.
+
+**And the guide was eleven authored points**, which on a phone read as a
+lopsided circle: roughly square, no fingers, nothing about it saying
+"hand". Points authored by eye cannot be checked by the person authoring
+them. It is built now — a capsule down each finger and across the palm,
+taken from `PalmGeometry.canonicalHand`, unioned and stroked. The test
+fixtures were re-pointed at that same map, so the target, the detected
+outline and every posed test hand are one anatomy.
+
+A debug-only readout in the corner names the readiness the checks land
+on, because `noHand` and `backOfHand` need telling apart from outside
+and the loop for finding out is build, install, hold a hand up.
 
 ### The handedness flip, and why it is the riskiest line in the feature
 

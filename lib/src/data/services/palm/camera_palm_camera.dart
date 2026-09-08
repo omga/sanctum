@@ -82,9 +82,22 @@ class CameraPalmCamera extends ChangeNotifier implements PalmCamera {
     // of the store listing — see the removal in AndroidManifest.xml and
     // the absent purpose string in Info.plist.
     enableAudio: false,
+    // `yuv420`, not `nv21`, and the difference is the whole feature.
+    //
+    // Both are YUV, but `nv21` arrives as one tightly packed plane and
+    // `yuv420` as three. The detector's frame preparation accepts a
+    // single plane only when it is packed 4-byte colour — everything
+    // else has to come as two planes or three — so an `nv21` frame is
+    // rejected before inference, on every frame, silently: the detector
+    // returns an empty list and the viewfinder says "hold your palm up
+    // to the camera" forever, with a model that loaded perfectly and
+    // never saw an image.
+    //
+    // It also stops Android falling back to JPEG frames, which is the
+    // reason the package's own README names this format.
     imageFormatGroup: defaultTargetPlatform == TargetPlatform.iOS
         ? ImageFormatGroup.bgra8888
-        : ImageFormatGroup.nv21,
+        : ImageFormatGroup.yuv420,
   );
 
   @override
@@ -215,7 +228,7 @@ class CameraPalmCamera extends ChangeNotifier implements PalmCamera {
         height: image.height,
         format: image.format.group == ImageFormatGroup.bgra8888
             ? PalmImageFormat.bgra8888
-            : PalmImageFormat.nv21,
+            : PalmImageFormat.yuv420,
         // Passed through rather than applied. Rotating a frame here
         // would cost a copy per frame for a consumer that has to know
         // the angle anyway to place its landmarks.

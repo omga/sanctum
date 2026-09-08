@@ -107,17 +107,31 @@ class HandDetectionPalmDetector implements PalmDetector {
           // frame that gets rejected.
           deviceOrientation: DeviceOrientation.portraitUp,
         ),
+        // Without this the package asks `Platform.isMacOS`, which is
+        // false on an iPhone — so an iOS frame, which really is BGRA,
+        // would be read as RGBA with red and blue swapped. The model
+        // still finds hands in a colour-shifted image, just less well,
+        // which is the kind of degradation nobody traces.
+        isBgra: image.format == PalmImageFormat.bgra8888,
         maxDim: maxDimension,
       ),
       // The still. Encoded bytes, which is what `detect` wants.
       null => await detector.detect(image.bytes),
     };
 
-    if (hands.isEmpty) return null;
+    // Only hands that actually carry landmarks. With tracking on, the
+    // package can return a palm-only detection — a box, no points, no
+    // handedness — alongside or instead of a full one. Picking the
+    // largest before filtering means the box wins, `landmarksFrom`
+    // returns null, and a hand that was detected perfectly well reports
+    // as no hand at all.
+    final complete = hands.where((hand) => hand.hasLandmarks).toList();
+    if (complete.isEmpty) return null;
 
-    // The largest hand, not the first. Two hands in frame is a common
-    // way to hold a phone, and the one being read is the near one.
-    final hand = hands.reduce(
+    // The largest of those, not the first. Two hands in frame is a
+    // common way to hold a phone, and the one being read is the near
+    // one.
+    final hand = complete.reduce(
       (a, b) =>
           a.boundingBox.width * a.boundingBox.height >=
               b.boundingBox.width * b.boundingBox.height

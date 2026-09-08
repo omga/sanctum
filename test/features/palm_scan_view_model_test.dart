@@ -16,7 +16,7 @@ final _frame = PalmFrameImage(
   bytes: Uint8List(4),
   width: 720,
   height: 1280,
-  format: PalmImageFormat.nv21,
+  format: PalmImageFormat.yuv420,
 );
 
 class _FakeCamera implements PalmCamera {
