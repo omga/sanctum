@@ -393,7 +393,7 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, three commits, ~92 tests. **Nothing has run on a
+Branch `palm-scan`, five commits, ~115 tests. **Nothing has run on a
 device**, because nothing that needs one exists yet.
 
 ### Built and tested
@@ -409,6 +409,11 @@ device**, because nothing that needs one exists yet.
 | The beat sheet | `features/palm/view/palm_reveal_timeline.dart` |
 | The painter | `features/palm/view/widgets/palm_reveal_painter.dart` |
 | The scan's state machine | `features/palm/view_model/palm_scan_view_model.dart` |
+| What a scan is allowed to say | `domain/services/palm_reading_composer.dart` |
+| Earned readings and shares | `data/repositories/palm_repository.dart` |
+| The viewfinder | `features/palm/view/widgets/palm_guide_painter.dart` |
+| The scan screen | `features/palm/view/palm_scan_screen.dart` |
+| The reading, gated | `features/palm/view/palm_reading_screen.dart` |
 
 All of `domain/` is pure Dart and runs in milliseconds. The painter is
 tested by rasterising and counting pixels, which is the only way to
@@ -432,13 +437,27 @@ open.
   channel, and it has not run.
 - **The camera adapter**, the `hand_detection` adapter, the ridge
   fragment shader, the offscreen renderer and the exporter.
-- **The screens, the routing and the copy.** No ARB keys, no locales, no
-  entry point. The feature is not reachable from the app.
 - **`NSCameraUsageDescription`** is still absent from
   `ios/Runner/Info.plist`, and the Android permission is undeclared.
 - **The consent screen, the privacy paragraph, and the store data-safety
   entries** in §7. None of them exist, and the feature must not ship
   without them.
+
+### Reachable, and in four languages
+
+A card on Today opens `/palm`; `/palm/reading` sells what the scan says.
+Both sit outside the shell so the viewfinder is full-bleed. **Not a
+sixth tab** — the bar is fitted to five labels in four locales, and a
+scan is something people come to do rather than a place they live.
+
+Copy is split the way this repo splits it: twenty-eight chrome strings
+in the ARB, twelve reading paragraphs in
+`assets/content/<locale>/copy.json`, because a paragraph about
+somebody's hand is the half that needs a human translator. All four
+locales are complete and both parity tests pass. **The uk, ru and es
+translations are drafts written in the documented voice and have had no
+native review** — for uk and ru that is the workflow already in place;
+for es it is the same gap §3 of `handoff.md` already records.
 
 ### Numbers that moved on contact with arithmetic
 
@@ -450,6 +469,15 @@ Both were guesses in this document and are now pinned by tests:
   enough that a 14 %-of-palm-length displacement only reaches a 0.046
   residual — so the limit came down from 0.06 to **0.035**, with
   landmark jitter pinned below it as the other end of the gap.
+
+A third distinction had to be added that this document missed entirely:
+**a crease support of zero meant two different things.** "We looked and
+found nothing" and "we did not look" were the same value, so every scan
+on a build with no ridge filter reported as too faint to read — a claim
+about the user's hand that nothing had measured.
+`PalmReading.measured` separates them now, which matters immediately:
+the first device build will have no ridge filter, and without this it
+would send every user back to the camera.
 
 Everything in §4's tier list, §5's beat sheet and §6's gate survived
 implementation unchanged.
