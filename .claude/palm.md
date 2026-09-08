@@ -393,7 +393,8 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, seven commits, ~134 tests. **Nothing has run on a
+Branch `palm-scan`, eight commits, ~136 tests. **Run once on a Pixel 6**
+— see below; it crashed, and the cause is fixed. **Nothing has run on a
 device**, because nothing that needs one exists yet.
 
 ### Built and tested
@@ -476,6 +477,44 @@ constraint.
 before a single test runs without it. `brew install cmake`, and the
 README says so. It comes from OpenCV alone — `flutter_litert` ships
 prebuilt libraries.
+
+### First run on a Pixel 6, and what it found
+
+Ran 2026-09-08. The camera opened, the guide drew, and the app died of
+an out-of-memory kill inside a minute, with `logcat` printing
+`Replacing 272 out of 272 node(s) with delegate` and `Replacing 165 out
+of 165` in pairs — the palm and landmark models being loaded and
+delegated, **once per frame**.
+
+`palmDetectorProvider` is auto-disposed, and `ref.read` of an
+auto-disposed provider that nothing listens to creates it, hands back
+the value, and disposes it again. So every frame built a fresh detector,
+which loaded both TFLite models and re-applied XNNPack. The camera
+escaped the same fate only because the preview surface happens to
+`watch` it.
+
+Fixed by watching both from `build`, which makes them dependencies of
+the notifier: built once, alive for the scan, disposed with it.
+`palm_scan_view_model_test.dart` asserts the construction count, and
+that test was checked against the old code to be sure it fails on it.
+
+Two things went in alongside:
+
+- **The preview stream dropped to `ResolutionPreset.medium`.** The
+  detector downscales to 640 on the long edge anyway, so 720p was 1.4 MB
+  a frame allocated thirty times a second to be resized away.
+- **Inference is throttled to one every 80 ms.** The busy guard alone
+  runs the detector as fast as the phone allows, which pegs a core to
+  track a hand that is barely moving. The interval is a provider so
+  tests can set it to zero.
+
+**"No buttons whatsoever" is half a real finding.** There is no shutter
+by design — the scan waits for eight steady frames and fires itself,
+because pressing a button moves the hand that is the subject. But the
+app bar, the back arrow and the instruction are all white over whatever
+the lens is pointing at, and against a bright wall none of them is
+visible. A viewfinder with nothing readable on it reads as an app that
+failed to load. There is a scrim behind them now.
 
 ### The handedness flip, and why it is the riskiest line in the feature
 

@@ -123,6 +123,20 @@ WidgetBuilder? palmPreviewBuilder(Ref ref) {
   return (context) => PalmCameraPreview(camera: camera);
 }
 
+/// How long to leave between inferences.
+///
+/// The busy guard alone runs the detector as fast as it will go, which
+/// on a good phone means pegging a core and heating the handset to track
+/// a hand that is barely moving. Twelve a second is more than the
+/// steadiness counter needs and is kinder to the battery the user is
+/// holding.
+///
+/// A provider rather than a constant so a test can set it to zero and
+/// feed frames as fast as it likes — the alternative is every test of
+/// the state machine sleeping through the throttle it is not testing.
+@riverpod
+Duration palmInferenceInterval(Ref ref) => const Duration(milliseconds: 80);
+
 /// The camera.
 ///
 /// Auto-disposed on purpose: the scan screen is the only thing that
@@ -185,16 +199,38 @@ class PalmScanViewModel extends _$PalmScanViewModel {
   /// that has been measured on a device.
   static const int steadyFramesRequired = 8;
 
+  late PalmCamera _camera;
+  late PalmDetector _detector;
+  PalmRidgeExtractor? _extractor;
+  late Duration _interval;
+
   StreamSubscription<PalmFrameImage>? _frames;
   var _busy = false;
+  DateTime? _lastInference;
 
   @override
   PalmScanState build() {
-    // Captured here rather than read inside the callback: Riverpod
-    // forbids touching another provider from a life-cycle hook, and the
-    // throw lands on every exit from the scan screen — the one moment
-    // the camera most needs releasing.
-    final camera = ref.read(palmCameraProvider);
+    // `watch`, not `read`, and this is not a style preference.
+    //
+    // Both providers are auto-disposed. A `read` of an auto-disposed
+    // provider that nothing listens to creates it, hands back the
+    // value, and disposes it again — so reading the detector once per
+    // frame built a fresh one every frame, and each one loaded both
+    // TFLite models and re-applied the XNNPack delegate. On a Pixel 6
+    // that is a pair of interpreters per frame, hundreds of megabytes
+    // through the large-object space, and an out-of-memory kill inside
+    // a minute. The camera escaped it only because the preview surface
+    // happened to `watch` it.
+    //
+    // Watching from `build` makes them dependencies of this notifier:
+    // built once, alive as long as the scan is, and disposed with it.
+    // Neither ever changes value, so nothing rebuilds.
+    _camera = ref.watch(palmCameraProvider);
+    _detector = ref.watch(palmDetectorProvider);
+    _extractor = ref.watch(palmRidgeExtractorProvider);
+    _interval = ref.watch(palmInferenceIntervalProvider);
+
+    final camera = _camera;
     ref.onDispose(() {
       unawaited(_frames?.cancel());
       unawaited(camera.stop());
@@ -206,7 +242,7 @@ class PalmScanViewModel extends _$PalmScanViewModel {
   Future<void> start() async {
     if (state.isStreaming) return;
 
-    final camera = ref.read(palmCameraProvider);
+    final camera = _camera;
     final started = await camera.start();
     if (!ref.mounted) return;
     if (started case Err(:final failure)) {
@@ -230,7 +266,7 @@ class PalmScanViewModel extends _$PalmScanViewModel {
   Future<void> stop() async {
     await _frames?.cancel();
     _frames = null;
-    await ref.read(palmCameraProvider).stop();
+    await _camera.stop();
     state = state.copyWith(stage: PalmScanStage.idle, clearPreview: true);
   }
 
@@ -240,10 +276,16 @@ class PalmScanViewModel extends _$PalmScanViewModel {
     // it a recording of the recent past, and the steadiness counter
     // would be counting frames the user had already moved on from.
     if (_busy || state.stage != PalmScanStage.aligning) return;
+
+    final now = DateTime.now();
+    final last = _lastInference;
+    if (last != null && now.difference(last) < _interval) return;
+    _lastInference = now;
+
     _busy = true;
 
     try {
-      final landmarks = await ref.read(palmDetectorProvider).detect(image);
+      final landmarks = await _detector.detect(image);
       // The screen can close while inference is in flight — leaving the
       // scan is the single most likely thing a user does during the
       // second it takes. Touching `ref` or `state` after that throws.
@@ -272,7 +314,7 @@ class PalmScanViewModel extends _$PalmScanViewModel {
     await _frames?.cancel();
     _frames = null;
 
-    final camera = ref.read(palmCameraProvider);
+    final camera = _camera;
     final still = await camera.capture();
     await camera.stop();
     if (!ref.mounted) return;
@@ -297,13 +339,10 @@ class PalmScanViewModel extends _$PalmScanViewModel {
         // landmarks from the stream would be subtly wrong on it — and
         // "subtly wrong" here means every line sits a few millimetres
         // off the crease it is supposed to be describing.
-        final detector = ref.read(palmDetectorProvider);
-        final extractor = ref.read(palmRidgeExtractorProvider);
-
-        final landmarks = await detector.detect(image);
+        final landmarks = await _detector.detect(image);
         if (landmarks == null) throw StateError('the hand left the frame');
 
-        final source = await extractor?.extract(
+        final source = await _extractor?.extract(
           image: image,
           landmarks: landmarks,
         );

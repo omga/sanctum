@@ -67,10 +67,17 @@ class CameraPalmCamera extends ChangeNotifier implements PalmCamera {
     CameraDescription description,
   ) => CameraController(
     description,
-    // Not `max`. The stream has to be filtered by a landmark model at
-    // something like fifteen frames a second, and a 4K stream buys
-    // nothing for a job whose output is a rotated box and 21 points.
-    ResolutionPreset.high,
+    // Matched to the detector's own downscale, which is 640 on the long
+    // edge. `high` is 720p: every frame of it is 1.4 MB that gets
+    // resized away before inference, allocated thirty times a second,
+    // and the garbage collector notices long before the model does.
+    // `medium` is 720x480 and loses nothing the detector would have
+    // kept.
+    //
+    // The still is unaffected — `takePicture` shoots at the sensor's own
+    // resolution, which is the whole reason the reveal is rendered from
+    // a photograph rather than from a preview frame.
+    ResolutionPreset.medium,
     // Nothing here records audio. This is what keeps the microphone out
     // of the store listing — see the removal in AndroidManifest.xml and
     // the absent purpose string in Info.plist.

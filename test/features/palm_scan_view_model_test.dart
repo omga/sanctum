@@ -80,11 +80,25 @@ class _FakeDetector implements PalmDetector {
   Future<void> dispose() async {}
 }
 
-ProviderContainer _containerWith(_FakeCamera camera, _FakeDetector detector) {
+ProviderContainer _containerWith(
+  _FakeCamera camera,
+  _FakeDetector detector, {
+  Duration interval = Duration.zero,
+  void Function()? onDetectorBuilt,
+}) {
   final container = ProviderContainer(
     overrides: [
       palmCameraProvider.overrideWithValue(camera),
-      palmDetectorProvider.overrideWithValue(detector),
+      if (onDetectorBuilt == null)
+        palmDetectorProvider.overrideWithValue(detector)
+      else
+        palmDetectorProvider.overrideWith((ref) {
+          onDetectorBuilt();
+          return detector;
+        }),
+      // The throttle is real behaviour with its own test; every other
+      // test here would otherwise have to sleep through it.
+      palmInferenceIntervalProvider.overrideWithValue(interval),
     ],
   );
   addTearDown(container.dispose);
@@ -265,6 +279,54 @@ void main() {
 
     expect(detector.calls, lessThan(6));
     expect(detector.calls, greaterThan(0));
+  });
+
+  test('builds the detector once, not once a frame', () async {
+    // The bug that killed a Pixel 6 in under a minute.
+    //
+    // `palmDetectorProvider` is auto-disposed. Reading it per frame
+    // created it, returned it and disposed it again — so every frame
+    // built a fresh detector, which loaded both TFLite models and
+    // re-applied the XNNPack delegate. Hundreds of megabytes through the
+    // large-object space and an out-of-memory kill.
+    //
+    // Nothing about the app's behaviour changed when it was fixed, which
+    // is why the assertion is on the construction count rather than on
+    // anything visible.
+    var built = 0;
+    final camera = _FakeCamera();
+    final detector = _FakeDetector((_) => goodHand());
+    addTearDown(camera.dispose);
+
+    final container = _containerWith(
+      camera,
+      detector,
+      onDetectorBuilt: () => built++,
+    );
+
+    await container.read(palmScanViewModelProvider.notifier).start();
+    await _feed(camera, 5);
+
+    expect(built, 1);
+  });
+
+  test('leaves a gap between inferences', () async {
+    // Without it the detector runs as fast as the phone will let it,
+    // pegging a core to track a hand that is barely moving.
+    final camera = _FakeCamera();
+    final detector = _FakeDetector((_) => null);
+    addTearDown(camera.dispose);
+
+    final container = _containerWith(
+      camera,
+      detector,
+      interval: const Duration(seconds: 30),
+    );
+
+    await container.read(palmScanViewModelProvider.notifier).start();
+    await _feed(camera, 6);
+
+    expect(detector.calls, 1);
   });
 
   test('a retake throws the reading away and looks again', () async {

@@ -188,6 +188,28 @@ class _Viewfinder extends ConsumerWidget {
               ),
             ),
           ),
+        // Legibility, not decoration. Everything on this screen is white
+        // text and a thin outline over whatever the lens happens to be
+        // pointing at; against a bright wall the app bar, the back
+        // arrow and the instruction all vanish, and a viewfinder with
+        // nothing readable on it reads as an app that has failed to
+        // load rather than one waiting for a hand.
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0x99000000),
+                Color(0x00000000),
+                Color(0x00000000),
+                Color(0xB3000000),
+              ],
+              stops: [0, 0.22, 0.55, 1],
+            ),
+          ),
+          child: SizedBox.expand(),
+        ),
         CustomPaint(
           painter: PalmGuidePainter(
             colors: context.colors,
