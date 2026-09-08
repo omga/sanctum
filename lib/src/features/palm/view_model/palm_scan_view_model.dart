@@ -6,6 +6,7 @@ import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/services/palm/camera_palm_camera.dart';
+import 'package:sanctum/src/data/services/palm/hand_detection_palm_detector.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_camera.dart';
 import 'package:sanctum/src/domain/services/palm_composer.dart';
@@ -135,11 +136,18 @@ PalmCamera palmCamera(Ref ref) {
   return camera;
 }
 
-/// The landmark model. Overridden once a real one exists.
+/// The landmark model.
+///
+/// Auto-disposed with the scan, like the camera. The models are a few
+/// megabytes of interpreter state; holding them open for a user who has
+/// left the screen is the kind of thing that gets an app killed in the
+/// background.
 @riverpod
-PalmDetector palmDetector(Ref ref) => throw UnimplementedError(
-  'palmDetectorProvider must be overridden with a real detector',
-);
+PalmDetector palmDetector(Ref ref) {
+  final detector = HandDetectionPalmDetector();
+  ref.onDispose(() => unawaited(detector.dispose()));
+  return detector;
+}
 
 /// The crease filter. Overridden once a real one exists.
 ///

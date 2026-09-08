@@ -393,7 +393,7 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, six commits, ~124 tests. **Nothing has run on a
+Branch `palm-scan`, seven commits, ~134 tests. **Nothing has run on a
 device**, because nothing that needs one exists yet.
 
 ### Built and tested
@@ -416,6 +416,7 @@ device**, because nothing that needs one exists yet.
 | The reading, gated | `features/palm/view/palm_reading_screen.dart` |
 | The camera | `data/services/palm/camera_palm_camera.dart` |
 | The preview surface | `features/palm/view/widgets/palm_camera_preview.dart` |
+| The landmark detector | `data/services/palm/hand_detection_palm_detector.dart` |
 
 All of `domain/` is pure Dart and runs in milliseconds. The painter is
 tested by rasterising and counting pixels, which is the only way to
@@ -423,10 +424,8 @@ assert that a line lands on the hand rather than near it.
 
 ### Seams cut, implementations missing
 
-`PalmDetector` and `PalmRidgeExtractor` are still interfaces with no
-implementation. The detector's provider throws, in the manner
-`audioServiceProvider` already does. The ridge extractor is nullable on
-purpose: with none, a scan still completes and draws the bare template —
+`PalmRidgeExtractor` is the last interface with no implementation, and
+it is nullable on purpose: with none, a scan still completes and draws the bare template —
 a worse product, but a working one, and the right thing to ship on the
 first device build while S3 is open.
 
@@ -435,12 +434,68 @@ a front sensor costs the crease filter detail it never gets back, and a
 mirrored frame flips reported handedness and pose chirality together,
 which is precisely the case `HandLandmarks.isPalmFacing` cannot detect.
 
-### Size, measured rather than estimated
+### Size: §2 was wrong, and by a lot
 
-`flutter build apk --release --target-platform=android-arm64`, before
-and after the camera: **30.3 MB → 32.2 MB**. The camera cost **1.9 MB**,
-against the 0.3–0.5 MB §2 guessed for it. §2's total of +8–12 MB still
-looks right, and the ML runtime and models are the whole rest of it.
+Measured with `--split-per-abi`, which is what a device downloads:
+
+| | arm64 APK |
+|---|---|
+| before the palm scan | 30.3 MB |
+| `camera` | 32.2 MB |
+| `hand_detection` | **65.6 MB** |
+
+**§2 estimated +8–12 MB for the whole feature. The real figure is
++33.4 MB**, and the app is now twice what it was. The breakdown:
+OpenCV `libdartcv.so` 11.4 MB, LiteRT and TensorFlow Lite plus two GPU
+delegates ~15.3 MB, the two models 7.8 MB, ~6.5 MB of `classes.dex`.
+
+The estimate went wrong in two places. It assumed one ML runtime, and
+`flutter_litert` ships two side by side with their accelerators. And it
+did not know `hand_detection` runs its pre-processing on OpenCV — the
+crop, rotate and colour conversion the MediaPipe pipeline needs — which
+is where `dartcv4` and 11.4 MB come from.
+
+**Measure with `--split-per-abi`, never `--target-platform`.** The
+plugin ships native libraries as jniLibs, which `abiFilters` does not
+reach, so a `--target-platform=android-arm64` build reports 95 MB while
+carrying x86_64 and armeabi-v7a copies of LiteRT no device would ever
+receive. That number is an artefact.
+
+**The leaner route, costed.** `flutter_litert` alone needs no OpenCV and
+no CMake, which would save the 11.4 MB and the toolchain — roughly
+53 MB — but means hand-rolling the MediaPipe pipeline: SSD anchor
+decode, non-maximum suppression, the rotated ROI crop and the landmark
+pass. Days of work whose hardest part cannot be validated without device
+captures. Weighed on 2026-09-08 and declined: twelve megabytes is not
+worth that risk. Worth revisiting only if the size becomes a real
+constraint.
+
+### CMake is now a build prerequisite
+
+`dartcv4` compiles a native asset for the host, so `flutter test` fails
+before a single test runs without it. `brew install cmake`, and the
+README says so. It comes from OpenCV alone — `flutter_litert` ships
+prebuilt libraries.
+
+### The handedness flip, and why it is the riskiest line in the feature
+
+MediaPipe's landmark model emits handedness **assuming its input is
+mirrored** — the selfie convention. `hand_detection` passes that output
+through untouched, and our frames come from the rear camera and are not
+mirrored, so the label arrives inverted.
+`HandDetectionPalmDetector.assumesMirroredInput` flips it back.
+
+Get this backwards and `HandLandmarks.isPalmFacing` disagrees with the
+pose's chirality for every hand: **every palm reports as the back of a
+hand, the readiness check never passes, and the shutter never fires** —
+on a scan that looks perfectly aligned. There is no partial failure, and
+nothing in the UI would say why.
+
+It follows from MediaPipe's documented convention and from reading this
+package's source, and a test pins the end-to-end property. **None of
+that is a device.** Spike S2 settles it, and the symptom names itself:
+if a real palm held flat to the lens reports
+`PalmReadiness.backOfHand`, invert that constant.
 
 ### Three permissions the camera plugin drags in
 
@@ -469,10 +524,9 @@ and declaring a purpose string for a device the app never opens puts
 - **The three spikes.** Still the gate. S1 in particular — the encoder
   on a real iPhone — decides whether phase 2 is a package or a platform
   channel, and it has not run.
-- **The `hand_detection` adapter**, the ridge fragment shader, the
-  offscreen renderer and the exporter. Without a detector the scan never
-  finds a hand, so the viewfinder opens and waits — the camera is real,
-  the thing it is waiting for is not.
+- **The ridge fragment shader**, the offscreen renderer and the
+  exporter. Without the shader a scan still completes and draws the
+  bare template — tier 1 of §4, which is a demo rather than a product.
 - **The consent screen, the privacy paragraph, and the store data-safety
   entries** in §7. None of them exist, and the feature must not ship
   without them.

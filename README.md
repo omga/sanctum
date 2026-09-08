@@ -39,6 +39,11 @@ hold one, `MessageRedaction` rewrites the ones a user types, and the
 proxy rejects them a third time. See `.claude/advisor.md` §1 for why
 that is three layers rather than one.
 
+**CMake is a build prerequisite** (`brew install cmake`). The palm
+scan's landmark detector pulls OpenCV through `dartcv4`, which compiles
+a native asset for the host — so without it `flutter test` fails before
+a single test runs, which is a confusing way to meet a missing tool.
+
 ```bash
 flutter pub get
 dart run build_runner build      # required: much of the app is generated

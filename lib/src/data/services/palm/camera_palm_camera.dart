@@ -148,6 +148,8 @@ class CameraPalmCamera extends ChangeNotifier implements PalmCamera {
           width: width,
           height: height,
           format: PalmImageFormat.jpeg,
+          isFrontFacing:
+              _description?.lensDirection == CameraLensDirection.front,
           // Left at the default zero. A still arrives upright: the
           // plugin bakes the sensor's rotation into the file's own
           // orientation, which the stream frames never get.
@@ -211,6 +213,11 @@ class CameraPalmCamera extends ChangeNotifier implements PalmCamera {
         // would cost a copy per frame for a consumer that has to know
         // the angle anyway to place its landmarks.
         rotationDegrees: _description?.sensorOrientation ?? 0,
+        isFrontFacing: _description?.lensDirection == CameraLensDirection.front,
+        // The detector wants this, not the packed bytes: it crops and
+        // rotates the YUV planes itself, and re-encoding a frame to
+        // avoid handing it over would cost more than the inference.
+        platformFrame: image,
       ),
     );
   }

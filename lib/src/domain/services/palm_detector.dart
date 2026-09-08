@@ -31,6 +31,8 @@ class PalmFrameImage {
     required this.height,
     required this.format,
     this.rotationDegrees = 0,
+    this.isFrontFacing = false,
+    this.platformFrame,
   });
 
   /// The pixels.
@@ -47,6 +49,29 @@ class PalmFrameImage {
 
   /// How far the sensor is rotated from the display, clockwise.
   final int rotationDegrees;
+
+  /// Whether this came from a lens pointing at the user.
+  ///
+  /// Not decoration: it decides how a frame has to be rotated, and it is
+  /// the first thing to look at when a scan insists every palm is the
+  /// back of a hand.
+  final bool isFrontFacing;
+
+  /// The camera's own frame object, when the camera and the detector in
+  /// use are a matched pair.
+  ///
+  /// Deliberately `Object?`. A landmark model wants the platform's
+  /// native frame — a YUV buffer it can crop and rotate itself — and
+  /// re-encoding every preview frame to hand it [bytes] instead would
+  /// cost more than the inference does. But naming that type here would
+  /// drag a camera plugin into `domain/`, which is the one thing this
+  /// layer is not allowed to do.
+  ///
+  /// So it is opaque: `domain/` never reads it, a fake camera leaves it
+  /// null, and the two real adapters agree on what it is between
+  /// themselves. A detector that finds it null falls back to [bytes],
+  /// which is what happens for the captured still.
+  final Object? platformFrame;
 
   /// The frame's height over its width, after rotation.
   ///
