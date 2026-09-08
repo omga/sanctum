@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
@@ -94,6 +95,84 @@ void main() {
     // Pulled well left of centre by the pose, which a target-only
     // render could not be.
     expect(ink.center.dx, lessThan(_size.width * 0.45));
+    image.dispose();
+  });
+
+  test('the outline contains the hand it is tracing', () async {
+    // The bug this exists for: the preview is cover-fitted, so on a tall
+    // phone a 3:4 frame overflows the width by half and a third of what
+    // the camera sees is off screen. Drawing in canvas widths instead of
+    // frame widths put the outline at about two thirds scale, up and to
+    // the left of the hand it was supposed to trace — and told the user
+    // to bring a hand closer that already filled the screen.
+    //
+    // Every landmark must fall inside the drawn outline, because the
+    // outline is built around exactly those points.
+    const aspect = 4 / 3;
+    final landmarks = handAt(pose(scale: 0.5));
+    final frame = PalmGeometry.rectify(landmarks)!;
+
+    final image = await _render(
+      PalmGuidePainter(
+        colors: _colors,
+        hold: 0,
+        frame: frame,
+        frameAspect: aspect,
+      ),
+    );
+    final ink = await _inkBounds(image);
+
+    final width = math.max(_size.width, _size.height / aspect);
+    final rect = Rect.fromCenter(
+      center: _size.center(Offset.zero),
+      width: width,
+      height: width * aspect,
+    );
+
+    var checked = 0;
+    for (final landmark in PalmLandmark.values) {
+      final point = landmarks[landmark];
+      final onCanvas = rect.topLeft + Offset(point.x, point.y) * rect.width;
+      // Cover-fitting crops: a landmark can legitimately be off screen,
+      // and nothing is drawn where nothing is shown.
+      if (!(Offset.zero & _size).deflate(3).contains(onCanvas)) continue;
+      checked++;
+      expect(
+        ink.inflate(2).contains(onCanvas),
+        isTrue,
+        reason: '$landmark at $onCanvas is outside the outline $ink',
+      );
+    }
+
+    // Guards the guard: a crop that swallowed the whole hand would make
+    // every assertion above vacuous.
+    expect(checked, greaterThan(15));
+
+    image.dispose();
+  });
+
+  test('the target is the size the readiness check demands', () async {
+    // A hand placed on the target has to pass. The first version sized
+    // the target at a pleasing fraction of the screen, which through the
+    // crop came out under `minKnuckleSpan` — so doing exactly what the
+    // outline asked still produced "bring your hand closer".
+    const aspect = 4 / 3;
+    final image = await _render(
+      PalmGuidePainter(colors: _colors, hold: 0, frameAspect: aspect),
+    );
+    final ink = await _inkBounds(image);
+
+    final coverWidth = math.max(_size.width, _size.height / aspect);
+    final span = PalmGeometry.canonicalHand[PalmLandmark.indexMcp]!.distanceTo(
+      PalmGeometry.canonicalHand[PalmLandmark.pinkyMcp]!,
+    );
+
+    // The whole silhouette is wider than the knuckle span it is sized
+    // from, so this is a floor rather than an equality.
+    expect(
+      ink.width / coverWidth,
+      greaterThan(PalmGeometry.minKnuckleSpan * span),
+    );
     image.dispose();
   });
 

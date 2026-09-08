@@ -60,6 +60,19 @@ class CameraPalmCamera extends ChangeNotifier implements PalmCamera {
   /// has finished.
   CameraController? get controller => _controller;
 
+  /// The preview's height over its width, once portrait-corrected, or
+  /// null before the camera is open.
+  ///
+  /// The viewfinder's overlay needs it. `previewSize` is reported in the
+  /// sensor's own orientation, which is landscape on effectively every
+  /// phone, so the two are swapped here — the same swap the preview
+  /// widget makes, in the one place that knows to make it.
+  double? get previewAspect {
+    final size = _controller?.value.previewSize;
+    if (size == null || size.height == 0) return null;
+    return size.width / size.height;
+  }
+
   @override
   Stream<PalmFrameImage> get frames => _frames.stream;
 

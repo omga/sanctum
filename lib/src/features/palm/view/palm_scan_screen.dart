@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/data/services/palm/camera_palm_camera.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
 import 'package:sanctum/src/design_system/theme/sanctum_theme.dart';
@@ -166,6 +167,11 @@ class _Viewfinder extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final preview = ref.watch(palmPreviewBuilderProvider);
+    // Read from the camera rather than from the last detection, so the
+    // target is the right size before the first hand arrives instead of
+    // resizing under the user the moment one does.
+    final camera = ref.watch(palmCameraProvider);
+    final aspect = camera is CameraPalmCamera ? camera.previewAspect : null;
 
     return Stack(
       fit: StackFit.expand,
@@ -217,6 +223,8 @@ class _Viewfinder extends ConsumerWidget {
             hold: state.holdProgress,
             frame: state.preview,
             isReady: state.readiness.isReady,
+            frameAspect:
+                aspect ?? state.preview?.landmarks.frameAspect ?? 4 / 3,
           ),
         ),
         // Debug builds only. The loop for anything wrong on this screen

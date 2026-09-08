@@ -336,6 +336,12 @@ class PalmRevealPainter extends CustomPainter {
     }
   }
 
+  /// Nodes at the ends of the drawn lines, joined sparsely.
+  ///
+  /// Each node reaches for its nearest neighbour and nothing else. The
+  /// first version connected every pair, which on a hand with three
+  /// lines is six nodes and fifteen hairlines — a cat's cradle laid over
+  /// the palm that buried the lines it was meant to frame.
   void _paintConstellation(Canvas canvas, Rect rect) {
     final width = rect.width;
     final nodes = <Offset>[
@@ -350,26 +356,35 @@ class PalmRevealPainter extends CustomPainter {
     final reach = frame.constellation;
     final hairline = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = width * 0.0012
-      ..color = colors.accentCool.withValues(alpha: 0.28 * reach);
+      ..strokeWidth = width * 0.0016
+      ..color = colors.accentCool.withValues(alpha: 0.32 * reach);
 
     for (var i = 0; i < nodes.length; i++) {
-      for (var j = i + 1; j < nodes.length; j++) {
-        canvas.drawLine(
-          nodes[i],
-          Offset.lerp(nodes[i], nodes[j], reach)!,
-          hairline,
-        );
+      var nearest = -1;
+      var best = double.infinity;
+      for (var j = 0; j < nodes.length; j++) {
+        if (i == j) continue;
+        final distance = (nodes[i] - nodes[j]).distance;
+        if (distance < best) {
+          best = distance;
+          nearest = j;
+        }
       }
+      if (nearest < 0) continue;
+      canvas.drawLine(
+        nodes[i],
+        Offset.lerp(nodes[i], nodes[nearest], reach)!,
+        hairline,
+      );
     }
 
     for (final node in nodes) {
       canvas.drawCircle(
         node,
-        width * 0.006 * reach,
+        width * 0.005 * reach,
         Paint()
           ..blendMode = BlendMode.plus
-          ..color = colors.gold.withValues(alpha: 0.8 * reach),
+          ..color = colors.gold.withValues(alpha: 0.75 * reach),
       );
     }
   }

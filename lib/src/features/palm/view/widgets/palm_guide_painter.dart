@@ -39,6 +39,7 @@ class PalmGuidePainter extends CustomPainter {
     required this.hold,
     this.frame,
     this.isReady = false,
+    this.frameAspect = 4 / 3,
   });
 
   /// Resolved colours.
@@ -52,6 +53,17 @@ class PalmGuidePainter extends CustomPainter {
 
   /// Whether this frame would be captured.
   final bool isReady;
+
+  /// The camera frame's height over its width.
+  ///
+  /// Needed because the preview is cover-fitted: on a tall phone a 3:4
+  /// frame fills the height and overflows the width by half, so a third
+  /// of what the camera sees is off screen on either side. Everything
+  /// here is drawn in frame coordinates, and without the crop they land
+  /// at about two thirds scale, up and to the left — which is exactly
+  /// how the outline first appeared over a hand it was supposed to
+  /// trace.
+  final double frameAspect;
 
   /// Half-width of a finger, in canonical units.
   static const double _fingerRadius = 0.062;
@@ -86,6 +98,11 @@ class PalmGuidePainter extends CustomPainter {
 
   /// The hand, in canonical units. Built once per process.
   static final Path _hand = _buildHand();
+
+  /// The knuckle span the readiness check measures, in canonical units.
+  static final double _canonicalKnuckleSpan = PalmGeometry
+      .canonicalHand[PalmLandmark.indexMcp]!
+      .distanceTo(PalmGeometry.canonicalHand[PalmLandmark.pinkyMcp]!);
 
   static Path _buildHand() {
     Path? combined;
@@ -138,30 +155,62 @@ class PalmGuidePainter extends CustomPainter {
     return path.transform(transform.storage);
   }
 
+  /// Where the camera frame lands on the canvas under `BoxFit.cover`.
+  ///
+  /// The same fit `PalmRevealPainter` applies to the still, for the same
+  /// reason: a point in frame coordinates has to end up on the pixel
+  /// that shows it.
+  Rect _coverRect(Size size) {
+    final width = math.max(size.width, size.height / frameAspect);
+    return Rect.fromCenter(
+      center: size.center(Offset.zero),
+      width: width,
+      height: width * frameAspect,
+    );
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    _paintTarget(canvas, size);
+    final rect = _coverRect(size);
+    _paintTarget(canvas, size, rect);
 
     if (frame case final frame?) {
-      _paintLive(canvas, size, frame);
+      _paintLive(canvas, rect, frame);
     }
     if (hold > 0) {
       _paintHold(canvas, size);
     }
   }
 
-  /// Where the hand is wanted: centred, at roughly the size the
-  /// readiness check will accept.
+  /// The size the readiness check will accept, drawn.
   ///
-  /// Fitted from the path's own bounds rather than from a guessed
-  /// scale, so changing the anatomy cannot push a fingertip off screen.
-  void _paintTarget(Canvas canvas, Size size) {
+  /// Sized *from* [PalmGeometry.minKnuckleSpan] rather than from a
+  /// pleasing fraction of the screen. The first version used 62 % of the
+  /// canvas width, which through the cover crop works out at a knuckle
+  /// span of about 0.26 — under the 0.28 the check demands. So a hand
+  /// placed exactly on the target was told to come closer, which is the
+  /// worst instruction an app can give: the user has already done what
+  /// was asked.
+  ///
+  /// A quarter over the threshold, so matching the outline by eye lands
+  /// clear of it rather than on it.
+  void _paintTarget(Canvas canvas, Size size, Rect rect) {
     final bounds = _hand.getBounds();
-    if (bounds.isEmpty) return;
+    if (bounds.isEmpty || _canonicalKnuckleSpan <= 0) return;
 
+    final wanted =
+        PalmGeometry.minKnuckleSpan * 1.25 * rect.width / _canonicalKnuckleSpan;
+
+    // Clamped so an unusual aspect ratio cannot push a fingertip off
+    // screen. If this bites, the target is smaller than the check wants
+    // and the copy will keep asking — better than an outline with no
+    // fingers on it.
     final scale = math.min(
-      size.width * 0.62 / bounds.width,
-      size.height * 0.56 / bounds.height,
+      wanted,
+      math.min(
+        size.width * 0.92 / bounds.width,
+        size.height * 0.66 / bounds.height,
+      ),
     );
     final transform = Matrix4.identity()
       ..translateByDouble(
@@ -183,13 +232,14 @@ class PalmGuidePainter extends CustomPainter {
     );
   }
 
-  void _paintLive(Canvas canvas, Size size, PalmFrame frame) {
+  void _paintLive(Canvas canvas, Rect rect, PalmFrame frame) {
     // Canonical → frame → canvas, as one matrix. `PalmSpace.image`
-    // normalises both axes to the frame's *width*, so both scale by
-    // width here; scaling y by height would draw an outline that tracks
-    // the hand almost exactly, which is the worst kind of wrong.
+    // normalises both axes to the frame's *width*, so both scale by the
+    // cover rect's width; scaling y by its height would draw an outline
+    // that tracks the hand almost exactly, which is the worst kind of
+    // wrong.
     final warp = frame.toImage;
-    final scale = size.width;
+    final scale = rect.width;
     final transform = Matrix4(
       warp.a * scale,
       warp.c * scale,
@@ -203,8 +253,8 @@ class PalmGuidePainter extends CustomPainter {
       0,
       1,
       0, //
-      warp.tx * scale,
-      warp.ty * scale,
+      warp.tx * scale + rect.left,
+      warp.ty * scale + rect.top,
       0,
       1, //
     );
@@ -262,5 +312,8 @@ class PalmGuidePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(PalmGuidePainter old) =>
-      old.hold != hold || old.frame != frame || old.isReady != isReady;
+      old.hold != hold ||
+      old.frame != frame ||
+      old.isReady != isReady ||
+      old.frameAspect != frameAspect;
 }
