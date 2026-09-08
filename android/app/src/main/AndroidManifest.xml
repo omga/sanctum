@@ -12,6 +12,47 @@
          breaks in release. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The palm scan's viewfinder. Requested at runtime by the camera
+         plugin the first time a scan is opened; nothing else in the app
+         touches it. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- camera_android_camerax declares RECORD_AUDIO and
+         WRITE_EXTERNAL_STORAGE in its own manifest, and the merger
+         folds them into ours. Both are removed here, and this is not
+         tidiness.
+
+         RECORD_AUDIO puts "Microphone" on the Play listing of an app
+         that never opens one — for a product whose whole claim is that
+         nothing leaves the device, that is the single worst permission
+         to be seen asking for, and it would also need a Play data
+         declaration nobody could honestly write. The controller is
+         built with `enableAudio: false`, so the plugin never uses it.
+
+         WRITE_EXTERNAL_STORAGE is dead weight: it applies to API 28 and
+         below, our stills go to the app's own temporary directory, and
+         they are deleted after the share.
+
+         READ_EXTERNAL_STORAGE is not declared by anybody. The merger
+         *implies* it from camerax's WRITE request, and the implication
+         fires off the plugin's declaration rather than off the merged
+         result — so removing WRITE alone leaves READ behind, and the
+         listing gains "Photos and media" instead of nothing. Verified
+         by reading the merger report, not by reasoning about it.
+
+         Removing a permission the plugin declares is invisible until
+         somebody reads a store listing, so `android_manifest_test.dart`
+         asserts both removals are still here. -->
+    <uses-permission
+        android:name="android.permission.RECORD_AUDIO"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove" />
+
     <!-- Google Play Billing, via RevenueCat. Play Billing's own
          manifest merges this in too, but declaring it here keeps the
          app's permission surface readable in one file rather than

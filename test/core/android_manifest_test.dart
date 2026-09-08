@@ -78,6 +78,58 @@ void main() {
       );
     });
 
+    test('the camera the palm scan opens', () {
+      expect(
+        manifest,
+        contains('android:name="android.permission.CAMERA"'),
+      );
+    });
+
+    test('and the three permissions the camera plugin drags in with it', () {
+      // camera_android_camerax declares RECORD_AUDIO and
+      // WRITE_EXTERNAL_STORAGE in its own manifest, and the merger folds
+      // them into ours. All three are removed with `tools:node="remove"`.
+      //
+      // The same class of silent failure as everything else here, one
+      // step further out: nothing in the app misbehaves, no test fails,
+      // and the only symptom is "Microphone" on the Play listing of an
+      // app whose whole claim is that nothing leaves the device — read
+      // by a stranger, months later, deciding whether to install.
+      //
+      // READ_EXTERNAL_STORAGE is the subtle one: nobody declares it.
+      // The merger implies it from camerax's WRITE request, and the
+      // implication fires off the plugin's own declaration rather than
+      // off the merged result — so removing WRITE alone leaves READ
+      // behind.
+      const dragged = [
+        'RECORD_AUDIO',
+        'WRITE_EXTERNAL_STORAGE',
+        'READ_EXTERNAL_STORAGE',
+      ];
+
+      for (final permission in dragged) {
+        expect(
+          manifest,
+          contains('android:name="android.permission.$permission"'),
+          reason: '$permission must be listed in order to be removed',
+        );
+      }
+
+      for (final permission in dragged) {
+        expect(
+          manifest,
+          matches(
+            RegExp(
+              r'<uses-permission\s+android:name='
+              '"android[.]permission[.]$permission"'
+              r'\s+tools:node="remove"\s*/>',
+            ),
+          ),
+          reason: '$permission must be removed, not merely mentioned',
+        );
+      }
+    });
+
     test('the audio service and its media button receiver', () {
       // Same class of defect, already paid for once: the missing
       // service produced "Unable to start service … AudioService: not

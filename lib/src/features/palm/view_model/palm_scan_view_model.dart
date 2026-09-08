@@ -1,16 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
+import 'package:sanctum/src/data/services/palm/camera_palm_camera.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_camera.dart';
 import 'package:sanctum/src/domain/services/palm_composer.dart';
 import 'package:sanctum/src/domain/services/palm_detector.dart';
 import 'package:sanctum/src/domain/services/palm_geometry.dart';
+import 'package:sanctum/src/features/palm/view/widgets/palm_camera_preview.dart';
 
 part 'palm_scan_view_model.g.dart';
 
@@ -107,18 +108,32 @@ class PalmScanState {
 /// The widget that shows the live camera, or null when there is none.
 ///
 /// A builder rather than a `Widget` on [PalmCamera], which would put
-/// Flutter into a `domain/` interface. The camera adapter supplies both
-/// halves — the frame stream through [PalmCamera] and the preview
-/// surface through this — and until one exists the viewfinder says so
-/// out loud rather than showing a plausible dark rectangle.
+/// Flutter into a `domain/` interface. The adapter supplies both halves
+/// — the frame stream through [PalmCamera] and the preview surface
+/// through this.
+///
+/// Null for any camera that is not the real one, which is what makes a
+/// test's fake camera render the labelled hole rather than reaching for
+/// a controller that does not exist.
 @riverpod
-WidgetBuilder? palmPreviewBuilder(Ref ref) => null;
+WidgetBuilder? palmPreviewBuilder(Ref ref) {
+  final camera = ref.watch(palmCameraProvider);
+  if (camera is! CameraPalmCamera) return null;
+  return (context) => PalmCameraPreview(camera: camera);
+}
 
-/// The camera. Overridden once a real one exists.
+/// The camera.
+///
+/// Auto-disposed on purpose: the scan screen is the only thing that
+/// reads it, and a phone with a camera held open by a provider nobody is
+/// looking through shows a recording light and drains a battery. The
+/// disposal releases the device.
 @riverpod
-PalmCamera palmCamera(Ref ref) => throw UnimplementedError(
-  'palmCameraProvider must be overridden with a real camera',
-);
+PalmCamera palmCamera(Ref ref) {
+  final camera = CameraPalmCamera();
+  ref.onDispose(camera.dispose);
+  return camera;
+}
 
 /// The landmark model. Overridden once a real one exists.
 @riverpod

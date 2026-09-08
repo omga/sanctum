@@ -393,7 +393,7 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, five commits, ~115 tests. **Nothing has run on a
+Branch `palm-scan`, six commits, ~124 tests. **Nothing has run on a
 device**, because nothing that needs one exists yet.
 
 ### Built and tested
@@ -414,6 +414,8 @@ device**, because nothing that needs one exists yet.
 | The viewfinder | `features/palm/view/widgets/palm_guide_painter.dart` |
 | The scan screen | `features/palm/view/palm_scan_screen.dart` |
 | The reading, gated | `features/palm/view/palm_reading_screen.dart` |
+| The camera | `data/services/palm/camera_palm_camera.dart` |
+| The preview surface | `features/palm/view/widgets/palm_camera_preview.dart` |
 
 All of `domain/` is pure Dart and runs in milliseconds. The painter is
 tested by rasterising and counting pixels, which is the only way to
@@ -421,24 +423,56 @@ assert that a line lands on the hand rather than near it.
 
 ### Seams cut, implementations missing
 
-`PalmCamera`, `PalmDetector` and `PalmRidgeExtractor` are interfaces in
-`domain/services/` with no implementation. Their providers throw, in the
-manner `audioServiceProvider` already does, and are meant to be
-overridden once there is something real to override them with. The
-ridge extractor is nullable on purpose: with none, a scan still
-completes and draws the bare template — a worse product, but a working
-one, and the right thing to ship on the first device build while S3 is
-open.
+`PalmDetector` and `PalmRidgeExtractor` are still interfaces with no
+implementation. The detector's provider throws, in the manner
+`audioServiceProvider` already does. The ridge extractor is nullable on
+purpose: with none, a scan still completes and draws the bare template —
+a worse product, but a working one, and the right thing to ship on the
+first device build while S3 is open.
+
+`PalmCamera` is implemented. It takes the **back** camera deliberately:
+a front sensor costs the crease filter detail it never gets back, and a
+mirrored frame flips reported handedness and pose chirality together,
+which is precisely the case `HandLandmarks.isPalmFacing` cannot detect.
+
+### Size, measured rather than estimated
+
+`flutter build apk --release --target-platform=android-arm64`, before
+and after the camera: **30.3 MB → 32.2 MB**. The camera cost **1.9 MB**,
+against the 0.3–0.5 MB §2 guessed for it. §2's total of +8–12 MB still
+looks right, and the ML runtime and models are the whole rest of it.
+
+### Three permissions the camera plugin drags in
+
+`camera_android_camerax` declares `CAMERA`, `RECORD_AUDIO` and
+`WRITE_EXTERNAL_STORAGE`. The last two are removed with
+`tools:node="remove"`, and so is `READ_EXTERNAL_STORAGE` — which nobody
+declares at all. The merger *implies* it from camerax's `WRITE` request,
+and the implication fires off the plugin's own declaration rather than
+off the merged result, so removing `WRITE` alone leaves `READ` behind.
+
+That was found by reading `manifest-merger-release-report.txt` after a
+real build, not by reasoning about it, and the merged manifest is now
+verified to carry `CAMERA` and none of the other three.
+`android_manifest_test.dart` asserts all three removals, because the
+only symptom of losing them is "Microphone" on the Play listing of an
+app whose whole claim is that nothing leaves the device.
+
+`NSCameraUsageDescription` is in `Info.plist` and says what the picture
+is for and that it is deleted. `NSMicrophoneUsageDescription` is
+deliberately absent: the controller is built with `enableAudio: false`,
+and declaring a purpose string for a device the app never opens puts
+"Microphone" on the App Store privacy card for nothing.
 
 ### Not built at all
 
 - **The three spikes.** Still the gate. S1 in particular — the encoder
   on a real iPhone — decides whether phase 2 is a package or a platform
   channel, and it has not run.
-- **The camera adapter**, the `hand_detection` adapter, the ridge
-  fragment shader, the offscreen renderer and the exporter.
-- **`NSCameraUsageDescription`** is still absent from
-  `ios/Runner/Info.plist`, and the Android permission is undeclared.
+- **The `hand_detection` adapter**, the ridge fragment shader, the
+  offscreen renderer and the exporter. Without a detector the scan never
+  finds a hand, so the viewfinder opens and waits — the camera is real,
+  the thing it is waiting for is not.
 - **The consent screen, the privacy paragraph, and the store data-safety
   entries** in §7. None of them exist, and the feature must not ship
   without them.

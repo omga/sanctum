@@ -180,7 +180,7 @@ build** and neither exists in a release build.
 | | bytes | what it is |
 |---|---|---|
 | `app-debug.apk` | 169,645,895 | what Settings calls "App size" |
-| `app-release.apk` (arm64) | 28.8 MB | what ships |
+| `app-release.apk` (arm64) | 32.2 MB | what ships |
 
 Inside the debug APK:
 
@@ -236,6 +236,11 @@ adb shell "run-as com.soulheals.sanctum sh -c 'du -sh -- *'"
 ~19 MB of that is engine plus AOT code and is the Flutter floor — a
 native Android build of the same app would be far smaller, and no amount
 of asset work changes it.
+
+**The palm scan's camera cost 1.9 MB**, measured the same way: 30.3 MB
+before `camera: ^0.12.1`, 32.2 MB after. The landmark model and its
+runtime are still to come and are the larger half — see
+`.claude/palm.md` §2.
 
 The APK was 23.8 MB before observability. `flutter_local_notifications`
 (plus Android core-library desugaring) and `posthog_flutter` cost about
