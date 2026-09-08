@@ -10,11 +10,22 @@ import 'package:sanctum/src/domain/services/palm_line_template.dart';
 class PalmReading {
   /// Creates a reading. Built by [PalmComposer.compose].
   const PalmReading({
+    required this.id,
     required this.frame,
     required this.curves,
+    required this.canonicalCurves,
     required this.support,
+    required this.measured,
     required this.claimed,
   });
+
+  /// What the gate and the analytics call this scan.
+  ///
+  /// A capture instant and a handedness, and nothing else. It identifies
+  /// a *session*, never a person: two scans of the same palm get
+  /// different ids on purpose, so nothing stored against one can be
+  /// joined up into a record of a hand. See `PalmRepository`.
+  final String id;
 
   /// The rectified palm.
   final PalmFrame frame;
@@ -22,8 +33,27 @@ class PalmReading {
   /// The lines, snapped and placed in [PalmSpace.image], ready to draw.
   final List<PalmCurve> curves;
 
+  /// The same lines before placement, in canonical palm space.
+  ///
+  /// Kept because everything *measured* about a line has to be measured
+  /// here. A length in frame widths says as much about how close the
+  /// hand was held as about the hand, so a reading built on it would
+  /// tell somebody their life line grew when they stepped forward.
+  final List<PalmCurve> canonicalCurves;
+
   /// How well each line sits on a real crease, `[0, 1]`.
+  ///
+  /// Meaningless unless [measured] is true.
   final Map<PalmLine, double> support;
+
+  /// Whether a ridge field was available at all.
+  ///
+  /// The distinction [support] cannot carry on its own: zero means "we
+  /// looked and found nothing" only when this is true, and "we did not
+  /// look" when it is false. Collapsing the two makes every scan on a
+  /// build with no crease filter report as too faint to read — which is
+  /// a claim about the user's hand that nothing measured.
+  final bool measured;
 
   /// The lines this hand is allowed to be told about.
   final Set<PalmLine> claimed;
@@ -69,6 +99,19 @@ abstract final class PalmComposer {
   /// file's.
   static const double fateThreshold = 0.35;
 
+  /// The id for a scan taken at [at] of a [handedness] hand.
+  ///
+  /// Second resolution, because that is enough to separate two scans and
+  /// not enough to be a fingerprint. UTC so the id does not change
+  /// meaning when somebody flies.
+  static String idFor({
+    required DateTime at,
+    required Handedness handedness,
+  }) {
+    final instant = at.toUtc().toIso8601String().split('.').first;
+    return 'palm:$instant:${handedness.name}';
+  }
+
   /// Composes the reading for [landmarks], or null when the pose cannot
   /// be rectified at all.
   ///
@@ -78,6 +121,7 @@ abstract final class PalmComposer {
   /// rather than a still and no time to filter it.
   static PalmReading? compose({
     required HandLandmarks landmarks,
+    required DateTime at,
     RidgeField? field,
     double fateThreshold = PalmComposer.fateThreshold,
   }) {
@@ -102,12 +146,17 @@ abstract final class PalmComposer {
       if ((support[PalmLine.fate] ?? 0) >= fateThreshold) PalmLine.fate,
     };
 
+    final kept = [
+      for (final curve in canonical)
+        if (claimed.contains(curve.line)) curve,
+    ];
+
     return PalmReading(
+      id: idFor(at: at, handedness: landmarks.handedness),
       frame: frame,
-      curves: [
-        for (final curve in canonical)
-          if (claimed.contains(curve.line)) frame.place(curve),
-      ],
+      curves: [for (final curve in kept) frame.place(curve)],
+      canonicalCurves: kept,
+      measured: field != null,
       support: support,
       claimed: claimed,
     );

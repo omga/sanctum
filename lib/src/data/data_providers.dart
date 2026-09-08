@@ -13,6 +13,7 @@ import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
 import 'package:sanctum/src/data/repositories/journal_repository.dart';
 import 'package:sanctum/src/data/repositories/message_balance_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
+import 'package:sanctum/src/data/repositories/palm_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
 import 'package:sanctum/src/data/repositories/quiz_repository.dart';
 import 'package:sanctum/src/data/repositories/report_repository.dart';
@@ -155,6 +156,13 @@ CompatibilityRepository compatibilityRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 ReportRepository reportRepository(Ref ref) =>
     const PreferencesReportRepository();
+
+/// What the user has earned on the palm feature.
+///
+/// Ids and a flag. No scan is stored — see [PalmRepository] for why the
+/// absence is the design rather than a gap.
+@Riverpod(keepAlive: true)
+PalmRepository palmRepository(Ref ref) => const PreferencesPalmRepository();
 
 /// Onboarding quiz answers.
 @Riverpod(keepAlive: true)

@@ -171,6 +171,7 @@ class _TodayContent extends ConsumerWidget {
         // Only rendered on the four phases that carry a ritual, so it
         // reads as an event rather than a permanent menu item.
         const _RitualPrompt(),
+        const _PalmPrompt(),
 
         if (state.needsCheckIn)
           _EnergyPrompt(onSelect: controller.recordEnergy)
@@ -208,6 +209,50 @@ class _TodayContent extends ConsumerWidget {
 }
 
 /// Appears only when the current moon phase has a ritual.
+/// The way into the palm scan.
+///
+/// On Today rather than in the nav bar. The bar already carries five
+/// labels in four languages and has been fitted to them; the scan is
+/// something people come to *do*, not a place they live. It sits under
+/// the ritual prompt because the ritual is the one that expires — four
+/// phases a month — and a card that is sometimes absent should not move
+/// the one below it.
+///
+/// Ungated on purpose. The scan and the video it produces are the
+/// acquisition channel; only the reading has a price. See `PalmGate`.
+class _PalmPrompt extends StatelessWidget {
+  const _PalmPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final type = context.type;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: SanctumSpacing.lg),
+      child: GlassCard.flat(
+        onTap: () => unawaited(const PalmScanRoute().push<void>(context)),
+        child: Row(
+          children: [
+            Icon(Icons.back_hand_outlined, color: colors.gold),
+            const SizedBox(width: SanctumSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(context.l10n.palmEntryTitle, style: type.title),
+                  Text(context.l10n.palmEntryHint, style: type.bodySmall),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: colors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _RitualPrompt extends ConsumerWidget {
   const _RitualPrompt();
 

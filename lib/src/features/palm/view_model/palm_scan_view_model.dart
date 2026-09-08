@@ -1,7 +1,9 @@
 import 'dart:async';
 
-import 'package:meta/meta.dart';
+import 'package:flutter/widgets.dart';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sanctum/src/core/core_providers.dart';
 import 'package:sanctum/src/core/result/app_failure.dart';
 import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
@@ -38,6 +40,7 @@ class PalmScanState {
     this.stage = PalmScanStage.idle,
     this.readiness = PalmReadiness.noHand,
     this.preview,
+    this.still,
     this.reading,
     this.failure,
     this.steadyFrames = 0,
@@ -53,6 +56,15 @@ class PalmScanState {
   /// even when [readiness] is unhappy — a hand that is merely too small
   /// still has a pose worth outlining while the copy asks for more.
   final PalmFrame? preview;
+
+  /// The captured still, held in memory for the reveal to draw.
+  ///
+  /// **Never written anywhere.** It lives as long as this state does and
+  /// goes when the screen does. A reveal has to draw the photograph — a
+  /// hand with lines over it is the whole artefact — but nothing about
+  /// the palm feature may outlive the session that made it, so this is
+  /// the furthest the image travels.
+  final PalmFrameImage? still;
 
   /// The finished scan.
   final PalmReading? reading;
@@ -76,6 +88,7 @@ class PalmScanState {
     PalmScanStage? stage,
     PalmReadiness? readiness,
     PalmFrame? preview,
+    PalmFrameImage? still,
     PalmReading? reading,
     AppFailure? failure,
     int? steadyFrames,
@@ -84,11 +97,22 @@ class PalmScanState {
     stage: stage ?? this.stage,
     readiness: readiness ?? this.readiness,
     preview: clearPreview ? null : preview ?? this.preview,
+    still: still ?? this.still,
     reading: reading ?? this.reading,
     failure: failure ?? this.failure,
     steadyFrames: steadyFrames ?? this.steadyFrames,
   );
 }
+
+/// The widget that shows the live camera, or null when there is none.
+///
+/// A builder rather than a `Widget` on [PalmCamera], which would put
+/// Flutter into a `domain/` interface. The camera adapter supplies both
+/// halves — the frame stream through [PalmCamera] and the preview
+/// surface through this — and until one exists the viewfinder says so
+/// out loud rather than showing a plausible dark rectangle.
+@riverpod
+WidgetBuilder? palmPreviewBuilder(Ref ref) => null;
 
 /// The camera. Overridden once a real one exists.
 @riverpod
@@ -237,6 +261,7 @@ class PalmScanViewModel extends _$PalmScanViewModel {
           failure: failure,
         );
       case Ok(value: final image):
+        state = state.copyWith(still: image);
         await _compose(image);
     }
   }
@@ -263,6 +288,7 @@ class PalmScanViewModel extends _$PalmScanViewModel {
         try {
           final reading = PalmComposer.compose(
             landmarks: landmarks,
+            at: ref.read(clockProvider).now(),
             field: source?.field,
           );
           if (reading == null) throw StateError('the palm could not be read');

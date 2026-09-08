@@ -1614,5 +1614,117 @@
   "advisorSelfHint": "Ask about your own chart",
   "@advisorSelfHint": {
     "description": "Secondary line under the You row in the Ask tab."
+  },
+  "palmEntryTitle": "Read your palm",
+  "@palmEntryTitle": {
+    "description": "Title of the card on Today that opens the palm scan."
+  },
+  "palmEntryHint": "Hold your hand up, and see what's there.",
+  "@palmEntryHint": {
+    "description": "Second line on the Today card. Says what happens, and deliberately promises drawing rather than prophecy."
+  },
+  "palmTitle": "Your palm",
+  "@palmTitle": {
+    "description": "App bar title on the scan screen and the reading."
+  },
+  "palmHintNoHand": "Hold your palm up to the camera",
+  "@palmHintNoHand": {
+    "description": "Viewfinder instruction when no hand has been found. The first thing most users see."
+  },
+  "palmHintLowConfidence": "A little more light",
+  "@palmHintLowConfidence": {
+    "description": "Viewfinder instruction when a hand is found but not confidently. Names the usual cause rather than the symptom."
+  },
+  "palmHintTooSmall": "Bring your hand closer",
+  "@palmHintTooSmall": {
+    "description": "Viewfinder instruction when the hand is too far away for the creases to survive the lens."
+  },
+  "palmHintOffCentre": "Fit your whole hand in the frame",
+  "@palmHintOffCentre": {
+    "description": "Viewfinder instruction when part of the hand is outside the frame."
+  },
+  "palmHintBackOfHand": "Turn your palm towards the camera",
+  "@palmHintBackOfHand": {
+    "description": "Viewfinder instruction when the back of the hand is showing. Must not say 'move closer' — doing as told would not help."
+  },
+  "palmHintFingersClosed": "Open your fingers",
+  "@palmHintFingersClosed": {
+    "description": "Viewfinder instruction when the fingers are curled, which hides the top of every line."
+  },
+  "palmHintTooOblique": "Hold your palm flat to the camera",
+  "@palmHintTooOblique": {
+    "description": "Viewfinder instruction when the palm is tilted too steeply to rectify honestly."
+  },
+  "palmHintReady": "Hold still",
+  "@palmHintReady": {
+    "description": "Viewfinder instruction while the steadiness counter fills and the shutter is about to fire by itself."
+  },
+  "palmCapturing": "Reading your hand",
+  "@palmCapturing": {
+    "description": "Shown between the shutter firing and the reveal starting."
+  },
+  "palmRetake": "Scan again",
+  "@palmRetake": {
+    "description": "Discards the scan and reopens the camera. Present on the reveal and on every failure."
+  },
+  "palmShare": "Share",
+  "@palmShare": {
+    "description": "Shares the scan. Never gated, and never conditional on where it is shared — see PalmGate."
+  },
+  "palmSeeReading": "What it says",
+  "@palmSeeReading": {
+    "description": "Opens the reading from the reveal. Deliberately not 'Unlock' — the ask, when there is one, belongs on the reading screen and not on the button that leads to it."
+  },
+  "palmCameraUnavailable": "The camera isn't available on this build yet",
+  "@palmCameraUnavailable": {
+    "description": "Shown where the preview would be when no camera implementation has been supplied. A developer-facing state that must not survive to release."
+  },
+  "palmDisclaimer": "For entertainment only",
+  "@palmDisclaimer": {
+    "description": "Sits under the reveal and under the reading. Store review for divination content generally expects this, and the roadmap already lists its absence elsewhere as debt."
+  },
+  "palmLockedShareTitle": "Share your scan to read it",
+  "@palmLockedShareTitle": {
+    "description": "Heading of the locked reading when the user has not shared yet. States the trade plainly."
+  },
+  "palmLockedShareBody": "Send it anywhere — a friend, a group, a post. The first reading is yours either way.",
+  "@palmLockedShareBody": {
+    "description": "Body of the share lock. Names several destinations on purpose: any share counts, and requiring a public post is both unenforceable and the shape of thing App Review rejects."
+  },
+  "palmLockedPremiumTitle": "You've had your free reading",
+  "@palmLockedPremiumTitle": {
+    "description": "Heading of the locked reading once the free allowance is spent."
+  },
+  "palmLockedPremiumBody": "Premium reads every scan, as often as you like.",
+  "@palmLockedPremiumBody": {
+    "description": "Body of the premium lock. Matches the promise the compatibility lock card already makes."
+  },
+  "palmLockedPremiumCta": "See Premium",
+  "@palmLockedPremiumCta": {
+    "description": "Opens the paywall from the locked reading."
+  },
+  "palmThinTitle": "That one came out faint",
+  "@palmThinTitle": {
+    "description": "Heading when mean clarity is too low to say much. Blames the photograph, not the hand."
+  },
+  "palmThinBody": "The light hid most of the lines. Try again somewhere brighter.",
+  "@palmThinBody": {
+    "description": "Body of the faint-scan state."
+  },
+  "palmLineHeart": "Heart line",
+  "@palmLineHeart": {
+    "description": "Name of the heart line, in the reading and on the reveal."
+  },
+  "palmLineHead": "Head line",
+  "@palmLineHead": {
+    "description": "Name of the head line."
+  },
+  "palmLineLife": "Life line",
+  "@palmLineLife": {
+    "description": "Name of the life line."
+  },
+  "palmLineFate": "Fate line",
+  "@palmLineFate": {
+    "description": "Name of the fate line. Only ever shown when the creases supported one."
   }
 }
