@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_composer.dart';
 import 'package:sanctum/src/domain/services/palm_crease_snapper.dart';
+import 'package:sanctum/src/domain/services/palm_geometry.dart';
 import 'package:sanctum/src/domain/services/palm_line_template.dart';
 import 'package:sanctum/src/domain/services/palm_reading_composer.dart';
 
@@ -124,6 +125,36 @@ void main() {
 
     test('has no note for a line the hand did not claim', () {
       expect(_profileFrom(null).noteOf(PalmLine.fate), isNull);
+    });
+  });
+
+  group('length', () {
+    test('is measured against the prior a line was traced from', () {
+      // A life line fitted to a thumb set further out starts a different
+      // length from the canonical template. Measuring against the template
+      // would call a hand's line long or short for where its thumb is.
+      final template = PalmLineTemplate.life;
+      final start = template.controlPoints.first;
+      final longer = template.withControlPoints([
+        for (final point in template.controlPoints)
+          start + (point - start) * 1.3,
+      ]);
+
+      final reading = PalmReading(
+        id: 'palm:test',
+        frame: PalmGeometry.rectify(goodHand())!,
+        curves: const [],
+        canonicalCurves: [longer],
+        priors: {PalmLine.life: longer},
+        support: const {PalmLine.life: 0.6},
+        measured: true,
+        claimed: const {PalmLine.life},
+      );
+
+      expect(
+        PalmReadingComposer.compose(reading).noteOf(PalmLine.life)!.length,
+        PalmLineLength.typical,
+      );
     });
   });
 }

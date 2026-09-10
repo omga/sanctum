@@ -183,4 +183,115 @@ void main() {
       }
     });
   });
+
+  group("the life line wraps this hand's thumb", () {
+    test(
+      'lands on the crease round a thumb set further out, not a nearer one',
+      () {
+        // The Pixel 6 report, reproduced. On a right hand whose thumb base
+        // sat further toward the thumb side than the canonical hand's, the
+        // life line came out about a tenth of a palm toward the middle of
+        // the palm: the real crease had followed the thumb out to the edge
+        // of the tracer's band, and a weaker crease nearer the template won
+        // because nearness is cheap.
+        const shift = PalmPoint(-0.09, 0);
+        final hand = {
+          for (final entry in canonicalHand.entries)
+            entry.key: entry.key == PalmLandmark.thumbCmc
+                ? entry.value + shift
+                : entry.value,
+        };
+
+        final life = PalmLineTemplate.life;
+        final count = life.controlPoints.length;
+        // The real crease follows the thumb; a different ramp from the one
+        // the template uses, so this is not the fitted prior checking itself.
+        final realCrease = life.withControlPoints([
+          for (var i = 0; i < count; i++)
+            life.controlPoints[i] + shift * math.min(1, 2 * i / (count - 1)),
+        ]);
+        final decoy = life.withControlPoints([
+          for (final point in life.controlPoints)
+            point + const PalmPoint(0.03, 0),
+        ]);
+        final field = _CurveField([realCrease, decoy]);
+
+        // Without the thumb, the nearer decoy wins. That is the bug, and
+        // asserting it is what makes the next assertion mean something.
+        final unfitted = PalmCreaseSnapper.snap(curve: life, field: field);
+        expect(
+          _meanDistance(unfitted, decoy),
+          lessThan(_meanDistance(unfitted, realCrease)),
+        );
+
+        final reading = PalmComposer.compose(
+          landmarks: handAt(pose(), canonical: hand),
+          at: _at,
+          field: field,
+        )!;
+        final traced = reading.canonicalCurves.firstWhere(
+          (curve) => curve.line == PalmLine.life,
+        );
+
+        expect(_meanDistance(traced, realCrease), lessThan(0.012));
+        expect(
+          _meanDistance(traced, realCrease),
+          lessThan(_meanDistance(traced, decoy)),
+        );
+      },
+    );
+
+    test('records the prior it traced from', () {
+      final reading = PalmComposer.compose(
+        landmarks: goodHand(),
+        at: _at,
+      )!;
+      final thumb = reading.frame.toCanonical.apply(
+        reading.frame.landmarks[PalmLandmark.thumbCmc],
+      );
+      expect(
+        reading.priors[PalmLine.life]!.controlPoints.last.distanceTo(
+          PalmLineTemplate.lifeAround(thumb).controlPoints.last,
+        ),
+        lessThan(1e-9),
+      );
+    });
+  });
+}
+
+/// Creases along arbitrary curves.
+class _CurveField implements RidgeField {
+  _CurveField(List<PalmCurve> curves)
+    : _samples = [
+        for (final curve in curves) ...curve.sample(perSegment: 40),
+      ];
+
+  final List<PalmPoint> _samples;
+
+  static const double _sigma = 0.012;
+
+  @override
+  double responseAt(PalmPoint point) {
+    var nearest = double.infinity;
+    for (final sample in _samples) {
+      nearest = math.min(nearest, sample.distanceTo(point));
+    }
+    final ratio = nearest / _sigma;
+    return math.exp(-ratio * ratio);
+  }
+}
+
+/// Mean distance from [curve] to the nearest point of [target].
+double _meanDistance(PalmCurve curve, PalmCurve target) {
+  final targets = target.sample(perSegment: 40);
+  final points = curve.sample(perSegment: 4);
+  var total = 0.0;
+  for (final point in points) {
+    var nearest = double.infinity;
+    for (final other in targets) {
+      nearest = math.min(nearest, other.distanceTo(point));
+    }
+    total += nearest;
+  }
+  return total / points.length;
 }

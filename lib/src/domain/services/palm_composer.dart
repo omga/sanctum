@@ -14,6 +14,7 @@ class PalmReading {
     required this.frame,
     required this.curves,
     required this.canonicalCurves,
+    required this.priors,
     required this.support,
     required this.measured,
     required this.claimed,
@@ -40,6 +41,14 @@ class PalmReading {
   /// hand was held as about the hand, so a reading built on it would
   /// tell somebody their life line grew when they stepped forward.
   final List<PalmCurve> canonicalCurves;
+
+  /// The prior each line was traced from, in canonical space.
+  ///
+  /// Not always the canonical template: the life line is fitted to the
+  /// hand's own thumb first. Kept so that anything measured *relative* to
+  /// what was expected — a line's length, above all — is measured against
+  /// what was actually expected for this hand.
+  final Map<PalmLine, PalmCurve> priors;
 
   /// How well each line sits on a real crease, `[0, 1]`.
   ///
@@ -131,7 +140,15 @@ abstract final class PalmComposer {
     final support = <PalmLine, double>{};
     final canonical = <PalmCurve>[];
 
-    for (final template in PalmLineTemplate.all) {
+    // The life line's prior is fitted to where this hand's thumb actually
+    // is, carried into canonical space by the same warp as everything
+    // else. It is the only line that depends on the thumb, and the warp
+    // alone cannot see the thumb — see `PalmLineTemplate.lifeAround`.
+    final priors = PalmLineTemplate.forHand(
+      thumbBase: frame.toCanonical.apply(landmarks[PalmLandmark.thumbCmc]),
+    );
+
+    for (final template in priors) {
       final snapped = field == null
           ? template
           : PalmCreaseSnapper.snap(curve: template, field: field);
@@ -156,6 +173,7 @@ abstract final class PalmComposer {
       frame: frame,
       curves: [for (final curve in kept) frame.place(curve)],
       canonicalCurves: kept,
+      priors: {for (final prior in priors) prior.line: prior},
       measured: field != null,
       support: support,
       claimed: claimed,

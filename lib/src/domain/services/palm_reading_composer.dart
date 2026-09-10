@@ -122,7 +122,14 @@ abstract final class PalmReadingComposer {
     final notes = <PalmLineNote>[];
 
     for (final curve in reading.canonicalCurves) {
-      final expected = PalmLineTemplate.of(curve.line).length;
+      // Against the prior this line was traced from, not the canonical
+      // template: a life line fitted to a thumb set further out is a
+      // slightly different length before any crease moves it, and
+      // measuring that difference would call a hand's line short or long
+      // for where its thumb is.
+      final prior =
+          reading.priors[curve.line] ?? PalmLineTemplate.of(curve.line);
+      final expected = prior.length;
       final ratio = expected == 0 ? 1.0 : curve.length / expected;
 
       notes.add(

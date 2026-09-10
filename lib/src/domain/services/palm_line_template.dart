@@ -117,6 +117,68 @@ abstract final class PalmLineTemplate {
   /// Every line, fate included.
   static List<PalmCurve> get all => [heart, head, life, fate];
 
+  /// How far this hand's thumb may move the life line, in canonical units.
+  ///
+  /// A guard, not a model. A misdetected thumb — or one folded across the
+  /// palm — would otherwise drag the prior somewhere absurd, and the
+  /// tracer only searches a tenth of a palm either side of wherever it is
+  /// put.
+  static const double maxThumbShift = 0.12;
+
+  /// How much of the thumb's movement each life-line control point takes:
+  /// none at the start, all of it from the middle down.
+  static const List<double> _thumbWeights = [0, 0.25, 0.55, 0.8, 1, 1, 1];
+
+  /// The life line, moved to wrap *this* hand's thumb.
+  ///
+  /// ## Why the life line alone
+  ///
+  /// It is the only principal line whose position depends on the thumb.
+  /// It is the crease bounding the ball of the thumb, and where that mount
+  /// sits changes from hand to hand and with how far the thumb is spread.
+  /// The warp cannot know: it is fitted to the wrist and the four finger
+  /// knuckles, with the thumb left out on purpose because it moves. So the
+  /// canonical life line was placed the same way whatever the thumb was
+  /// doing, and on a Pixel 6 it came out about a tenth of a palm toward
+  /// the middle of the palm on some scans — close enough to the edge of
+  /// the tracer's band that a weaker crease nearer the template won,
+  /// because nearness is cheap.
+  ///
+  /// [thumbBase] is the detected thumb carpometacarpal landmark, in
+  /// canonical space. The line moves by its difference from the canonical
+  /// hand's, from the middle down; the start stays where it is, because
+  /// that end is shared with the head line and tied to the index web, not
+  /// to the thumb. The tracer does the rest.
+  static PalmCurve lifeAround(PalmPoint thumbBase) {
+    assert(
+      _thumbWeights.length == life.controlPoints.length,
+      'one weight per life-line control point',
+    );
+    final reference = PalmGeometry.canonicalHand[PalmLandmark.thumbCmc]!;
+    var shift = thumbBase - reference;
+    final distance = shift.magnitude;
+    if (distance > maxThumbShift) {
+      shift = shift * (maxThumbShift / distance);
+    }
+
+    return life.withControlPoints([
+      for (var i = 0; i < life.controlPoints.length; i++)
+        () {
+          final moved = life.controlPoints[i] + shift * _thumbWeights[i];
+          return PalmPoint(moved.x.clamp(0, 1), moved.y.clamp(0, 1));
+        }(),
+    ]);
+  }
+
+  /// Every line, with the life line fitted to [thumbBase] when one is
+  /// known.
+  static List<PalmCurve> forHand({PalmPoint? thumbBase}) => [
+    heart,
+    head,
+    if (thumbBase == null) life else lifeAround(thumbBase),
+    fate,
+  ];
+
   /// The template for [line].
   static PalmCurve of(PalmLine line) => switch (line) {
     PalmLine.heart => heart,

@@ -393,11 +393,7 @@ is not how we find out.
 
 ## 10. What is built, as of 2026-09-08
 
-Branch `palm-scan`, eleven commits, ~154 tests. **Run three times on a
-Pixel 6** — see below. The first crashed, the second detected nothing,
-the third detected well and drew in the wrong place. Every cause is
-fixed; none was visible from a test until one was written for it. **Nothing has run on a
-device**, because nothing that needs one exists yet.
+Branch `palm-scan`. **Run five times on a Pixel 6** — see below. The first crashed, the second detected nothing, the third drew in the wrong place, the fourth drew an outline that was not a hand and a life line bowed backwards, and the fifth put heart and head exactly on their creases with the life line sometimes a tenth of a palm off. Each cause found has a fix and a test; the fifth still needs a device to confirm.
 
 ### Built and tested
 
@@ -662,6 +658,49 @@ line's, and the tracer now settles that from the image.
 crop reaches past the palm — on a hand wearing a ring, the ring's dark
 edge sits inside it and set the ruler, leaving every real crease faint.
 It scales by the 99th percentile now.
+
+### Fifth run: heart and head on their creases, life sometimes a tenth off
+
+Ran 2026-09-11 on a right hand. Heart and head landed exactly on the
+creases — the tracer doing what it was built for. The life line came out
+about a tenth of a palm toward the middle of the palm on some scans.
+
+**The life line is the only principal line that depends on the thumb.**
+It is the crease bounding the ball of the thumb, and where that mount
+sits changes from hand to hand and with how far the thumb is spread. The
+warp cannot see that: it is fitted to the wrist and the four finger
+knuckles, and the thumb was left out on purpose because it moves. So the
+life-line prior sat in the same place whatever the thumb was doing.
+When the real crease followed the thumb out toward the edge of the
+tracer's band, a weaker crease nearer the template could win, because
+the tracer charges for distance and nearness is cheap. That is what
+"sometimes" looks like: two creases scoring close, and small changes in
+thumb pose deciding between them.
+
+`PalmLineTemplate.lifeAround` fits the prior to the detected thumb base,
+carried into canonical space by the same warp as everything else. The
+line moves by the base's difference from the canonical hand's, taking
+none of it at its start — shared with the head line and tied to the
+index web, not the thumb — and all of it from the middle down. The move
+is capped at 0.12 so a misdetected or folded thumb cannot drag the prior
+across the palm. The tracer does the rest.
+
+Heart and head do not move with the thumb and are untouched; a test
+holds them identical.
+
+`PalmReading.priors` records what each line was traced from, and a
+line's length is now read against that rather than the canonical
+template, so a hand is not told its life line is short because its thumb
+sits further out.
+
+The regression test reproduces the report: a thumb base further out, a
+real crease that follows it, and a decoy crease a little toward the
+palm's middle. It first asserts the *unfitted* template traces onto the
+decoy — the bug, so the test is known to discriminate — then that the
+fitted prior traces onto the real crease.
+
+**Not yet measured:** the ramp and the cap are reasoned from anatomy,
+not fitted to captures. The next device run is what confirms them.
 
 ### The handedness flip, and why it is the riskiest line in the feature
 
