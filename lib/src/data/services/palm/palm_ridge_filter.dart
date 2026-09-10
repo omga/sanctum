@@ -31,7 +31,8 @@ import 'package:sanctum/src/domain/services/palm_crease_snapper.dart';
 ///
 /// ## The floor matters more than the ceiling
 ///
-/// Responses are scaled so the strongest creases reach 1, which on a
+/// Responses are scaled so the strongest creases reach 1 — by a high
+/// percentile rather than the maximum, see [responseFrom] — which on a
 /// palm photographed in good light is right and on a blank wall would
 /// stretch sensor noise to look identical. [minimumContrast] is what
 /// stops that: below it the divisor stops shrinking, a featureless
@@ -70,20 +71,40 @@ abstract final class PalmRidgeFilter {
     final smoothed = _blur(grey, size);
     final response = Float32List(size * size);
 
-    var strongest = 0.0;
     for (var y = 0; y < size; y++) {
       for (var x = 0; x < size; x++) {
-        final best = _flankResponse(smoothed, size, x, y);
-        response[y * size + x] = best;
-        if (best > strongest) strongest = best;
+        response[y * size + x] = _flankResponse(smoothed, size, x, y);
       }
     }
 
-    final divisor = math.max(strongest, minimumContrast);
+    // Scaled by the 99th percentile, not the maximum. The crop reaches
+    // past the palm, and on a hand wearing a ring the ring's dark edge
+    // sits inside that margin: scaling by the single strongest response
+    // let one bright edge set the ruler, and every real crease on the
+    // palm came out faint beside it.
+    final divisor = math.max(_percentile(response, 0.99), minimumContrast);
     for (var i = 0; i < response.length; i++) {
       response[i] = (response[i] / divisor).clamp(0.0, 1.0);
     }
     return response;
+  }
+
+  /// The value below which [fraction] of [values] fall, from a histogram
+  /// over the response's own range of `[0, 256)`.
+  static double _percentile(Float32List values, double fraction) {
+    const bins = 1024;
+    const top = 256.0;
+    final counts = Int32List(bins);
+    for (final value in values) {
+      counts[(value / top * bins).floor().clamp(0, bins - 1)]++;
+    }
+    final wanted = (values.length * fraction).ceil();
+    var seen = 0;
+    for (var bin = 0; bin < bins; bin++) {
+      seen += counts[bin];
+      if (seen >= wanted) return (bin + 1) * top / bins;
+    }
+    return top;
   }
 
   static Float32List _greyscale(Uint8List rgba, int size) {

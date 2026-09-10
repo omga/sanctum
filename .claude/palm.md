@@ -599,6 +599,70 @@ them back *through* its inverse — which is the only way to tell a
 correct rectification from a plausible one, and the matrix that composes
 three transforms is the piece most likely to be silently wrong.
 
+### Fourth run: an outline that was not a hand, and a life line drawn backwards
+
+Ran 2026-09-11. Detection worked, the shutter fired, the reveal played —
+and the result showed two things that tests had not.
+
+**The outline did not look like a hand**, especially the thumb. It had
+been built from parts twice: first eleven points authored by eye (a
+lopsided circle), then a capsule down every bone, unioned (sausage
+fingers, a V where five capsules met at the wrist, and a thumb stuck on
+at whatever angle the canonical hand held it). The second also pushed
+the *canonical* hand through the warp fitted to the knuckles, so the
+outline ignored where the user's fingers and thumb actually were.
+
+`PalmSilhouette` now traces one line round the hand from the 21
+detected landmarks — up each finger's outer edge, round a tapered tip,
+into the web, across to the thumb and back round the thenar bulge —
+joined with a **centripetal** Catmull-Rom spline, the variant proven not
+to loop at uneven spacing like fingertips and webs. Sides are chosen
+relative to the hand (toward the little finger, toward the index), so
+both hands trace the same way round. Tests hold it to never crossing
+itself on either hand or at an angle, to reaching past every tip, and to
+going round the thumb whether it is tucked or splayed. The live outline
+eases between detections instead of jumping twelve times a second.
+
+**The size threshold was nearly unreachable on the phone it was run
+on.** A Pixel 6's preview is 411 × 914 logical over a 2:3 frame, so the
+cover crop hides a third of the width; at `minKnuckleSpan` 0.28 the
+largest hand outline that fits on screen cleared it by one percent, and
+jitter would flicker it. It is **0.22** now. The creases come from the
+full-resolution still, where 0.22 of a 3024-pixel photograph is still
+about 660 pixels across the knuckles. A test places a hand exactly on
+the target on three screen geometries, Pixel 6 included, and asserts
+the checks accept it with ten percent to spare.
+
+**The life line bowed the wrong way.** It encloses the ball of the
+thumb, so it bows toward the palm's middle; the template bowed toward
+the thumb. At its middle it sat about 0.3 of a palm from the real
+crease, and the snapper was only allowed to look 0.045 either side, so
+nothing could rescue it.
+
+**So the snapper is a tracer now.** It picked each anchor's best offset
+on its own and smoothed afterwards, which failed twice over: a radius
+small enough not to jump lines was too small to reach a misplaced
+crease, and independent choices on a textured palm landed neighbouring
+points on different wrinkles. It now cuts a line into 28 stations,
+scores every offset in a ±0.10 band at each, and finds the best
+continuous path by dynamic programming, paying for distance from the
+template and for bending. The balance was worked out before writing it:
+the first weights would have let a single dark speck on a blank palm
+pull the line into a detour, so bending is expensive enough that a
+one-station gain cannot pay for the trip out and back, while a real
+crease repays the transition at every station it runs for. The path may
+bow either way — the photograph decides curvature, not the template.
+
+**The heart line was not mirrored.** Everything sat on the correct side;
+flipping it end to end would start it under the thumb, where the head
+and life lines begin. Its curvature was a guess, though, like the life
+line's, and the tracer now settles that from the image.
+
+**The ridge filter scaled by the single strongest response**, and the
+crop reaches past the palm — on a hand wearing a ring, the ring's dark
+edge sits inside it and set the ruler, leaving every real crease faint.
+It scales by the 99th percentile now.
+
 ### The handedness flip, and why it is the riskiest line in the feature
 
 MediaPipe's landmark model emits handedness **assuming its input is

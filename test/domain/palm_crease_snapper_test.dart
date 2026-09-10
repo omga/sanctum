@@ -9,7 +9,7 @@ import 'package:sanctum/src/domain/services/palm_line_template.dart';
 ///
 /// Stands in for the ridge filter. Writing the field by hand is the
 /// whole reason [RidgeField] is an interface rather than a bitmap: the
-/// snapper can be tested against a crease whose position is known
+/// tracer can be tested against a crease whose position is known
 /// exactly, which no photograph would give us.
 class _Crease implements RidgeField {
   _Crease(PalmCurve reference, {this.sigma = 0.012})
@@ -22,15 +22,14 @@ class _Crease implements RidgeField {
   double responseAt(PalmPoint point) {
     var nearest = double.infinity;
     for (final sample in _samples) {
-      final distance = sample.distanceTo(point);
-      if (distance < nearest) nearest = distance;
+      nearest = math.min(nearest, sample.distanceTo(point));
     }
     final ratio = nearest / sigma;
     return math.exp(-ratio * ratio);
   }
 }
 
-/// The strongest response of several creases at a point.
+/// The strongest response of several fields at a point.
 class _Creases implements RidgeField {
   _Creases(this.fields);
 
@@ -41,6 +40,19 @@ class _Creases implements RidgeField {
       fields.map((field) => field.responseAt(point)).reduce(math.max);
 }
 
+/// One dark speck and nothing else.
+class _Speck implements RidgeField {
+  const _Speck(this.centre);
+
+  final PalmPoint centre;
+
+  @override
+  double responseAt(PalmPoint point) {
+    final ratio = point.distanceTo(centre) / 0.008;
+    return math.exp(-ratio * ratio);
+  }
+}
+
 /// Nothing anywhere.
 class _Blank implements RidgeField {
   const _Blank();
@@ -49,36 +61,33 @@ class _Blank implements RidgeField {
   double responseAt(PalmPoint point) => 0;
 }
 
-/// The curve as the snapper will see it, after its own subdivision.
-///
-/// `snap` returns more control points than it was given, so any test
-/// that compares point-for-point has to compare against this rather than
-/// against the template — otherwise it is asserting that subdivision
-/// did not happen.
-PalmCurve _refine(PalmCurve curve) {
-  var refined = curve;
-  for (var i = 0; i < PalmCreaseSnapper.defaultSubdivisions; i++) {
-    refined = refined.subdivided();
-  }
-  return refined;
-}
-
 PalmCurve _shifted(PalmCurve curve, PalmPoint by) => curve.withControlPoints([
   for (final point in curve.controlPoints) point + by,
 ]);
 
-double _meanDistanceToCrease(PalmCurve curve, PalmCurve crease) {
-  final samples = crease.sample(perSegment: 40);
-  final anchors = curve.anchors;
+/// [curve] bowed by [depth] in `y`, pinned at both ends.
+PalmCurve _bowed(PalmCurve curve, double depth) {
+  final count = curve.controlPoints.length;
+  return curve.withControlPoints([
+    for (var i = 0; i < count; i++)
+      curve.controlPoints[i] +
+          PalmPoint(0, depth * math.sin(math.pi * i / (count - 1))),
+  ]);
+}
+
+/// Mean distance from [curve] to the nearest point of [crease].
+double _meanDistance(PalmCurve curve, PalmCurve crease) {
+  final targets = crease.sample(perSegment: 40);
+  final points = curve.sample(perSegment: 4);
   var total = 0.0;
-  for (final anchor in anchors) {
+  for (final point in points) {
     var nearest = double.infinity;
-    for (final sample in samples) {
-      nearest = math.min(nearest, sample.distanceTo(anchor));
+    for (final target in targets) {
+      nearest = math.min(nearest, target.distanceTo(point));
     }
     total += nearest;
   }
-  return total / anchors.length;
+  return total / points.length;
 }
 
 void main() {
@@ -96,9 +105,6 @@ void main() {
     });
 
     test('claims only the three lines every hand has', () {
-      // Fate is drawn when the creases support it and named only then —
-      // plenty of hands have none, and a line the user cannot find is a
-      // claim they can disprove by looking down.
       expect(PalmLineTemplate.principal.map((curve) => curve.line), [
         PalmLine.heart,
         PalmLine.head,
@@ -109,161 +115,154 @@ void main() {
     });
 
     test('keeps the heart line above the head line across the palm', () {
-      // The one ordering palmistry will not forgive, and the easiest to
-      // break while nudging coordinates.
       final heart = PalmLineTemplate.heart.sample();
       final head = PalmLineTemplate.head.sample();
       for (final point in heart) {
-        final below = head.where((other) => (other.x - point.x).abs() < 0.05);
-        for (final other in below) {
+        for (final other in head.where((o) => (o.x - point.x).abs() < 0.05)) {
           expect(point.y, lessThan(other.y));
         }
       }
     });
+
+    test('bows the life line toward the palm, round the thumb', () {
+      // Authored backwards once. The life line encloses the ball of the
+      // thumb, so its middle sits further from the thumb side (larger x)
+      // than the straight line between its ends.
+      final life = PalmLineTemplate.life;
+      final start = life.controlPoints.first;
+      final end = life.controlPoints.last;
+      final middle = life.sample(perSegment: 20)[20];
+      final t = (middle.y - start.y) / (end.y - start.y);
+      final chordX = start.x + (end.x - start.x) * t;
+
+      expect(middle.x, greaterThan(chordX + 0.05));
+    });
   });
 
-  group('snap', () {
-    test('leaves a curve that already sits on its crease', () {
+  group('trace', () {
+    test('leaves a line that already sits on its crease', () {
       final template = PalmLineTemplate.head;
-      final refined = _refine(template);
-      final snapped = PalmCreaseSnapper.snap(
+      final traced = PalmCreaseSnapper.snap(
         curve: template,
         field: _Crease(template),
       );
-
-      for (var i = 0; i < refined.anchors.length; i++) {
-        expect(
-          snapped.anchors[i].distanceTo(refined.anchors[i]),
-          lessThan(0.004),
-        );
-      }
+      expect(_meanDistance(traced, template), lessThan(0.004));
     });
 
-    test('pulls a curve onto a crease offset from the template', () {
+    test('pulls a line onto a crease offset from the template', () {
       final template = PalmLineTemplate.head;
-      final crease = _shifted(template, const PalmPoint(0, 0.02));
+      final crease = _shifted(template, const PalmPoint(0, 0.035));
 
-      final before = _meanDistanceToCrease(template, crease);
-      final snapped = PalmCreaseSnapper.snap(
+      final before = _meanDistance(template, crease);
+      final traced = PalmCreaseSnapper.snap(
         curve: template,
         field: _Crease(crease),
       );
-      final after = _meanDistanceToCrease(snapped, crease);
 
-      expect(before, greaterThan(0.015));
-      expect(after, lessThan(before / 3));
+      expect(before, greaterThan(0.03));
+      expect(_meanDistance(traced, crease), lessThan(before / 3));
+    });
+
+    test('follows a crease that bends the other way', () {
+      // The life-line lesson, as a test. A template's curvature is a
+      // guess; the photograph's is not. The old per-point snapper could
+      // only nudge each anchor a little, so a crease bowing the opposite
+      // way stayed out of reach at its middle — exactly where the
+      // difference is largest.
+      final template = PalmLineTemplate.heart;
+      final crease = _bowed(template, 0.07);
+
+      final before = _meanDistance(template, crease);
+      final traced = PalmCreaseSnapper.snap(
+        curve: template,
+        field: _Crease(crease),
+      );
+
+      expect(_meanDistance(traced, crease), lessThan(before / 2));
     });
 
     test('prefers the crease under it to an equal one further away', () {
-      // What the falloff penalty buys. Without it the heart line walks
-      // onto whichever neighbouring crease happens to read darker.
       final template = PalmLineTemplate.head;
-      final near = _Crease(template);
-      final far = _Crease(_shifted(template, const PalmPoint(0, 0.04)));
-
-      final snapped = PalmCreaseSnapper.snap(
+      final traced = PalmCreaseSnapper.snap(
         curve: template,
-        field: _Creases([near, far]),
+        field: _Creases([
+          _Crease(template),
+          _Crease(_shifted(template, const PalmPoint(0, 0.04))),
+        ]),
       );
 
-      expect(
-        _meanDistanceToCrease(snapped, template),
-        lessThan(0.006),
-      );
+      expect(_meanDistance(traced, template), lessThan(0.006));
     });
 
-    test('never moves an anchor further than the search radius', () {
-      final template = PalmLineTemplate.life;
-      final refined = _refine(template);
-      final crease = _shifted(template, const PalmPoint(0.2, 0));
-      final snapped = PalmCreaseSnapper.snap(
-        curve: template,
-        field: _Crease(crease),
-        searchRadius: 0.03,
-      );
-
-      for (var i = 0; i < refined.anchors.length; i++) {
-        expect(
-          snapped.anchors[i].distanceTo(refined.anchors[i]),
-          lessThanOrEqualTo(0.03 + 1e-9),
-        );
-      }
-    });
-
-    test('preserves every tangent, so the curve does not kink', () {
+    test('is not pulled into a detour by a single speck', () {
+      // A mole, a crumb, the edge of a ring: strong, dark and short. A
+      // one-station gain cannot pay for bending out and back, so the line
+      // stays put where a real crease would have drawn it across.
       final template = PalmLineTemplate.heart;
-      final refined = _refine(template);
-      final snapped = PalmCreaseSnapper.snap(
+      final middle = template.controlPoints[3];
+      final traced = PalmCreaseSnapper.snap(
         curve: template,
-        field: _Crease(_shifted(template, const PalmPoint(0, 0.015))),
+        field: _Speck(middle + const PalmPoint(0, 0.06)),
       );
 
-      for (var i = 0; i < refined.segmentCount; i++) {
-        final beforeOut = refined.controlPoints[i * 3].distanceTo(
-          refined.controlPoints[i * 3 + 1],
-        );
-        final afterOut = snapped.controlPoints[i * 3].distanceTo(
-          snapped.controlPoints[i * 3 + 1],
-        );
-        expect(afterOut, closeTo(beforeOut, 1e-9));
+      final nearest = traced
+          .sample(perSegment: 8)
+          .map((point) => point.distanceTo(middle))
+          .reduce(math.min);
+      expect(nearest, lessThan(0.015));
+    });
+
+    test('never moves further than the band', () {
+      final template = PalmLineTemplate.life;
+      final traced = PalmCreaseSnapper.snap(
+        curve: template,
+        field: _Crease(_shifted(template, const PalmPoint(0.2, 0))),
+        band: 0.03,
+      );
+
+      final allowed = template.sample(perSegment: 40);
+      for (final point in traced.sample(perSegment: 4)) {
+        final nearest = allowed
+            .map((other) => other.distanceTo(point))
+            .reduce(math.min);
+        expect(nearest, lessThanOrEqualTo(0.03 + 0.002));
       }
     });
 
-    test('spreads a single-anchor find across its neighbours', () {
-      // Smoothing. One dark speck under one anchor must not produce a
-      // curve with a spike in it — the neighbours come partway, so the
-      // line bends instead of kinking.
-      final template = PalmLineTemplate.head;
-      final refined = _refine(template);
-      final anchors = refined.anchors;
-      const peak = 4;
-      final speck = _Crease(
-        PalmCurve(
-          line: PalmLine.head,
-          controlPoints: [
-            anchors[peak] + const PalmPoint(-0.004, 0.028),
-            anchors[peak] + const PalmPoint(-0.001, 0.028),
-            anchors[peak] + const PalmPoint(0.001, 0.028),
-            anchors[peak] + const PalmPoint(0.004, 0.028),
-          ],
-        ),
-        sigma: 0.006,
+    test('comes out smooth, with no kinks', () {
+      final traced = PalmCreaseSnapper.snap(
+        curve: PalmLineTemplate.heart,
+        field: _Crease(_bowed(PalmLineTemplate.heart, 0.07)),
       );
 
-      final snapped = PalmCreaseSnapper.snap(curve: template, field: speck);
-      final moved = [
-        for (var i = 0; i < anchors.length; i++)
-          snapped.anchors[i].distanceTo(anchors[i]),
-      ];
-
-      expect(moved[peak], greaterThan(0.002));
-      expect(moved[peak - 1], greaterThan(0));
-      expect(moved[peak + 1], greaterThan(0));
-      expect(moved[peak - 1], lessThan(moved[peak]));
-      expect(moved.first, lessThan(moved[peak]));
+      final points = traced.sample(perSegment: 4);
+      for (var i = 1; i < points.length - 1; i++) {
+        final a = (points[i] - points[i - 1]).normalized;
+        final b = (points[i + 1] - points[i]).normalized;
+        final turn = math.acos((a.x * b.x + a.y * b.y).clamp(-1.0, 1.0));
+        expect(turn, lessThan(math.pi / 9), reason: 'at sample $i');
+      }
     });
 
-    test('does nothing on a blank field', () {
+    test('stays on the template on a blank palm', () {
       final template = PalmLineTemplate.life;
-      final snapped = PalmCreaseSnapper.snap(
+      final traced = PalmCreaseSnapper.snap(
         curve: template,
         field: const _Blank(),
       );
+      expect(_meanDistance(traced, template), lessThan(0.004));
+    });
 
-      // Not the same control points — snapping subdivides first — but
-      // the same curve, which is the claim that matters.
-      expect(
-        snapped.controlPoints.length,
-        greaterThan(
-          template.controlPoints.length,
-        ),
+    test('refuses a line that is not in canonical space', () {
+      final placed = PalmCurve(
+        line: PalmLine.head,
+        controlPoints: PalmLineTemplate.head.controlPoints,
+        space: PalmSpace.image,
       );
-      final before = template.sample(perSegment: 16);
-      final after = snapped.sample(perSegment: 4);
-      expect(after.length, before.length);
-      for (var i = 0; i < before.length; i++) {
-        expect(after[i].distanceTo(before[i]), lessThan(1e-12));
-      }
+      expect(
+        () => PalmCreaseSnapper.snap(curve: placed, field: const _Blank()),
+        throwsA(isA<AssertionError>()),
+      );
     });
 
     test('subdivision traces the same curve exactly', () {
@@ -277,18 +276,6 @@ void main() {
           expect(after[i].distanceTo(before[i]), lessThan(1e-12));
         }
       }
-    });
-
-    test('refuses a curve that is not in canonical space', () {
-      final placed = PalmCurve(
-        line: PalmLine.head,
-        controlPoints: PalmLineTemplate.head.controlPoints,
-        space: PalmSpace.image,
-      );
-      expect(
-        () => PalmCreaseSnapper.snap(curve: placed, field: const _Blank()),
-        throwsA(isA<AssertionError>()),
-      );
     });
   });
 
@@ -306,14 +293,15 @@ void main() {
     });
 
     test('separates a hand with a fate line from one without', () {
-      // The number the reading consults before it names the fate line.
       final fate = PalmLineTemplate.fate;
-      final elsewhere = _Crease(PalmLineTemplate.life);
-
       expect(
         PalmCreaseSnapper.support(curve: fate, field: _Crease(fate)),
         greaterThan(
-          PalmCreaseSnapper.support(curve: fate, field: elsewhere) + 0.5,
+          PalmCreaseSnapper.support(
+                curve: fate,
+                field: _Crease(PalmLineTemplate.life),
+              ) +
+              0.5,
         ),
       );
     });

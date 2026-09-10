@@ -23,25 +23,32 @@ import 'package:sanctum/src/domain/services/palm_geometry.dart';
 /// finger side — so these curves serve a left hand and a right hand
 /// alike. See [PalmGeometry] for why that works and what it costs.
 ///
-/// ## These numbers are authored, and not yet measured
+/// ## These numbers are a prior, not an answer
 ///
-/// They come from standard palmistry placement over adult hand
-/// proportions, not from a dataset. Spike S3 in `.claude/palm.md` §8 is
-/// what replaces them with something fitted to real captures; until it
-/// runs, treat every coordinate here as a starting point.
+/// They come from palmar crease anatomy over adult hand proportions: the
+/// heart line over the little and ring knuckles, the head line starting
+/// with the life line at the thumb-side edge, the life line round the
+/// thenar eminence. They are there to put the tracer in the right
+/// neighbourhood, and the tracer decides the rest — including which way a
+/// line bends, because the first time that was authored by eye it was
+/// authored backwards.
 abstract final class PalmLineTemplate {
-  /// The heart line: from the little-finger edge, rising toward the gap
-  /// between the index and middle fingers.
+  /// The heart line: from the little-finger edge, across, and curving up
+  /// at the end into the gap between the index and middle fingers.
+  ///
+  /// It sags toward the wrist in the middle, which is the common shape —
+  /// and deliberately only a prior. Heart lines genuinely bend either way,
+  /// and the tracer is free to follow whichever this one does.
   static final PalmCurve heart = PalmCurve(
     line: PalmLine.heart,
     controlPoints: const [
-      PalmPoint(0.97, 0.34),
-      PalmPoint(0.82, 0.29),
-      PalmPoint(0.66, 0.26),
-      PalmPoint(0.50, 0.25),
-      PalmPoint(0.40, 0.24),
-      PalmPoint(0.32, 0.22),
-      PalmPoint(0.24, 0.19),
+      PalmPoint(1, 0.36),
+      PalmPoint(0.88, 0.35),
+      PalmPoint(0.74, 0.33),
+      PalmPoint(0.62, 0.32),
+      PalmPoint(0.5, 0.31),
+      PalmPoint(0.38, 0.28),
+      PalmPoint(0.3, 0.21),
     ],
   );
 
@@ -50,28 +57,35 @@ abstract final class PalmLineTemplate {
   static final PalmCurve head = PalmCurve(
     line: PalmLine.head,
     controlPoints: const [
-      PalmPoint(0.16, 0.36),
-      PalmPoint(0.30, 0.38),
-      PalmPoint(0.45, 0.42),
-      PalmPoint(0.58, 0.46),
-      PalmPoint(0.68, 0.49),
-      PalmPoint(0.76, 0.52),
-      PalmPoint(0.84, 0.55),
+      PalmPoint(0.12, 0.35),
+      PalmPoint(0.26, 0.37),
+      PalmPoint(0.4, 0.41),
+      PalmPoint(0.52, 0.45),
+      PalmPoint(0.64, 0.49),
+      PalmPoint(0.74, 0.52),
+      PalmPoint(0.82, 0.54),
     ],
   );
 
   /// The life line: around the ball of the thumb, from the index edge
   /// down to the wrist.
+  ///
+  /// It bows toward the **middle of the palm**, enclosing the thumb's
+  /// mount on its thumb side. The first version bowed the other way —
+  /// toward the thumb — which a Pixel 6 photograph made obvious and which
+  /// no amount of snapping could rescue: at its middle it sat about 0.3
+  /// of a palm from the real crease, several times further than the
+  /// snapper was allowed to look.
   static final PalmCurve life = PalmCurve(
     line: PalmLine.life,
     controlPoints: const [
-      PalmPoint(0.19, 0.30),
-      PalmPoint(0.14, 0.42),
-      PalmPoint(0.16, 0.55),
-      PalmPoint(0.24, 0.68),
-      PalmPoint(0.30, 0.78),
-      PalmPoint(0.36, 0.86),
-      PalmPoint(0.42, 0.95),
+      PalmPoint(0.13, 0.36),
+      PalmPoint(0.22, 0.42),
+      PalmPoint(0.32, 0.52),
+      PalmPoint(0.37, 0.65),
+      PalmPoint(0.41, 0.76),
+      PalmPoint(0.4, 0.88),
+      PalmPoint(0.35, 0.97),
     ],
   );
 
@@ -83,13 +97,13 @@ abstract final class PalmLineTemplate {
   static final PalmCurve fate = PalmCurve(
     line: PalmLine.fate,
     controlPoints: const [
-      PalmPoint(0.48, 0.95),
-      PalmPoint(0.48, 0.78),
-      PalmPoint(0.47, 0.62),
-      PalmPoint(0.46, 0.48),
-      PalmPoint(0.45, 0.38),
-      PalmPoint(0.45, 0.30),
-      PalmPoint(0.45, 0.22),
+      PalmPoint(0.54, 0.96),
+      PalmPoint(0.54, 0.8),
+      PalmPoint(0.52, 0.64),
+      PalmPoint(0.51, 0.52),
+      PalmPoint(0.5, 0.42),
+      PalmPoint(0.49, 0.34),
+      PalmPoint(0.48, 0.26),
     ],
   );
 
