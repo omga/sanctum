@@ -4,40 +4,34 @@ import 'package:flutter/widgets.dart';
 import 'package:sanctum/src/design_system/tokens/sanctum_colors.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_geometry.dart';
+import 'package:sanctum/src/domain/services/palm_silhouette.dart';
 
 /// The viewfinder: where to put a hand, and where one currently is.
 ///
 /// ## Two outlines, and the difference between them is the instruction
 ///
-/// A static target sits in the middle of the frame in the shape of a
-/// hand. When a hand is found, its own outline is drawn over the target
-/// — same shape, actual position — so the gap between the two *is* the
+/// A faint target sits in the middle of the frame. When a hand is found,
+/// its own outline is drawn over it, so the gap between the two *is* the
 /// correction, without a sentence having to describe it.
 ///
-/// The live outline appears as soon as there is a pose, including for
-/// frames the geometry has refused. A hand that is merely too far away
-/// still has an outline worth drawing, and drawing it while the copy
-/// asks for more is the difference between an app that is guiding
-/// somebody and one that has apparently stopped working.
+/// ## The live outline is the user's hand, not the template's
 ///
-/// ## Why the shape is computed rather than drawn
+/// It used to be the canonical hand pushed through the warp fitted to
+/// the knuckles — which lined the palm up and left every finger and the
+/// thumb at the canonical angle, whatever the user's were doing. It is
+/// drawn from the detected landmarks now, so a splayed thumb is drawn
+/// splayed. The warp is still what places the *lines*; the outline no
+/// longer needs it.
 ///
-/// The first version was a polygon of eleven authored points, and on a
-/// phone it read as a lopsided circle: no fingers, roughly square, and
-/// nothing about it said "hand". Points authored by eye cannot be
-/// checked by the person authoring them.
-///
-/// So the outline is built instead — a capsule down each finger and
-/// across the palm, taken from [PalmGeometry.canonicalHand], unioned
-/// into one path and stroked. It is the same anatomy the warp is fitted
-/// to, which means the target and the detected outline are necessarily
-/// the same shape, and nudging the anatomy moves both.
+/// Both outlines come from `PalmSilhouette`, which traces one smooth
+/// line round the hand. See there for why the two versions built from
+/// parts did not look like hands.
 class PalmGuidePainter extends CustomPainter {
   /// Creates a painter.
   const PalmGuidePainter({
     required this.colors,
     required this.hold,
-    this.frame,
+    this.landmarks,
     this.isReady = false,
     this.frameAspect = 4 / 3,
   });
@@ -48,8 +42,8 @@ class PalmGuidePainter extends CustomPainter {
   /// How close the shutter is to firing, `[0, 1]`.
   final double hold;
 
-  /// The live warp, when there is a hand.
-  final PalmFrame? frame;
+  /// The detected hand in `PalmSpace.image`, or null when there is none.
+  final List<PalmPoint>? landmarks;
 
   /// Whether this frame would be captured.
   final bool isReady;
@@ -58,207 +52,152 @@ class PalmGuidePainter extends CustomPainter {
   ///
   /// Needed because the preview is cover-fitted: on a tall phone a 3:4
   /// frame fills the height and overflows the width by half, so a third
-  /// of what the camera sees is off screen on either side. Everything
-  /// here is drawn in frame coordinates, and without the crop they land
-  /// at about two thirds scale, up and to the left — which is exactly
-  /// how the outline first appeared over a hand it was supposed to
-  /// trace.
+  /// of what the camera sees is off screen. Everything here is in frame
+  /// coordinates, and without the crop it lands at about two thirds
+  /// scale, up and to the left.
   final double frameAspect;
 
-  /// Half-width of a finger, in canonical units.
-  static const double _fingerRadius = 0.062;
-
-  /// Half-width of the palm's own capsules. Wider, so the five of them
-  /// merge into one mass rather than reading as splayed bones.
-  static const double _palmRadius = 0.15;
-
-  /// The bones a capsule is laid along.
-  static const List<List<PalmLandmark>> _bones = [
-    // The palm: wrist to each knuckle, then across the knuckle line.
-    [PalmLandmark.wrist, PalmLandmark.indexMcp],
-    [PalmLandmark.wrist, PalmLandmark.middleMcp],
-    [PalmLandmark.wrist, PalmLandmark.ringMcp],
-    [PalmLandmark.wrist, PalmLandmark.pinkyMcp],
-    [PalmLandmark.indexMcp, PalmLandmark.middleMcp],
-    [PalmLandmark.middleMcp, PalmLandmark.ringMcp],
-    [PalmLandmark.ringMcp, PalmLandmark.pinkyMcp],
-    // The fingers.
-    [PalmLandmark.indexMcp, PalmLandmark.indexPip, PalmLandmark.indexTip],
-    [PalmLandmark.middleMcp, PalmLandmark.middlePip, PalmLandmark.middleTip],
-    [PalmLandmark.ringMcp, PalmLandmark.ringPip, PalmLandmark.ringTip],
-    [PalmLandmark.pinkyMcp, PalmLandmark.pinkyPip, PalmLandmark.pinkyTip],
-    // The thumb, which leaves the palm at its own angle.
-    [
-      PalmLandmark.thumbCmc,
-      PalmLandmark.thumbMcp,
-      PalmLandmark.thumbIp,
-      PalmLandmark.thumbTip,
-    ],
+  static final List<PalmPoint> _canonical = [
+    for (final landmark in PalmLandmark.values)
+      PalmGeometry.canonicalHand[landmark]!,
   ];
 
-  /// The hand, in canonical units. Built once per process.
-  static final Path _hand = _buildHand();
+  static final List<PalmPoint> _canonicalOutline = PalmSilhouette.outline(
+    _canonical,
+  );
 
-  /// The knuckle span the readiness check measures, in canonical units.
-  static final double _canonicalKnuckleSpan = PalmGeometry
-      .canonicalHand[PalmLandmark.indexMcp]!
-      .distanceTo(PalmGeometry.canonicalHand[PalmLandmark.pinkyMcp]!);
+  static final Rect _canonicalBounds = _boundsOf(
+    PalmSilhouette.sample(_canonicalOutline),
+  );
 
-  static Path _buildHand() {
-    Path? combined;
-    for (final bone in _bones) {
-      final isPalm = bone.length == 2 && bone.first != PalmLandmark.thumbCmc;
-      final radius = isPalm ? _palmRadius : _fingerRadius;
-      for (var i = 0; i < bone.length - 1; i++) {
-        final segment = _capsule(
-          _offsetOf(bone[i]),
-          _offsetOf(bone[i + 1]),
-          radius,
-        );
-        combined = combined == null
-            ? segment
-            : Path.combine(PathOperation.union, combined, segment);
-      }
-    }
-    return combined ?? Path();
-  }
-
-  static Offset _offsetOf(PalmLandmark landmark) {
-    final point = PalmGeometry.canonicalHand[landmark]!;
-    return Offset(point.x, point.y);
-  }
-
-  /// A capsule from [a] to [b].
-  ///
-  /// A rounded rectangle of height `2r` with radius `r` is exactly a
-  /// capsule, so it is built on the x axis and rotated into place —
-  /// which avoids two `arcToPoint` calls whose sweep direction is very
-  /// easy to get backwards and impossible to notice until it is drawn.
-  static Path _capsule(Offset a, Offset b, double radius) {
-    final delta = b - a;
-    final length = delta.distance;
-    if (length < 1e-9) {
-      return Path()..addOval(Rect.fromCircle(center: a, radius: radius));
-    }
-
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(-radius, -radius, length + radius * 2, radius * 2),
-          Radius.circular(radius),
-        ),
+  static final double _canonicalKnuckleSpan =
+      _canonical[PalmLandmark.indexMcp.index].distanceTo(
+        _canonical[PalmLandmark.pinkyMcp.index],
       );
 
-    final transform = Matrix4.identity()
-      ..translateByDouble(a.dx, a.dy, 0, 1)
-      ..rotateZ(math.atan2(delta.dy, delta.dx));
-    return path.transform(transform.storage);
+  static Rect _boundsOf(List<PalmPoint> points) {
+    var left = double.infinity;
+    var top = double.infinity;
+    var right = double.negativeInfinity;
+    var bottom = double.negativeInfinity;
+    for (final point in points) {
+      left = math.min(left, point.x);
+      top = math.min(top, point.y);
+      right = math.max(right, point.x);
+      bottom = math.max(bottom, point.y);
+    }
+    return Rect.fromLTRB(left, top, right, bottom);
   }
 
-  /// Where the camera frame lands on the canvas under `BoxFit.cover`.
-  ///
-  /// The same fit `PalmRevealPainter` applies to the still, for the same
-  /// reason: a point in frame coordinates has to end up on the pixel
-  /// that shows it.
-  Rect _coverRect(Size size) {
-    final width = math.max(size.width, size.height / frameAspect);
+  /// Where the camera frame lands on the canvas under `BoxFit.cover` —
+  /// the same fit `PalmRevealPainter` applies to the still.
+  static Rect _coverRect(Size size, double aspect) {
+    final width = math.max(size.width, size.height / aspect);
     return Rect.fromCenter(
       center: size.center(Offset.zero),
       width: width,
-      height: width * frameAspect,
+      height: width * aspect,
     );
+  }
+
+  /// Canonical units onto the canvas, for the target.
+  ///
+  /// Sized *from* [PalmGeometry.minKnuckleSpan], a quarter above it, so
+  /// a hand placed on the outline passes the check rather than being
+  /// told to come closer. Clamped so no fingertip leaves the screen; if
+  /// the clamp ever binds, the copy keeps asking — better than an
+  /// outline with its fingers cut off.
+  static Offset Function(PalmPoint) _targetPlacement(Size size, Rect rect) {
+    final bounds = _canonicalBounds;
+    final wanted =
+        PalmGeometry.minKnuckleSpan * 1.25 * rect.width / _canonicalKnuckleSpan;
+    final scale = math.min(
+      wanted,
+      math.min(
+        size.width * 0.88 / bounds.width,
+        size.height * 0.64 / bounds.height,
+      ),
+    );
+    final dx = size.width / 2 - bounds.center.dx * scale;
+    final dy = size.height * 0.47 - bounds.center.dy * scale;
+    return (point) => Offset(point.x * scale + dx, point.y * scale + dy);
+  }
+
+  /// The canonical hand as the target draws it, in frame coordinates.
+  ///
+  /// Exists so a test can hand these to `PalmGeometry.evaluate` and prove
+  /// that a hand matching the target is a hand the checks accept — which
+  /// is the promise the target makes, and the one it used to break.
+  @visibleForTesting
+  static List<PalmPoint> targetLandmarks(Size size, double frameAspect) {
+    final rect = _coverRect(size, frameAspect);
+    final place = _targetPlacement(size, rect);
+    return [
+      for (final point in _canonical)
+        () {
+          final onCanvas = place(point);
+          return PalmPoint(
+            (onCanvas.dx - rect.left) / rect.width,
+            (onCanvas.dy - rect.top) / rect.width,
+          );
+        }(),
+    ];
+  }
+
+  static Path _pathOf(
+    List<PalmPoint> chain,
+    Offset Function(PalmPoint) place,
+  ) {
+    final path = Path();
+    if (chain.length < 4) return path;
+    final start = place(chain.first);
+    path.moveTo(start.dx, start.dy);
+    for (var s = 0; s + 3 < chain.length; s += 3) {
+      final c1 = place(chain[s + 1]);
+      final c2 = place(chain[s + 2]);
+      final end = place(chain[s + 3]);
+      path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+    }
+    return path;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = _coverRect(size);
+    final rect = _coverRect(size, frameAspect);
     _paintTarget(canvas, size, rect);
 
-    if (frame case final frame?) {
-      _paintLive(canvas, rect, frame);
+    if (landmarks case final live?) {
+      _paintLive(canvas, rect, live);
     }
     if (hold > 0) {
       _paintHold(canvas, size);
     }
   }
 
-  /// The size the readiness check will accept, drawn.
-  ///
-  /// Sized *from* [PalmGeometry.minKnuckleSpan] rather than from a
-  /// pleasing fraction of the screen. The first version used 62 % of the
-  /// canvas width, which through the cover crop works out at a knuckle
-  /// span of about 0.26 — under the 0.28 the check demands. So a hand
-  /// placed exactly on the target was told to come closer, which is the
-  /// worst instruction an app can give: the user has already done what
-  /// was asked.
-  ///
-  /// A quarter over the threshold, so matching the outline by eye lands
-  /// clear of it rather than on it.
   void _paintTarget(Canvas canvas, Size size, Rect rect) {
-    final bounds = _hand.getBounds();
-    if (bounds.isEmpty || _canonicalKnuckleSpan <= 0) return;
-
-    final wanted =
-        PalmGeometry.minKnuckleSpan * 1.25 * rect.width / _canonicalKnuckleSpan;
-
-    // Clamped so an unusual aspect ratio cannot push a fingertip off
-    // screen. If this bites, the target is smaller than the check wants
-    // and the copy will keep asking — better than an outline with no
-    // fingers on it.
-    final scale = math.min(
-      wanted,
-      math.min(
-        size.width * 0.92 / bounds.width,
-        size.height * 0.66 / bounds.height,
-      ),
-    );
-    final transform = Matrix4.identity()
-      ..translateByDouble(
-        size.width / 2 - bounds.center.dx * scale,
-        size.height * 0.47 - bounds.center.dy * scale,
-        0,
-        1,
-      )
-      ..scaleByDouble(scale, scale, 1, 1);
-
     canvas.drawPath(
-      _hand.transform(transform.storage),
+      _pathOf(_canonicalOutline, _targetPlacement(size, rect)),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
         ..color = colors.textPrimary.withValues(
-          alpha: frame == null ? 0.34 : 0.12,
+          alpha: landmarks == null ? 0.34 : 0.12,
         ),
     );
   }
 
-  void _paintLive(Canvas canvas, Rect rect, PalmFrame frame) {
-    // Canonical → frame → canvas, as one matrix. `PalmSpace.image`
-    // normalises both axes to the frame's *width*, so both scale by the
-    // cover rect's width; scaling y by its height would draw an outline
-    // that tracks the hand almost exactly, which is the worst kind of
-    // wrong.
-    final warp = frame.toImage;
-    final scale = rect.width;
-    final transform = Matrix4(
-      warp.a * scale,
-      warp.c * scale,
-      0,
-      0, //
-      warp.b * scale,
-      warp.d * scale,
-      0,
-      0, //
-      0,
-      0,
-      1,
-      0, //
-      warp.tx * scale + rect.left,
-      warp.ty * scale + rect.top,
-      0,
-      1, //
+  void _paintLive(Canvas canvas, Rect rect, List<PalmPoint> points) {
+    final chain = PalmSilhouette.outline(points);
+    if (chain.isEmpty) return;
+
+    // Frame coordinates onto the canvas: both axes scale by the cover
+    // rect's *width*, because that is how `PalmSpace.image` normalises.
+    final path = _pathOf(
+      chain,
+      (point) => rect.topLeft + Offset(point.x, point.y) * rect.width,
     );
-    final path = _hand.transform(transform.storage);
 
     final colour = isReady ? colors.gold : colors.accentCool;
     canvas
@@ -266,16 +205,20 @@ class PalmGuidePainter extends CustomPainter {
         path,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 6
-          ..color = colour.withValues(alpha: 0.22)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+          ..strokeWidth = 7
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..color = colour.withValues(alpha: 0.24)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
       )
       ..drawPath(
         path,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..color = colour.withValues(alpha: 0.9),
+          ..strokeWidth = 2.2
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..color = colour.withValues(alpha: 0.92),
       );
   }
 
@@ -313,7 +256,7 @@ class PalmGuidePainter extends CustomPainter {
   @override
   bool shouldRepaint(PalmGuidePainter old) =>
       old.hold != hold ||
-      old.frame != frame ||
       old.isReady != isReady ||
-      old.frameAspect != frameAspect;
+      old.frameAspect != frameAspect ||
+      !identical(old.landmarks, landmarks);
 }

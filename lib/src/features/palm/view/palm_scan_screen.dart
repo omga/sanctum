@@ -217,14 +217,28 @@ class _Viewfinder extends ConsumerWidget {
           ),
           child: SizedBox.expand(),
         ),
-        CustomPaint(
-          painter: PalmGuidePainter(
-            colors: context.colors,
-            hold: state.holdProgress,
-            frame: state.preview,
-            isReady: state.readiness.isReady,
-            frameAspect:
-                aspect ?? state.preview?.landmarks.frameAspect ?? 4 / 3,
+        // Glides between detections rather than jumping. Inference runs
+        // about twelve times a second, and an outline that snaps to each
+        // new reading looks like a flickering sticker; easing it over one
+        // interval makes it look attached to the hand.
+        TweenAnimationBuilder<List<PalmPoint>>(
+          // Empty rather than null for "no hand": the builder asserts a
+          // non-null end, and an empty list already jumps, which is what a
+          // hand appearing or leaving should do.
+          tween: _LandmarksTween(
+            end: state.preview?.landmarks.points ?? const [],
+          ),
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOutCubic,
+          builder: (context, landmarks, _) => CustomPaint(
+            painter: PalmGuidePainter(
+              colors: context.colors,
+              hold: state.holdProgress,
+              landmarks: landmarks.isEmpty ? null : landmarks,
+              isReady: state.readiness.isReady,
+              frameAspect:
+                  aspect ?? state.preview?.landmarks.frameAspect ?? 4 / 3,
+            ),
           ),
         ),
         // Debug builds only. The loop for anything wrong on this screen
@@ -421,4 +435,22 @@ class _Failed extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Eases one detected hand into the next, point by point.
+///
+/// A hand that appears or disappears jumps — there is nothing sensible
+/// to interpolate a hand from or to. "No hand" is an empty list.
+class _LandmarksTween extends Tween<List<PalmPoint>> {
+  _LandmarksTween({super.end});
+
+  @override
+  List<PalmPoint> lerp(double t) {
+    final from = begin ?? const <PalmPoint>[];
+    final to = end ?? const <PalmPoint>[];
+    if (to.isEmpty || from.length != to.length) return to;
+    return [
+      for (var i = 0; i < to.length; i++) from[i] + (to[i] - from[i]) * t,
+    ];
+  }
 }

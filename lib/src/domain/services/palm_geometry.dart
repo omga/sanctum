@@ -349,14 +349,18 @@ abstract final class PalmGeometry {
   /// the wrist, so the fingers are above zero — that is, negative.
   static const Map<PalmLandmark, PalmPoint> canonicalHand = {
     PalmLandmark.wrist: PalmPoint(0.50, 1),
+    // Splayed outward, the way a thumb sits in a hand held open to a
+    // camera. The first version pointed it straight up beside the index
+    // finger, which no relaxed hand does and which made the guide read
+    // as a mitten.
     PalmLandmark.thumbCmc: PalmPoint(0.17, 0.83),
-    PalmLandmark.thumbMcp: PalmPoint(0.05, 0.62),
-    PalmLandmark.thumbIp: PalmPoint(0, 0.45),
-    PalmLandmark.thumbTip: PalmPoint(-0.02, 0.30),
+    PalmLandmark.thumbMcp: PalmPoint(0, 0.66),
+    PalmLandmark.thumbIp: PalmPoint(-0.17, 0.56),
+    PalmLandmark.thumbTip: PalmPoint(-0.32, 0.48),
     PalmLandmark.indexMcp: PalmPoint(0.19, 0.19),
-    PalmLandmark.indexPip: PalmPoint(0.16, -0.10),
-    PalmLandmark.indexDip: PalmPoint(0.15, -0.28),
-    PalmLandmark.indexTip: PalmPoint(0.14, -0.44),
+    PalmLandmark.indexPip: PalmPoint(0.15, -0.10),
+    PalmLandmark.indexDip: PalmPoint(0.12, -0.28),
+    PalmLandmark.indexTip: PalmPoint(0.10, -0.44),
     PalmLandmark.middleMcp: PalmPoint(0.44, 0.12),
     PalmLandmark.middlePip: PalmPoint(0.44, -0.20),
     PalmLandmark.middleDip: PalmPoint(0.44, -0.41),
@@ -366,9 +370,9 @@ abstract final class PalmGeometry {
     PalmLandmark.ringDip: PalmPoint(0.71, -0.34),
     PalmLandmark.ringTip: PalmPoint(0.72, -0.50),
     PalmLandmark.pinkyMcp: PalmPoint(0.89, 0.25),
-    PalmLandmark.pinkyPip: PalmPoint(0.93, 0.02),
-    PalmLandmark.pinkyDip: PalmPoint(0.95, -0.12),
-    PalmLandmark.pinkyTip: PalmPoint(0.96, -0.24),
+    PalmLandmark.pinkyPip: PalmPoint(0.95, 0.03),
+    PalmLandmark.pinkyDip: PalmPoint(0.99, -0.10),
+    PalmLandmark.pinkyTip: PalmPoint(1.02, -0.22),
   };
 
   /// Where each anchor sits in canonical palm space.
@@ -393,9 +397,21 @@ abstract final class PalmGeometry {
   /// Below this detector confidence, the pose is not worth fitting.
   static const double minConfidence = 0.6;
 
-  /// The knuckle span, in frame widths, under which creases do not
-  /// survive the lens.
-  static const double minKnuckleSpan = 0.28;
+  /// The knuckle span, in frame widths, under which a hand is too far
+  /// away to read.
+  ///
+  /// Was 0.28, which was a guess, and on a Pixel 6 it was nearly
+  /// unreachable: the preview crops a third of the frame's width, so a
+  /// hand had to fill almost the whole visible screen to pass, and the
+  /// viewfinder's own target could only clear it by one percent — close
+  /// enough that landmark jitter flickered it in and out of "bring your
+  /// hand closer".
+  ///
+  /// The creases never came from this frame anyway. They are measured on
+  /// the full-resolution still, where 0.22 of a 3024-pixel photograph is
+  /// still around 660 pixels across the knuckles — several pixels per
+  /// crease after the palm is rectified to 256.
+  static const double minKnuckleSpan = 0.22;
 
   /// Tip-to-wrist over knuckle-to-wrist, under which the fingers are
   /// curled far enough to hide the top of every line.
