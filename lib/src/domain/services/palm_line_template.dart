@@ -48,7 +48,7 @@ abstract final class PalmLineTemplate {
       PalmPoint(0.62, 0.32),
       PalmPoint(0.5, 0.31),
       PalmPoint(0.38, 0.28),
-      PalmPoint(0.3, 0.21),
+      PalmPoint(0.3, 0.23),
     ],
   );
 
@@ -57,7 +57,7 @@ abstract final class PalmLineTemplate {
   static final PalmCurve head = PalmCurve(
     line: PalmLine.head,
     controlPoints: const [
-      PalmPoint(0.12, 0.35),
+      PalmPoint(0.11, 0.35),
       PalmPoint(0.26, 0.37),
       PalmPoint(0.4, 0.41),
       PalmPoint(0.52, 0.45),
@@ -79,13 +79,13 @@ abstract final class PalmLineTemplate {
   static final PalmCurve life = PalmCurve(
     line: PalmLine.life,
     controlPoints: const [
-      PalmPoint(0.13, 0.36),
-      PalmPoint(0.22, 0.42),
-      PalmPoint(0.32, 0.52),
-      PalmPoint(0.37, 0.65),
-      PalmPoint(0.41, 0.76),
-      PalmPoint(0.4, 0.88),
-      PalmPoint(0.35, 0.97),
+      PalmPoint(0.11, 0.35),
+      PalmPoint(0.25, 0.38),
+      PalmPoint(0.39, 0.42),
+      PalmPoint(0.47, 0.61),
+      PalmPoint(0.49, 0.76),
+      PalmPoint(0.44, 0.88),
+      PalmPoint(0.33, 0.95),
     ],
   );
 
@@ -97,8 +97,8 @@ abstract final class PalmLineTemplate {
   static final PalmCurve fate = PalmCurve(
     line: PalmLine.fate,
     controlPoints: const [
-      PalmPoint(0.54, 0.96),
-      PalmPoint(0.54, 0.8),
+      PalmPoint(0.54, 0.95),
+      PalmPoint(0.53, 0.8),
       PalmPoint(0.52, 0.64),
       PalmPoint(0.51, 0.52),
       PalmPoint(0.5, 0.42),
