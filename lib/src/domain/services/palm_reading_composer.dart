@@ -48,6 +48,7 @@ class PalmProfile {
     required this.id,
     required this.notes,
     required this.measured,
+    this.background = 0,
   });
 
   /// The scan this describes.
@@ -66,12 +67,28 @@ class PalmProfile {
       : notes.map((note) => note.clarity).reduce((a, b) => a + b) /
             notes.length;
 
+  /// How crease-like the palm is away from the lines — see
+  /// `PalmReading.background`.
+  final double background;
+
+  /// How far the traced lines stand out from the palm around them.
+  double get lift => clarity - background;
+
   /// Whether the photograph was too poor to say much.
   ///
+  /// Decided by [lift], not by [clarity]. The first version asked for a
+  /// mean clarity of 0.2, and on a Pixel 6 a bare palm whose lines were
+  /// traced perfectly failed it while the same palm with the lines gone
+  /// over in pen passed: the filter scales against the strongest edges
+  /// in the crop, so a real crease reads low in absolute terms and a pen
+  /// line reads high. Neither number says whether the photograph was
+  /// readable. Whether the lines stand out from the rest of the palm
+  /// does — a blurred or unlit photograph has lines no different from
+  /// their surroundings, and a readable one does not, pen or no pen.
+  ///
   /// False when nothing was measured. "We did not look" is not evidence
-  /// that a hand read faintly, and offering a retake on the strength of
-  /// it would send somebody back to the camera for no reason.
-  bool get isThin => measured && clarity < PalmReadingComposer.thinClarity;
+  /// that a hand read faintly.
+  bool get isThin => measured && lift < PalmReadingComposer.minLift;
 
   /// The note for [line], if the hand claimed it.
   PalmLineNote? noteOf(PalmLine line) {
@@ -114,8 +131,16 @@ abstract final class PalmReadingComposer {
   /// And how much shorter counts as short.
   static const double shortRatio = 0.9;
 
-  /// Below this mean clarity, offer a retake rather than a reading.
-  static const double thinClarity = 0.2;
+  /// How much more crease-like than the rest of the palm the lines must
+  /// be before a reading is shown.
+  ///
+  /// Low on purpose. Refusing a reading over lines the user can see were
+  /// drawn correctly is a broken screen at the point of sale; showing one
+  /// on a mediocre photograph costs almost nothing, because a line the
+  /// tracer could not move stays on its prior and reads as typical. Not
+  /// calibrated — the debug readout on the reading screen prints the
+  /// three numbers this is decided from, for exactly that.
+  static const double minLift = 0.03;
 
   /// The profile for [reading].
   static PalmProfile compose(PalmReading reading) {
@@ -149,6 +174,7 @@ abstract final class PalmReadingComposer {
       id: reading.id,
       notes: notes,
       measured: reading.measured,
+      background: reading.background,
     );
   }
 }

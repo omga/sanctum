@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctum/src/data/data_providers.dart';
@@ -120,11 +121,51 @@ class _GatedState extends ConsumerState<_Gated> {
   @override
   Widget build(BuildContext context) =>
       widget.access == PalmReadingAccess.unlocked
-      ? _Reading(
+      ? _Diagnosed(
           profile: PalmReadingComposer.compose(widget.scan),
           copy: widget.copy,
         )
       : _Locked(access: widget.access);
+}
+
+/// The reading, with the numbers behind the faint gate printed over it
+/// in debug builds.
+///
+/// `PalmReadingComposer.minLift` is a guess, and the only way to replace
+/// it with a measurement is to see these three numbers on real palms —
+/// with a pen and without, in good light and bad. Printing them on the
+/// screen that makes the decision is cheaper than any other way of
+/// getting them off a phone.
+class _Diagnosed extends StatelessWidget {
+  const _Diagnosed({required this.profile, required this.copy});
+
+  final PalmProfile profile;
+  final CopyBook copy;
+
+  @override
+  Widget build(BuildContext context) {
+    final reading = _Reading(profile: profile, copy: copy);
+    if (!kDebugMode || !profile.measured) return reading;
+
+    return Stack(
+      children: [
+        Positioned.fill(child: reading),
+        Positioned(
+          left: SanctumSpacing.md,
+          bottom: SanctumSpacing.md,
+          child: Text(
+            'clarity ${profile.clarity.toStringAsFixed(3)}'
+            ' · background ${profile.background.toStringAsFixed(3)}'
+            ' · lift ${profile.lift.toStringAsFixed(3)}'
+            ' / ${PalmReadingComposer.minLift}',
+            style: context.type.caption.copyWith(
+              color: context.colors.textTertiary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// The reading itself.
@@ -165,15 +206,6 @@ class _Reading extends StatelessWidget {
           ),
           const SizedBox(height: SanctumSpacing.md),
         ],
-        const SizedBox(height: SanctumSpacing.sm),
-        Center(
-          child: Text(
-            context.l10n.palmDisclaimer,
-            style: context.type.caption.copyWith(
-              color: context.colors.textTertiary,
-            ),
-          ),
-        ),
       ],
     );
   }

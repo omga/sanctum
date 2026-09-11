@@ -147,6 +147,7 @@ void main() {
         canonicalCurves: [longer],
         priors: {PalmLine.life: longer},
         support: const {PalmLine.life: 0.6},
+        background: 0,
         measured: true,
         claimed: const {PalmLine.life},
       );
@@ -155,6 +156,46 @@ void main() {
         PalmReadingComposer.compose(reading).noteOf(PalmLine.life)!.length,
         PalmLineLength.typical,
       );
+    });
+  });
+
+  group('faint', () {
+    PalmProfile profileWith({
+      required double support,
+      required double background,
+    }) => PalmReadingComposer.compose(
+      PalmReading(
+        id: 'palm:test',
+        frame: PalmGeometry.rectify(goodHand())!,
+        curves: const [],
+        canonicalCurves: PalmLineTemplate.principal,
+        priors: {
+          for (final curve in PalmLineTemplate.principal) curve.line: curve,
+        },
+        support: {for (final line in PalmLine.principal) line: support},
+        background: background,
+        measured: true,
+        claimed: PalmLine.principal.toSet(),
+      ),
+    );
+
+    test('is not a real crease that merely scores low', () {
+      // The Pixel 6 report. A bare palm, lines traced correctly, and the
+      // reading refused as faint — because the filter scales against the
+      // hand's edges, a real crease reads around a tenth in absolute terms.
+      // Above a quiet palm, that is a perfectly readable photograph.
+      final profile = profileWith(support: 0.11, background: 0.04);
+      expect(profile.clarity, lessThan(0.2));
+      expect(profile.isThin, isFalse);
+    });
+
+    test('is lines no more crease-like than the palm around them', () {
+      final profile = profileWith(support: 0.07, background: 0.06);
+      expect(profile.isThin, isTrue);
+    });
+
+    test('is a photograph with nothing in it', () {
+      expect(profileWith(support: 0.01, background: 0.01).isThin, isTrue);
     });
   });
 }

@@ -7,6 +7,7 @@ import 'package:sanctum/src/data/data_providers.dart';
 import 'package:sanctum/src/data/repositories/palm_repository.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_composer.dart';
+import 'package:sanctum/src/domain/services/palm_crease_snapper.dart';
 import 'package:sanctum/src/features/palm/view/palm_reading_screen.dart';
 import 'package:sanctum/src/features/palm/view_model/palm_scan_view_model.dart';
 import 'package:sanctum/src/l10n/generated/app_localizations.dart';
@@ -43,10 +44,15 @@ class _FakePalmRepository implements PalmRepository {
 late AppLocalizations _en;
 late PalmReading _scan;
 
+/// A scan that was measured and found nothing: lines no more crease-like
+/// than the palm around them.
+late PalmReading _faintScan;
+
 Future<void> _pumpReading(
   WidgetTester tester, {
   required _FakePalmRepository repository,
   bool isPremium = false,
+  bool faint = false,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -69,9 +75,13 @@ Future<void> _pumpReading(
         isPremiumProvider.overrideWithValue(isPremium),
         // The reading is read from the live scan, because nothing about
         // a palm is stored. Seeding it is what the camera would do.
-        palmScanViewModelProvider.overrideWith(_SeededScan.new),
+        palmScanViewModelProvider.overrideWith(
+          faint ? _SeededFaintScan.new : _SeededScan.new,
+        ),
       ],
-      child: testApp(PalmReadingScreen(scanId: _scan.id)),
+      child: testApp(
+        PalmReadingScreen(scanId: (faint ? _faintScan : _scan).id),
+      ),
     ),
   );
   await tester.pump();
@@ -79,6 +89,21 @@ Future<void> _pumpReading(
 }
 
 /// A view model that starts on a finished scan.
+/// A field with nothing in it.
+class _Blank implements RidgeField {
+  const _Blank();
+
+  @override
+  double responseAt(PalmPoint point) => 0;
+}
+
+/// A view model that starts on a faint, measured scan.
+class _SeededFaintScan extends PalmScanViewModel {
+  @override
+  PalmScanState build() =>
+      PalmScanState(stage: PalmScanStage.revealed, reading: _faintScan);
+}
+
 class _SeededScan extends PalmScanViewModel {
   @override
   PalmScanState build() =>
@@ -91,6 +116,11 @@ void main() {
     _scan = PalmComposer.compose(
       landmarks: goodHand(),
       at: DateTime.utc(2026, 9, 8, 10, 12),
+    )!;
+    _faintScan = PalmComposer.compose(
+      landmarks: goodHand(),
+      at: DateTime.utc(2026, 9, 8, 11, 30),
+      field: const _Blank(),
     )!;
   });
 
@@ -164,15 +194,22 @@ void main() {
     expect(find.text(_en.palmLockedPremiumTitle), findsNothing);
   });
 
-  testWidgets('carries the entertainment disclaimer', (tester) async {
-    // Present on the reveal and here. Store review for divination
-    // content generally expects it, and the roadmap already lists its
-    // absence elsewhere as debt.
+  testWidgets('points a faint scan at a pen', (tester) async {
+    // Where a disclaimer used to be tested. A scan too faint to read now
+    // suggests the fix that reliably works: a line drawn in pen is far
+    // darker than any crease, and the tracer finds it every time.
     await _pumpReading(
       tester,
       repository: _FakePalmRepository(shared: true),
+      faint: true,
     );
 
-    expect(find.text(_en.palmDisclaimer), findsOneWidget);
+    expect(find.text(_en.palmThinTitle), findsOneWidget);
+    expect(find.text(_en.palmThinBody), findsOneWidget);
+    expect(_en.palmThinBody.toLowerCase(), contains('pen'));
+
+    // The numbers behind the decision, printed in debug builds so the
+    // threshold can be set from real palms rather than guessed again.
+    expect(find.textContaining('lift 0.000 / '), findsOneWidget);
   });
 }

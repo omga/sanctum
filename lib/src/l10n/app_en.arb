@@ -1668,6 +1668,14 @@
     "description": "Discards the scan and reopens the camera. Present on the reveal and on every failure."
   },
   "palmShare": "Share",
+  "palmSave": "Save",
+  "@palmSave": {
+    "description": "Saves the finished reveal — the photograph with its lines drawn on — to the photo library. Never gated, like Share."
+  },
+  "palmSaved": "Saved to your photos",
+  "@palmSaved": {
+    "description": "Snackbar after a successful save. Says where the image went, because on Android that is not obvious."
+  },
   "@palmShare": {
     "description": "Shares the scan. Never gated, and never conditional on where it is shared — see PalmGate."
   },
@@ -1679,9 +1687,9 @@
   "@palmCameraUnavailable": {
     "description": "Shown where the preview would be when no camera implementation has been supplied. A developer-facing state that must not survive to release."
   },
-  "palmDisclaimer": "For entertainment only",
-  "@palmDisclaimer": {
-    "description": "Sits under the reveal and under the reading. Store review for divination content generally expects this, and the roadmap already lists its absence elsewhere as debt."
+  "palmPenTip": "Lines not quite right? Trace them with a pen and scan again.",
+  "@palmPenTip": {
+    "description": "Sits under the finished reveal where a disclaimer used to. The single most effective fix for a scan that misread: a pen line is far darker than a crease, and the tracer finds it every time. Deliberately a tip rather than an apology."
   },
   "palmLockedShareTitle": "Share your scan to read it",
   "@palmLockedShareTitle": {
@@ -1707,9 +1715,9 @@
   "@palmThinTitle": {
     "description": "Heading when mean clarity is too low to say much. Blames the photograph, not the hand."
   },
-  "palmThinBody": "The light hid most of the lines. Try again somewhere brighter.",
+  "palmThinBody": "The light hid most of the lines. Try somewhere brighter, or trace your lines with a pen first.",
   "@palmThinBody": {
-    "description": "Body of the faint-scan state."
+    "description": "Body of the faint-scan state. Blames the photograph, not the hand, and offers the pen as the reliable way through."
   },
   "palmLineHeart": "Heart line",
   "@palmLineHeart": {

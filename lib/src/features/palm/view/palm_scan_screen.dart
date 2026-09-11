@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctum/src/core/result/result.dart';
 import 'package:sanctum/src/data/services/palm/camera_palm_camera.dart';
 import 'package:sanctum/src/design_system/atoms/sanctum_button.dart';
 import 'package:sanctum/src/design_system/effects/aurora_background.dart';
@@ -18,6 +19,7 @@ import 'package:sanctum/src/features/palm/view/widgets/palm_guide_painter.dart';
 import 'package:sanctum/src/features/palm/view/widgets/palm_reveal_painter.dart';
 import 'package:sanctum/src/features/palm/view_model/palm_reading_view_model.dart';
 import 'package:sanctum/src/features/palm/view_model/palm_scan_view_model.dart';
+import 'package:sanctum/src/features/sharing/view_model/save_image_controller.dart';
 import 'package:sanctum/src/features/sharing/view_model/share_controller.dart';
 import 'package:sanctum/src/l10n/l10n.dart';
 import 'package:sanctum/src/routing/app_router.dart';
@@ -99,6 +101,24 @@ class _PalmScanScreenState extends ConsumerState<PalmScanScreen>
     });
   }
 
+  Future<void> _save(PalmReading reading) async {
+    // The scan id carries colons, which no gallery wants in a file name.
+    final name =
+        'sanctum-${reading.id.replaceAll(RegExp('[^A-Za-z0-9]+'), '-')}';
+    final result = await ref
+        .read(saveImageControllerProvider.notifier)
+        .save(_revealKey, name: name);
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(switch (result) {
+          Ok() => context.l10n.palmSaved,
+          Err(:final failure) => failure.message,
+        }),
+      ),
+    );
+  }
+
   Future<void> _share(PalmReading reading) async {
     await ref
         .read(shareControllerProvider.notifier)
@@ -115,6 +135,14 @@ class _PalmScanScreenState extends ConsumerState<PalmScanScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(palmScanViewModelProvider);
+
+    // Watched, not merely read on tap. Both controllers are auto-disposed,
+    // and reading one only when a button is pressed creates it, starts the
+    // capture, and lets it be disposed before the capture returns — the
+    // same trap that once built a fresh detector for every camera frame.
+    ref
+      ..watch(shareControllerProvider)
+      ..watch(saveImageControllerProvider);
 
     if (state.still case final still? when state.reading != null) {
       unawaited(_decode(still));
@@ -142,6 +170,7 @@ class _PalmScanScreenState extends ConsumerState<PalmScanScreen>
           elapsed: _elapsed,
           revealKey: _revealKey,
           onShare: () => unawaited(_share(state.reading!)),
+          onSave: () => unawaited(_save(state.reading!)),
           onRetake: () => unawaited(
             ref.read(palmScanViewModelProvider.notifier).retake(),
           ),
@@ -306,6 +335,7 @@ class _Reveal extends StatelessWidget {
     required this.elapsed,
     required this.revealKey,
     required this.onShare,
+    required this.onSave,
     required this.onRetake,
   });
 
@@ -314,6 +344,7 @@ class _Reveal extends StatelessWidget {
   final Duration elapsed;
   final GlobalKey revealKey;
   final VoidCallback onShare;
+  final VoidCallback onSave;
   final VoidCallback onRetake;
 
   @override
@@ -356,10 +387,14 @@ class _Reveal extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // A tip, not a disclaimer. The most reliable fix for a
+                // misread scan is a pen: a drawn line is far darker than
+                // any crease, and the tracer finds it every time.
                 Text(
-                  context.l10n.palmDisclaimer,
+                  context.l10n.palmPenTip,
+                  textAlign: TextAlign.center,
                   style: context.type.caption.copyWith(
-                    color: context.colors.textTertiary,
+                    color: context.colors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: SanctumSpacing.md),
@@ -367,8 +402,9 @@ class _Reveal extends StatelessWidget {
                   children: [
                     Expanded(
                       child: SanctumButton(
-                        label: context.l10n.palmShare,
-                        onPressed: isFinished ? onShare : null,
+                        label: context.l10n.palmSave,
+                        icon: Icons.download_rounded,
+                        onPressed: isFinished ? onSave : null,
                         variant: SanctumButtonVariant.ghost,
                         expand: true,
                       ),
@@ -376,16 +412,24 @@ class _Reveal extends StatelessWidget {
                     const SizedBox(width: SanctumSpacing.sm),
                     Expanded(
                       child: SanctumButton(
-                        label: context.l10n.palmSeeReading,
-                        onPressed: isFinished
-                            ? () =>
-                                  PalmReadingRoute(scanId: reading.id)
-                                      .push<void>(context)
-                            : null,
+                        label: context.l10n.palmShare,
+                        icon: Icons.ios_share_rounded,
+                        onPressed: isFinished ? onShare : null,
+                        variant: SanctumButtonVariant.ghost,
                         expand: true,
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: SanctumSpacing.sm),
+                SanctumButton(
+                  label: context.l10n.palmSeeReading,
+                  onPressed: isFinished
+                      ? () =>
+                            PalmReadingRoute(scanId: reading.id)
+                                .push<void>(context)
+                      : null,
+                  expand: true,
                 ),
                 const SizedBox(height: SanctumSpacing.sm),
                 SanctumButton(

@@ -702,6 +702,59 @@ fitted prior traces onto the real crease.
 **Not yet measured:** the ramp and the cap are reasoned from anatomy,
 not fitted to captures. The next device run is what confirms them.
 
+### Sixth run: the pen, a Save button, and a gate that refused good scans
+
+Ran 2026-09-11, after the owner retuned the templates by hand. Every line
+drew on its crease. Three things followed.
+
+**A pen line is the most reliable input the tracer gets.** Going over the
+creases with a pen before scanning produces a line far darker than any
+crease, and the tracer finds it every time. The reveal now says so where
+"For entertainment only" used to sit — removed at the owner's request, as
+not the voice of the product — and the faint-scan copy offers the pen as
+the way through. The disclaimer is gone from the palm screens only; the
+payoff screen and the carousel's closing frame still carry theirs, and a
+store reviewer who asks for one on the palm feature is a one-key change.
+
+**Save puts the finished reveal in the photo library**, beside Share,
+through `gal`. On iOS it asks for add-only access at the moment of the
+tap and never for read access. On Android, `WRITE_EXTERNAL_STORAGE` is
+back — it had been removed as dead weight when the camera plugin dragged
+it in, and stopped being dead weight here — but capped at API 29, the
+last version that needs it, so it is never requested on anything newer.
+The microphone and the implied read access stay removed, and the
+manifest test asserts all three.
+
+Wiring it turned up a latent bug in the reveal's existing Share: it read
+an auto-disposed controller on tap without anything watching it, which is
+the same trap that once built a detector per camera frame. Both
+controllers are watched now.
+
+**"That one came out faint" refused scans whose lines were drawn
+correctly** — every bare palm, while the same palm in pen passed. The gate
+was a mean line support of 0.2, and the ridge filter scales every
+response against the strongest things in the crop, which on most photos
+are the hand's edges against the background. So a real crease traced
+perfectly reads around a tenth; a pen line reads high. Neither number
+says whether a photograph was readable. What does is whether the lines
+stand out from the palm around them: `PalmReading.background` is the
+mean response across the palm's interior away from every traced line,
+and a reading is refused only when the lines rise less than 0.03 above
+it. That threshold is a guess, biased toward showing the reading —
+refusing one over lines the user can see were drawn correctly is a broken
+screen at the point of sale. **Debug builds print clarity, background
+and lift on the reading screen**; a handful of scans with and without a
+pen is what replaces the guess.
+
+**The retuned life line exposed a fate-line risk.** Its lower arc now
+reaches x≈0.49, about four hundredths from the fate line — inside the
+tracer's band — so on a hand with no fate line, the fate tracer followed
+the life line's crease and scored it as fate. The templates were left as
+the owner set them. Instead, fate is traced last, against a field with
+the heart, head and life creases faded out, so it can only claim evidence
+that belongs to no other line; a real fate line four hundredths from the
+life line is still found, and a test holds both.
+
 ### The handedness flip, and why it is the riskiest line in the feature
 
 MediaPipe's landmark model emits handedness **assuming its input is

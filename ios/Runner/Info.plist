@@ -16,6 +16,12 @@
 	     capability, not to add the string. -->
 	<key>NSCameraUsageDescription</key>
 	<string>To read the lines on your palm. The picture stays on this phone and is deleted when you leave the scan.</string>
+	<!-- Add-only, and only when the user taps Save on a finished reveal.
+	     NSPhotoLibraryUsageDescription (read access) is deliberately
+	     absent: gal needs it only below iOS 14 or to save into a named
+	     album, and this app targets iOS 15 and saves to the library. -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>To save your palm image to your photos when you tap Save. Nothing is saved unless you ask.</string>
 	<!-- PostHog is configured from Dart; see analytics_service.dart. -->
 	<key>com.posthog.posthog.AUTO_INIT</key>
 	<false/>

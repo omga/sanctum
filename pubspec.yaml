@@ -74,6 +74,13 @@ dependencies:
   camera: ^0.12.1
   hand_detection: ^4.1.0
 
+  # ── Gallery ───────────────────────────────────────────────
+  # Saves the palm reveal to the photo library when the user taps Save,
+  # and never otherwise. Needs WRITE_EXTERNAL_STORAGE on Android 10 and
+  # below (declared capped at API 29 in the manifest) and the add-only
+  # photos key on iOS — see both files for why each is scoped as it is.
+  gal: ^2.3.3
+
   # ── Platform ──────────────────────────────────────────────────
   # NOTE: flutter_local_notifications (above) forces Android core-library
   # desugaring — see android/app/build.gradle.kts — and pulls in

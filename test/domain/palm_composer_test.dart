@@ -257,6 +257,32 @@ void main() {
       );
     });
   });
+
+  group('background', () {
+    test('is the palm between the lines, not the lines', () {
+      // Creases along the three principal lines over a palm with a faint
+      // even texture. The lines themselves must not count toward the
+      // yardstick they are measured against.
+      final field = _Textured(_Creases(PalmLine.principal), floor: 0.05);
+      final reading = PalmComposer.compose(
+        landmarks: goodHand(),
+        at: _at,
+        field: field,
+      )!;
+
+      expect(reading.background, closeTo(0.05, 0.02));
+      for (final line in PalmLine.principal) {
+        expect(reading.support[line], greaterThan(reading.background + 0.3));
+      }
+    });
+
+    test('is zero when nothing was measured', () {
+      expect(
+        PalmComposer.compose(landmarks: goodHand(), at: _at)!.background,
+        0,
+      );
+    });
+  });
 }
 
 /// Creases along arbitrary curves.
@@ -294,4 +320,16 @@ double _meanDistance(PalmCurve curve, PalmCurve target) {
     total += nearest;
   }
   return total / points.length;
+}
+
+/// [inner] with an even response added everywhere, like skin texture.
+class _Textured implements RidgeField {
+  _Textured(this.inner, {required this.floor});
+
+  final RidgeField inner;
+  final double floor;
+
+  @override
+  double responseAt(PalmPoint point) =>
+      math.min(1, inner.responseAt(point) + floor);
 }

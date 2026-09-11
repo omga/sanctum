@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:meta/meta.dart';
 import 'package:sanctum/src/domain/models/palm.dart';
 import 'package:sanctum/src/domain/services/palm_crease_snapper.dart';
@@ -16,6 +18,7 @@ class PalmReading {
     required this.canonicalCurves,
     required this.priors,
     required this.support,
+    required this.background,
     required this.measured,
     required this.claimed,
   });
@@ -54,6 +57,20 @@ class PalmReading {
   ///
   /// Meaningless unless [measured] is true.
   final Map<PalmLine, double> support;
+
+  /// How crease-like the palm is where no line runs, `[0, 1]`.
+  ///
+  /// The yardstick [support] is read against. Support alone is a poor
+  /// judge of a photograph: the ridge filter scales every response by
+  /// the strongest things in the crop, and on most photographs those are
+  /// the edges of the hand against whatever is behind it — so a real
+  /// crease traced perfectly can score low in absolute terms, while a
+  /// pen line scores high. What distinguishes a readable photograph from
+  /// an unreadable one is whether the lines stand out from the palm
+  /// around them, and this is the "around them".
+  ///
+  /// Zero when nothing was measured.
+  final double background;
 
   /// Whether a ridge field was available at all.
   ///
@@ -148,15 +165,38 @@ abstract final class PalmComposer {
       thumbBase: frame.toCanonical.apply(landmarks[PalmLandmark.thumbCmc]),
     );
 
+    assert(
+      priors.last.line == PalmLine.fate,
+      'fate must be traced after the lines it is kept off',
+    );
+
     for (final template in priors) {
-      final snapped = field == null
+      // Fate is traced last, against a field with the lines already traced
+      // taken out of it. The fate line runs up the middle of the palm, and
+      // a life line bowed well toward the middle can pass within a few
+      // hundredths of it — inside the tracer's band. Traced against the
+      // whole field, the fate line on a hand that has none would follow the
+      // life line's crease and score it as its own, and the reading would
+      // describe a line the user cannot find. Taking those creases out
+      // leaves only evidence that belongs to no other line.
+      final own = switch (field) {
+        null => null,
+        final whole when template.line == PalmLine.fate => _Excluding(
+          whole,
+          canonical,
+        ),
+        final whole => whole,
+      };
+      final snapped = own == null
           ? template
-          : PalmCreaseSnapper.snap(curve: template, field: field);
-      support[template.line] = field == null
+          : PalmCreaseSnapper.snap(curve: template, field: own);
+      support[template.line] = own == null
           ? 0
-          : PalmCreaseSnapper.support(curve: snapped, field: field);
+          : PalmCreaseSnapper.support(curve: snapped, field: own);
       canonical.add(snapped);
     }
+
+    final background = field == null ? 0.0 : _backgroundOf(field, canonical);
 
     final claimed = <PalmLine>{
       ...PalmLine.principal,
@@ -174,9 +214,66 @@ abstract final class PalmComposer {
       curves: [for (final curve in kept) frame.place(curve)],
       canonicalCurves: kept,
       priors: {for (final prior in priors) prior.line: prior},
+      background: background,
       measured: field != null,
       support: support,
       claimed: claimed,
     );
+  }
+
+  /// The mean ridge response over the palm, away from every traced line.
+  ///
+  /// A grid across the palm's interior rather than the whole crop: the
+  /// crop reaches past the hand, and its edges against the background
+  /// are exactly the strong responses this is meant to see past.
+  static double _backgroundOf(RidgeField field, List<PalmCurve> lines) {
+    const steps = 16;
+    const clearance = 0.035;
+    final near = [for (final line in lines) ...line.sample()];
+
+    var total = 0.0;
+    var count = 0;
+    for (var row = 0; row < steps; row++) {
+      for (var column = 0; column < steps; column++) {
+        final point = PalmPoint(
+          0.15 + 0.70 * column / (steps - 1),
+          0.20 + 0.70 * row / (steps - 1),
+        );
+        if (near.any((sample) => sample.distanceTo(point) < clearance)) {
+          continue;
+        }
+        total += field.responseAt(point).clamp(0.0, 1.0);
+        count++;
+      }
+    }
+    return count == 0 ? 0 : total / count;
+  }
+}
+
+/// [field] with the creases of lines already traced faded out.
+///
+/// A soft mask rather than a hard cut: a hard edge would put a step in
+/// the response that the tracer could mistake for the side of a crease.
+/// Within a couple of hundredths of a traced line the response is gone;
+/// by four hundredths — where a real fate line beside the life line would
+/// run — it is essentially untouched.
+class _Excluding implements RidgeField {
+  _Excluding(this.field, List<PalmCurve> lines)
+    : _samples = [for (final line in lines) ...line.sample(perSegment: 6)];
+
+  final RidgeField field;
+  final List<PalmPoint> _samples;
+
+  static const double _radius = 0.025;
+
+  @override
+  double responseAt(PalmPoint point) {
+    var nearest = double.infinity;
+    for (final sample in _samples) {
+      final distance = sample.distanceTo(point);
+      if (distance < nearest) nearest = distance;
+    }
+    final ratio = nearest / _radius;
+    return field.responseAt(point) * (1 - math.exp(-ratio * ratio));
   }
 }

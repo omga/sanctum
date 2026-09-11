@@ -85,49 +85,49 @@ void main() {
       );
     });
 
-    test('and the three permissions the camera plugin drags in with it', () {
-      // camera_android_camerax declares RECORD_AUDIO and
-      // WRITE_EXTERNAL_STORAGE in its own manifest, and the merger folds
-      // them into ours. All three are removed with `tools:node="remove"`.
-      //
-      // The same class of silent failure as everything else here, one
-      // step further out: nothing in the app misbehaves, no test fails,
-      // and the only symptom is "Microphone" on the Play listing of an
-      // app whose whole claim is that nothing leaves the device — read
-      // by a stranger, months later, deciding whether to install.
-      //
-      // READ_EXTERNAL_STORAGE is the subtle one: nobody declares it.
-      // The merger implies it from camerax's WRITE request, and the
-      // implication fires off the plugin's own declaration rather than
-      // off the merged result — so removing WRITE alone leaves READ
-      // behind.
-      const dragged = [
-        'RECORD_AUDIO',
-        'WRITE_EXTERNAL_STORAGE',
-        'READ_EXTERNAL_STORAGE',
-      ];
-
-      for (final permission in dragged) {
-        expect(
-          manifest,
-          contains('android:name="android.permission.$permission"'),
-          reason: '$permission must be listed in order to be removed',
-        );
-      }
-
-      for (final permission in dragged) {
-        expect(
-          manifest,
-          matches(
-            RegExp(
-              r'<uses-permission\s+android:name='
-              '"android[.]permission[.]$permission"'
-              r'\s+tools:node="remove"\s*/>',
-            ),
+    test('and not the microphone the camera plugin drags in', () {
+      // camera_android_camerax declares RECORD_AUDIO. Losing this removal
+      // is silent: nothing misbehaves, no test fails, and "Microphone"
+      // appears on the Play listing of an app whose whole claim is that
+      // nothing leaves the device.
+      expect(
+        manifest,
+        matches(
+          RegExp(
+            r'<uses-permission\s+android:name="android\.permission\.'
+            r'RECORD_AUDIO"\s+tools:node="remove"\s*/>',
           ),
-          reason: '$permission must be removed, not merely mentioned',
-        );
-      }
+        ),
+      );
+    });
+
+    test('nor the read access the merger implies from it', () {
+      // Nobody declares READ_EXTERNAL_STORAGE: the merger implies it from
+      // camerax's WRITE request, off the plugin's own declaration, so it
+      // appears whatever this manifest does with WRITE.
+      expect(
+        manifest,
+        matches(
+          RegExp(
+            r'<uses-permission\s+android:name="android\.permission\.'
+            r'READ_EXTERNAL_STORAGE"\s+tools:node="remove"\s*/>',
+          ),
+        ),
+      );
+    });
+
+    test('write access for Save, and only on Android 10 and below', () {
+      // Needed by the gallery save on API 29 and lower, which minSdk 24
+      // includes. Uncapped, it would be requested on every Android
+      // version for no reason; removed, Save fails on the older ones.
+      final write = RegExp(
+        r'<uses-permission\s+android:name="android\.permission\.'
+        'WRITE_EXTERNAL_STORAGE"([^>]*)/>',
+      ).firstMatch(manifest);
+
+      expect(write, isNotNull);
+      expect(write!.group(1), contains('android:maxSdkVersion="29"'));
+      expect(write.group(1), isNot(contains('tools:node="remove"')));
     });
 
     test('the audio service and its media button receiver', () {
