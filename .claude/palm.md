@@ -251,42 +251,106 @@ photo:
 
 ---
 
-## 6. Money, and the mechanic that conflicts with a decision already made
+## 6. Money: the reading is free, the report is paid
 
-`handoff.md`, "The reveal exports as a four-frame carousel", records that
-share-gating was designed and **rejected**, for three reasons that all
-still apply here:
+> **Decided 2026-09-11**, replacing the share-gated first reading this
+> section used to describe. **Not built yet** — `PalmGate` still sells the
+> first reading for a share and the second for Premium. The delta is at
+> the end of this section.
 
-> the platform only reports that an app was picked, never that anything
-> was posted […] requiring a public post to unlock functionality is the
-> shape of thing App Review rejects; and the export *is* the acquisition
-> channel, so charging friction for it taxes the only growth this product
-> has.
+### The shape
 
-Apple's own position is split in a way that matters: incentivising users
-to post about your app on social media is permitted, but §3.1.1 says apps
-"may not use their own mechanisms to unlock content or functionality". If
-the palm report is *also* sold for money, then share-to-unlock is exactly
-such a mechanism, and it is the reviewer's call which sentence wins.
+- **Free for everyone, with no gate:** the scan, the lines, the reveal,
+  Save, Share, and the short reading — one paragraph per claimed line.
+- **One paid product: the full palm report**, a one-time purchase.
+  Included for Premium subscribers, who never meet its price.
 
-**Recommended shape, which gets the same outcome without the bet:**
+### Why the reading should be free
 
-- **The video is free, ungated, always.** It is the growth channel. Never
-  put a toll on it.
-- **The scan and the three named lines are free.** That is the payoff
-  people film.
-- **The deep palm reading is the product**, sold through the consumable
-  path `sanctum.report.relationship` already proved out, and included for
-  subscribers under the same once-ever rule `ReportGate` implements.
-- **If you want a share incentive, make it additive.** Mirror
-  `CompatibilityGate.hasSharedInvite`: a completed share grants an *extra
-  free scan*, never the paid reading. Reuse `ShareController.shareInvite`
-  and inherit its documented honesty about what `ShareResultStatus`
-  actually proves.
+- **The share gate taxed the moment people are most delighted**, for three
+  or four paragraphs. It was also unenforceable — the share sheet reports
+  that an app was picked, never that anything was posted.
+- **The reading is part of what gets posted.** People screenshot the one
+  sentence that describes them. Gating it charges the growth channel twice:
+  once for the video and again for the caption.
+- **It removes the App Store 3.1.1 question entirely.** Nothing is traded
+  for a share any more, so no reviewer has to decide whether a share is a
+  payment mechanism.
 
-Implement as `PalmGate` in `domain/services/`, beside `ReportGate` and
-`CompatibilityGate`, in the same shape: a pure function from state to an
-enum, tested exhaustively.
+### Why a non-consumable, not one report per scan
+
+This is the part the relationship report's shape gets wrong for palms.
+
+- **A scan is never stored** — see §7, and it is the design, not a gap. A
+  report bought for one scan disappears when the user leaves the screen or
+  the app is killed. That is a refund request with a receipt attached.
+- **Consumables do not restore.** `roadmap.md` §1 already records this as
+  an open problem for the relationship report; a palm report would inherit
+  it and make it worse.
+- **A non-consumable "full palm report" unlock restores through the store,
+  applies to every future scan and to both hands, and needs no backend and
+  no stored scan.** It fits the privacy model instead of fighting it.
+
+If per-report revenue is wanted later, the only honest route is to store
+the *derived profile* — three length bands, clarity, whether fate was
+found — which describes a reading, not a hand. Decide that deliberately
+before building it; do not drift into storing a scan.
+
+**Price:** store-priced like the relationship report. Start at its tier and
+test one above: it unlocks every future scan, not one pairing.
+
+### Where the offer appears
+
+Not on the reveal — that is the share moment, and a price there competes
+with it, the lesson `roadmap.md` §1 already paid for. **At the foot of the
+free reading**, after the last paragraph, when curiosity is highest. A
+subscriber sees the full report in its place and no offer at all.
+
+### What the report may say
+
+What is measured: each line's length against this hand's prior (three
+bands), how clearly it read, whether a fate line was found, and which hand
+it was. What is **not** measured: breaks, forks, islands, chains, mounts.
+The report may not describe anything in the second list, however standard
+it is in the genre. Depth comes from three honest places:
+
+- **Combinations.** How the heart and head lines negotiate, head against
+  life, the reading with a fate line and without one. Three lines in three
+  bands is 27 combinations before fate — real depth from real measurements.
+- **Both hands.** Palmistry reads the non-dominant hand as what you were
+  given and the dominant hand as what you made of it. That is a second scan
+  and a reason to take it.
+- **Palm against birth chart.** The app already computes the chart. Where
+  the hands and the chart agree, and where they argue, is a report no
+  palm-only app can make.
+
+"Sell depth, not prophecy" (`roadmap.md` §1) applies: no timelines, no ages,
+and the life line is vitality, never lifespan.
+
+### Other monetisation to try, briefly
+
+- **Two hands as a hook.** "My hands do not match" is a video format in its
+  own right, and an upsell into the report.
+- **Palm compatibility.** Scan a partner's hand for a match reading, feeding
+  the existing relationship one-off. The other person has to be in the room,
+  which makes it an in-person share.
+- **A paywall moment after a free reading,** through the existing
+  earned-moment trigger, for subscription conversion.
+- **"Ask about your palm"** through the advisor once `roadmap.md` §2 ships.
+  The profile is bands rather than geometry, and it still goes through the
+  consent gate like everything else the advisor sends.
+- **Gift a report** with store promo codes.
+- **Not:** ads; any toll on the video, the still or Save; share-to-unlock on
+  anything paid.
+
+### Build delta
+
+- `PalmGate`: the reading is always open; the report is open when owned or
+  when the user is Premium.
+- `PalmRepository`'s unlocked-scan ids and shared flag go; ownership comes
+  from a RevenueCat non-consumable, provisionally `sanctum.report.palm`.
+- Report copy lives in `assets/content/<locale>/copy.json` under
+  `palm.report.*`, written to §11.
 
 ---
 
@@ -847,3 +911,47 @@ would send every user back to the camera.
 
 Everything in §4's tier list, §5's beat sheet and §6's gate survived
 implementation unchanged.
+
+---
+
+## 11. How the reading is written
+
+Rewritten 2026-09-11, after two paragraphs were rightly called generic.
+
+**The difference, by example.** *"You have deep reserves and a habit of
+spending them on other people. Worth watching."* works. *"You keep going
+steadily, and people rely on that more than they say."* does not. The rules
+below are what separates them.
+
+1. **A behaviour, not a trait.** Something the reader can picture herself
+   doing — replaying a conversation, disappearing after a sprint — rather
+   than an adjective.
+2. **Every strength has a cost.** Pure flattery reads as a horoscope. A
+   strength with its price reads as being seen — the half of the Barnum
+   effect that generic copy leaves out.
+3. **Specific enough to feel personal, never checkable.** No siblings,
+   jobs, ages or dates.
+4. **Never explain palmistry.** The screen already names the line. The
+   paragraph is about the reader, not about hands.
+5. **Quotable.** Each paragraph has to survive being screenshotted on its
+   own, because it will be — it is the caption on the video.
+6. **The bands mean different things.** Short, typical and long are three
+   different people, not three volumes of one sentence.
+7. **Typical gets the best line.** Most hands land in the typical band, so
+   those paragraphs are the most read in the app. The two weakest paragraphs
+   were both typical.
+8. **No prophecy, no lifespan, no diagnosis.** Tiredness and hurt can be
+   described; they are never named clinically.
+9. **House voice:** dry and concrete, no contractions outside quoted speech,
+   British spelling.
+
+**Translation is rewriting, not word-for-word.** The first Ukrainian,
+Russian and Spanish drafts were literally accurate and nothing a native
+speaker says — *"на повну гучність"*, *"бути впізнаною"*, *"a volumen
+completo"*. The rewrite keeps each paragraph's idea and uses the phrase a
+native speaker would reach for: *"з головою"*, *"обвести навколо пальця"*,
+*"Ojo con eso"*. Ukrainian and Russian follow the voice rules in
+`handoff.md` §3 (informal singular, feminine reader); Spanish is `tú`,
+Latin-American neutral, and dry by positioning. **Spanish still wants a
+native pass** — nobody on the team reads it.
+

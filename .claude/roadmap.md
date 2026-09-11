@@ -163,6 +163,16 @@ to a model. §2's privacy gate has to cover the third party explicitly,
 not just the user — and this is a reason to ship the offline report
 first and let it establish the norm.
 
+
+### A second one-off: the palm report
+
+Decided 2026-09-11, not built. The palm scan and its short reading are free
+for everyone; a **full palm report** is sold as a one-time purchase and
+included for subscribers. It is a **non-consumable**, unlike this section's
+report, because a palm scan is never stored — a report bought per scan would
+vanish when the screen closes, and consumables do not restore. Reasoning,
+honesty limits and other experiments are in `.claude/palm.md` §6.
+
 ---
 
 ## 2. The advisor — the one bet that changes the curve
