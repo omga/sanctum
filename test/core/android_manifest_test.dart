@@ -78,6 +78,58 @@ void main() {
       );
     });
 
+    test('the camera the palm scan opens', () {
+      expect(
+        manifest,
+        contains('android:name="android.permission.CAMERA"'),
+      );
+    });
+
+    test('and not the microphone the camera plugin drags in', () {
+      // camera_android_camerax declares RECORD_AUDIO. Losing this removal
+      // is silent: nothing misbehaves, no test fails, and "Microphone"
+      // appears on the Play listing of an app whose whole claim is that
+      // nothing leaves the device.
+      expect(
+        manifest,
+        matches(
+          RegExp(
+            r'<uses-permission\s+android:name="android\.permission\.'
+            r'RECORD_AUDIO"\s+tools:node="remove"\s*/>',
+          ),
+        ),
+      );
+    });
+
+    test('nor the read access the merger implies from it', () {
+      // Nobody declares READ_EXTERNAL_STORAGE: the merger implies it from
+      // camerax's WRITE request, off the plugin's own declaration, so it
+      // appears whatever this manifest does with WRITE.
+      expect(
+        manifest,
+        matches(
+          RegExp(
+            r'<uses-permission\s+android:name="android\.permission\.'
+            r'READ_EXTERNAL_STORAGE"\s+tools:node="remove"\s*/>',
+          ),
+        ),
+      );
+    });
+
+    test('write access for Save, and only on Android 10 and below', () {
+      // Needed by the gallery save on API 29 and lower, which minSdk 24
+      // includes. Uncapped, it would be requested on every Android
+      // version for no reason; removed, Save fails on the older ones.
+      final write = RegExp(
+        r'<uses-permission\s+android:name="android\.permission\.'
+        'WRITE_EXTERNAL_STORAGE"([^>]*)/>',
+      ).firstMatch(manifest);
+
+      expect(write, isNotNull);
+      expect(write!.group(1), contains('android:maxSdkVersion="29"'));
+      expect(write.group(1), isNot(contains('tools:node="remove"')));
+    });
+
     test('the audio service and its media button receiver', () {
       // Same class of defect, already paid for once: the missing
       // service produced "Unable to start service … AudioService: not

@@ -1576,8 +1576,9 @@ validation layers, and `flutter run` leaves a *second* copy of the kernel
 blob in `app_flutter/` for hot reload, which Android files under user
 data. The app's real persisted state is **~40 KB**.
 
-The release APK is **30.3 MB** for arm64 (28.8 MB before
-RevenueCat), of which ~19 MB is the Flutter
+The release APK is **65.6 MB** for arm64 (32.2 MB before the palm
+scan's detector, 30.3 MB before its camera, 28.8 MB before RevenueCat),
+of which ~19 MB is the Flutter
 engine plus our AOT code. It was 23.8 MB before
 `flutter_local_notifications` (plus Android core-library desugaring),
 `posthog_flutter`, and `sentry_flutter` — Sentry's native SDK is the

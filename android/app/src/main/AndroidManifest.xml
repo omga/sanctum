@@ -12,6 +12,48 @@
          breaks in release. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The palm scan's viewfinder. Requested at runtime by the camera
+         plugin the first time a scan is opened; nothing else in the app
+         touches it. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- camera_android_camerax declares RECORD_AUDIO and
+         WRITE_EXTERNAL_STORAGE in its own manifest, and the merger folds
+         them into ours.
+
+         RECORD_AUDIO is removed. It would put "Microphone" on the Play
+         listing of an app that never opens one — for a product whose
+         whole claim is that nothing leaves the device, the single worst
+         permission to be seen asking for — and the controller is built
+         with `enableAudio: false`, so the plugin never uses it.
+
+         WRITE_EXTERNAL_STORAGE is kept, and its cap raised from the
+         plugin's 28 to 29. It was removed once as dead weight; it stopped
+         being dead weight when the reveal gained a Save button. `gal`
+         writes to the photo library through MediaStore, which needs no
+         permission from Android 11, but on Android 10 and below it does —
+         and this app's minSdk is 24. Capped at 29, it is never requested
+         on anything newer.
+
+         READ_EXTERNAL_STORAGE is not declared by anybody. The merger
+         *implies* it from camerax's WRITE request, and the implication
+         fires off the plugin's own declaration rather than off the merged
+         result — so it appears whatever we do with WRITE. Saving needs no
+         read access, so it is removed.
+
+         All of this is invisible until somebody reads a store listing,
+         so `android_manifest_test.dart` asserts each line of it. -->
+    <uses-permission
+        android:name="android.permission.RECORD_AUDIO"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:replace="android:maxSdkVersion" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove" />
+
     <!-- Google Play Billing, via RevenueCat. Play Billing's own
          manifest merges this in too, but declaring it here keeps the
          app's permission surface readable in one file rather than

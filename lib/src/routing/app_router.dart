@@ -7,6 +7,8 @@ import 'package:sanctum/src/features/compatibility/view/match_result_screen.dart
 import 'package:sanctum/src/features/compatibility/view/partner_entry_screen.dart';
 import 'package:sanctum/src/features/journal/view/journal_screen.dart';
 import 'package:sanctum/src/features/onboarding/view/onboarding_screen.dart';
+import 'package:sanctum/src/features/palm/view/palm_reading_screen.dart';
+import 'package:sanctum/src/features/palm/view/palm_scan_screen.dart';
 import 'package:sanctum/src/features/payoff/view/payoff_screen.dart';
 import 'package:sanctum/src/features/paywall/view/paywall_presenter.dart';
 import 'package:sanctum/src/features/paywall/view/paywall_screen.dart';
@@ -82,8 +84,8 @@ class SanctumShellRoute extends StatefulShellRouteData {
   /// branches with a hard cut; this one keeps every branch mounted — so
   /// playback, scroll offsets and loaded state all survive — and fades
   /// between them.
-  static const ShellNavigationContainerBuilder
-  $navigatorContainerBuilder = _buildBranchContainer;
+  static const ShellNavigationContainerBuilder $navigatorContainerBuilder =
+      _buildBranchContainer;
 
   @override
   Widget builder(
@@ -218,13 +220,12 @@ class MatchResultRoute extends GoRouteData with $MatchResultRoute {
   final String? celebrityId;
 
   @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      MatchResultScreen(
-        name: name,
-        birth: birth,
-        minuteOfBirth: minuteOfBirth,
-        celebrityId: celebrityId,
-      );
+  Widget build(BuildContext context, GoRouterState state) => MatchResultScreen(
+    name: name,
+    birth: birth,
+    minuteOfBirth: minuteOfBirth,
+    celebrityId: celebrityId,
+  );
 }
 
 /// The sound-bath library.
@@ -288,6 +289,44 @@ class PayoffRoute extends GoRouteData with $PayoffRoute {
   Widget build(BuildContext context, GoRouterState state) => PayoffScreen(
     onContinue: () => const TodayRoute().go(context),
   );
+}
+
+/// The palm scan, outside the shell so the viewfinder is full-bleed.
+///
+/// Not a sixth tab. The bar already carries five labels in four
+/// languages and has been fitted to them; the scan is a thing people
+/// come to do rather than a place they live, and it is entered from
+/// Today.
+@TypedGoRoute<PalmScanRoute>(
+  path: '/palm',
+  routes: [TypedGoRoute<PalmReadingRoute>(path: 'reading')],
+)
+class PalmScanRoute extends GoRouteData with $PalmScanRoute {
+  /// Creates the route.
+  const PalmScanRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const PalmScanScreen();
+}
+
+/// What the scan says, behind the gate that sells it.
+///
+/// [scanId] identifies a session, not a hand — see `PalmComposer.idFor`.
+/// It travels in the path so the gate has something to decide about
+/// without reaching into the scan, but the reading itself is read from
+/// the live scan: nothing about a palm is stored, so a cold link here
+/// resolves to an offer to scan again rather than to a document.
+class PalmReadingRoute extends GoRouteData with $PalmReadingRoute {
+  /// Creates the route.
+  const PalmReadingRoute({required this.scanId});
+
+  /// Which scan this reading is about.
+  final String scanId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      PalmReadingScreen(scanId: scanId);
 }
 
 /// The onboarding quiz, outside the shell so it is full-bleed.

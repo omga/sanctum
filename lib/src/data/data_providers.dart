@@ -13,6 +13,7 @@ import 'package:sanctum/src/data/repositories/entitlement_repository.dart';
 import 'package:sanctum/src/data/repositories/journal_repository.dart';
 import 'package:sanctum/src/data/repositories/message_balance_repository.dart';
 import 'package:sanctum/src/data/repositories/oracle_repository.dart';
+import 'package:sanctum/src/data/repositories/palm_repository.dart';
 import 'package:sanctum/src/data/repositories/practice_repository.dart';
 import 'package:sanctum/src/data/repositories/quiz_repository.dart';
 import 'package:sanctum/src/data/repositories/report_repository.dart';
@@ -20,6 +21,8 @@ import 'package:sanctum/src/data/repositories/revenuecat_subscription_repository
 import 'package:sanctum/src/data/repositories/settings_repository.dart';
 import 'package:sanctum/src/data/repositories/subscription_repository.dart';
 import 'package:sanctum/src/data/services/audio/sanctum_audio_service.dart';
+import 'package:sanctum/src/data/services/gallery/gal_image_gallery.dart';
+import 'package:sanctum/src/data/services/gallery/image_gallery.dart';
 import 'package:sanctum/src/data/services/reminders/reminder_service.dart';
 import 'package:sanctum/src/domain/models/advisor_consent.dart';
 import 'package:sanctum/src/l10n/sanctum_locales.dart';
@@ -155,6 +158,20 @@ CompatibilityRepository compatibilityRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 ReportRepository reportRepository(Ref ref) =>
     const PreferencesReportRepository();
+
+/// What the user has earned on the palm feature.
+///
+/// Ids and a flag. No scan is stored — see [PalmRepository] for why the
+/// absence is the design rather than a gap.
+@Riverpod(keepAlive: true)
+PalmRepository palmRepository(Ref ref) => const PreferencesPalmRepository();
+
+/// The photo library, write-only.
+///
+/// Used by Save on the palm reveal and nowhere else. Overridden in tests
+/// with a gallery that records what it was handed.
+@Riverpod(keepAlive: true)
+ImageGallery imageGallery(Ref ref) => const GalImageGallery();
 
 /// Onboarding quiz answers.
 @Riverpod(keepAlive: true)

@@ -180,7 +180,7 @@ build** and neither exists in a release build.
 | | bytes | what it is |
 |---|---|---|
 | `app-debug.apk` | 169,645,895 | what Settings calls "App size" |
-| `app-release.apk` (arm64) | 28.8 MB | what ships |
+| `app-release.apk` (arm64) | 32.2 MB | what ships |
 
 Inside the debug APK:
 
@@ -236,6 +236,27 @@ adb shell "run-as com.soulheals.sanctum sh -c 'du -sh -- *'"
 ~19 MB of that is engine plus AOT code and is the Flutter floor — a
 native Android build of the same app would be far smaller, and no amount
 of asset work changes it.
+
+**The palm scan cost 33.4 MB**, and almost all of it is the detector.
+Measured with `--split-per-abi`, which is what a device actually
+downloads:
+
+| | arm64 APK |
+|---|---|
+| before the palm scan | 30.3 MB |
+| `camera` | 32.2 MB |
+| `hand_detection` | **65.6 MB** |
+
+Inside that last step: OpenCV (`libdartcv.so`) 11.4 MB, the LiteRT and
+TensorFlow Lite runtimes plus two GPU delegates ~15.3 MB, the two
+models 7.8 MB, and ~6.5 MB of `classes.dex`.
+
+**Measure with `--split-per-abi`, not `--target-platform`.** The plugin
+ships its native libraries as jniLibs, which `abiFilters` does not
+reach — a plain `--target-platform=android-arm64` build comes out at
+95 MB because it carries x86_64 and armeabi-v7a copies of LiteRT that
+Play would never deliver together. That number is an artefact, not a
+download.
 
 The APK was 23.8 MB before observability. `flutter_local_notifications`
 (plus Android core-library desugaring) and `posthog_flutter` cost about
