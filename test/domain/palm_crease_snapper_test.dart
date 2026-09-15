@@ -12,11 +12,11 @@ import 'package:sanctum/src/domain/services/palm_line_template.dart';
 /// tracer can be tested against a crease whose position is known
 /// exactly, which no photograph would give us.
 class _Crease implements RidgeField {
-  _Crease(PalmCurve reference, {this.sigma = 0.012})
-    : _samples = reference.sample(perSegment: 40);
+  _Crease(PalmCurve reference) : _samples = reference.sample(perSegment: 40);
+
+  static const double _sigma = 0.012;
 
   final List<PalmPoint> _samples;
-  final double sigma;
 
   @override
   double responseAt(PalmPoint point) {
@@ -24,7 +24,7 @@ class _Crease implements RidgeField {
     for (final sample in _samples) {
       nearest = math.min(nearest, sample.distanceTo(point));
     }
-    final ratio = nearest / sigma;
+    final ratio = nearest / _sigma;
     return math.exp(-ratio * ratio);
   }
 }

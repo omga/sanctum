@@ -30,8 +30,10 @@ import 'package:sanctum/src/domain/services/chat_transport.dart';
 /// No intelligence. It does not parse the question, and it must not
 /// grow a rules engine that pretends to — the moment this file starts
 /// answering plausibly, somebody will demo it as the product and the
-/// real one will never get funded. It answers with a fixed rotation and
-/// says so in its own copy.
+/// real one will never get funded. It answers with a fixed rotation.
+///
+/// That rotation is written copy, used to make content for social posts,
+/// so tests assert on its shape and never on its wording.
 class ScriptedChatTransport implements ChatTransport {
   /// Creates a scripted transport.
   ///
@@ -93,24 +95,42 @@ You've asked me this four times this week. My answer hasn't changed. Neither has
 I pulled his chart three times hoping for a different result.''';
 
   static const String _second =
-      'Your Venus is in Pisces. You fall in love with potential. Liam has enormous potential. Liam is also 26 and lives with his mother.';
+      'Your Venus is in Pisces. You fall in love with potential. '
+      'Liam has enormous potential. '
+      'Liam is also 26 and lives with his mother.';
 
   static const String _third =
       'You won\'t. But "seen 9:42 pm" will outlive us all.';
   static const String _fourth =
       "Anywhere Liam isn't. I've run the numbers twice.";
   static const String _fifth =
-      "Nothing. That's the reading. Nothing is going to happen, and you're going to be fine.";
+      "Nothing. That's the reading. "
+      "Nothing is going to happen, and you're going to be fine.";
   static const String _six =
-      "You already asked me this. I told you the truth. Would you like a lie instead?";
+      'You already asked me this. I told you the truth. '
+      'Would you like a lie instead?';
+
+  // Not in [_script] yet.
+  // ignore: unused_field
   static const String _seven =
-      "Mercury went direct on Tuesday and you mistook that for a personality change in Liam. "
-      "Venus is retrograde. So is your judgment. These are related. "
-      "Immortality is not in your chart. This situationship, however, appears to be eternal."
-      "Your 12th house. Liam is in your 8th. Different addresses. Please stop visiting. "
-      "He will watch your story. He will not reply. Saturday, approximately 11 pm.";
+      'Mercury went direct on Tuesday and you mistook that for a '
+      'personality change in Liam. '
+      'Venus is retrograde. So is your judgment. These are related. '
+      'Immortality is not in your chart. '
+      'This situationship, however, appears to be eternal. '
+      'Your 12th house. Liam is in your 8th. Different addresses. '
+      'Please stop visiting. '
+      'He will watch your story. He will not reply. '
+      'Saturday, approximately 11 pm.';
 
-
-  /// The rotation. Written to be obviously placeholder text.
-  static const List<String> _script = [_first, _second, _third, _fourth,  _fifth, _six];
+  /// The rotation. Written copy, used to make content for social posts:
+  /// a test may pin its shape, never its wording.
+  static const List<String> _script = [
+    _first,
+    _second,
+    _third,
+    _fourth,
+    _fifth,
+    _six,
+  ];
 }

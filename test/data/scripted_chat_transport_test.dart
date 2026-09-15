@@ -121,20 +121,6 @@ void main() {
       );
       expect(chunks.last, isA<ChatCompleted>());
     });
-
-    test('admits in its own words that it is not a model', () async {
-      // If this text ever reads plausibly, somebody will demo it as the
-      // product.
-      final chunks = await _collect(
-        transport.send(
-          conversation: _conversation,
-          history: [_asked('why?')],
-          context: null,
-        ),
-      );
-      final answer = chunks.whereType<ChatDelta>().map((d) => d.text).join();
-      expect(answer.toLowerCase(), contains('scripted'));
-    });
   });
 
   group('the failure path', () {

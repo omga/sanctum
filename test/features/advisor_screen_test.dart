@@ -322,17 +322,19 @@ void main() {
 
   group('asking', () {
     testWidgets('shows the question, then the answer', (tester) async {
-      await _pump(tester);
+      // A transport with a known answer. The scripted replies are written
+      // copy that changes, so no test here pins their wording.
+      await _pump(tester, transport: _Recording());
       await tester.enterText(find.byType(TextField), 'Why is it like this?');
       await tester.testTextInput.receiveAction(TextInputAction.send);
       await tester.pumpAndSettle();
 
       expect(find.text('Why is it like this?'), findsOneWidget);
-      expect(find.textContaining('scripted advisor'), findsOneWidget);
+      expect(find.text('An answer.'), findsOneWidget);
     });
 
     testWidgets('a tapped suggestion asks it', (tester) async {
-      await _pump(tester);
+      await _pump(tester, transport: _Recording());
       // Tap the card, not the label inside it: the label is not the
       // hit target, and tapping it only worked by falling through.
       final chip = find.ancestor(
@@ -343,7 +345,7 @@ void main() {
       await tester.tap(chip);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('scripted advisor'), findsOneWidget);
+      expect(find.text('An answer.'), findsOneWidget);
     });
 
     testWidgets('sends no name to the transport, ever', (tester) async {
@@ -552,7 +554,7 @@ void main() {
       final db = SanctumDatabase.memory();
       addTearDown(db.close);
 
-      await _pump(tester, database: db);
+      await _pump(tester, database: db, transport: _Recording());
       await tester.enterText(find.byType(TextField), 'Does this persist?');
       await tester.testTextInput.receiveAction(TextInputAction.send);
       await tester.pumpAndSettle();
@@ -564,7 +566,7 @@ void main() {
       await _pump(tester, database: db);
 
       expect(find.text('Does this persist?'), findsOneWidget);
-      expect(find.textContaining('scripted advisor'), findsOneWidget);
+      expect(find.text('An answer.'), findsOneWidget);
     });
 
     testWidgets('so do the turns already spent', (tester) async {

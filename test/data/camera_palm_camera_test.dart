@@ -39,7 +39,10 @@ class _FakeController extends CameraController {
   Future<void> stopImageStream() async => streaming = false;
 
   @override
-  Future<void> dispose() async => disposed = true;
+  Future<void> dispose() async {
+    disposed = true;
+    await super.dispose();
+  }
 }
 
 void main() {
